@@ -257,7 +257,6 @@ st.title("Scaladeiturchi Offerte Amazon")
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
 
-# --- RENDERING CARD PRODOTTO ---
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
         c_star, c_img, c_txt = st.columns([0.25, 1.35, 2.4])
@@ -286,17 +285,14 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Spedizione
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
                 ship_class = "shipping-free" if is_free else "shipping-box"
                 st.markdown(f"<div class='{ship_class}'>🚚 {p['info_spedizione']}</div>", unsafe_allow_html=True)
 
-            # Prezzo e Sconto
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
 
-            # Condivisione multipiattaforma
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             link = p.get('link_affiliato', '')
             share_text = f"Guarda questa offerta: {safe_title} a €{p['prezzo_finale']:.2f}!"
@@ -323,7 +319,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-# --- TAB 1: RICERCA ---
 with tab_cerca:
     keyword_libera = st.text_input(
         "🔍 Ricerca Testuale Diretta (Prioritaria):",
@@ -404,7 +399,6 @@ with tab_cerca:
                 with col_r:
                     render_product_card(st.session_state.offerte[idx + 1], tab_key="search")
 
-# --- TAB 2: PREFERITI ---
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
     if not lista_preferiti:
