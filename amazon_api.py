@@ -66,20 +66,34 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--single-process"
+                ]
+            )
             context = browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
                 locale="it-IT",
-                viewport={"width": 1920, "height": 1080}
+                viewport={"width": 1920, "height": 1080},
+                extra_http_headers={
+                    "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+                }
             )
             page = context.new_page()
 
             while len(prodotti) < item_count and page_num <= max_pages:
                 current_url = f"{base_url}&page={page_num}"
                 try:
-                    page.goto(current_url, wait_until="domcontentloaded", timeout=20000)
-                    page.wait_for_selector("div[data-component-type='s-search-result']", timeout=10000)
-                except Exception:
+                    page.goto(current_url, wait_until="domcontentloaded", timeout=25000)
+                    page.wait_for_selector("div[data-component-type='s-search-result']", timeout=12000)
+                except Exception as e:
+                    print(f"Attesa pagina {page_num} timeout: {e}")
                     break
 
                 content = page.content()
