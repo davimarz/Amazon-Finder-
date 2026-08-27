@@ -1,7 +1,7 @@
 import urllib.parse
 import re
+import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 PARTNER_TAG = "eiapromo-21"
 
@@ -59,131 +59,115 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
         prezzo_centesimi = int(max_price * 100)
         base_url += f"&low-price=0&high-price={prezzo_centesimi}"
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://www.amazon.it/",
+        "DNT": "1",
+        "Upgrade-Insecure-Requests": "1"
+    }
+
     prodotti = []
     asins_visti = set()
     page_num = 1
     max_pages = (item_count // 15) + 3
+    session = requests.Session()
 
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=[
-                    "--no-sandbox",
-                    "--disable-setuid-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
-                    "--single-process"
-                ]
-            )
-            context = browser.new_context(
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-                locale="it-IT",
-                viewport={"width": 1920, "height": 1080},
-                extra_http_headers={
-                    "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
-                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
-                }
-            )
-            page = context.new_page()
+        while len(prodotti) < item_count and page_num <= max_pages:
+            current_url = f"{base_url}&page={page_num}"
+            response = session.get(current_url, headers=headers, timeout=12)
 
-            while len(prodotti) < item_count and page_num <= max_pages:
-                current_url = f"{base_url}&page={page_num}"
-                try:
-                    page.goto(current_url, wait_until="domcontentloaded", timeout=25000)
-                    page.wait_for_selector("div[data-component-type='s-search-result']", timeout=12000)
-                except Exception as e:
-                    print(f"Attesa pagina {page_num} timeout: {e}")
+            if response.status_code != 200:
+                break
+
+            soup = BeautifulSoup(response.text, "html.parser")
+            items = soup.find_all("div", {"data-component-type": "s-search-result"})
+
+            if not items:
+                break
+
+            for item in items:
+                if len(prodotti) >= item_count:
                     break
 
-                content = page.content()
-                soup = BeautifulSoup(content, "html.parser")
-                items = soup.find_all("div", {"data-component-type": "s-search-result"})
+                asin = item.get("data-asin", "").strip()
+                if not asin or asin in asins_visti:
+                    continue
 
-                if not items:
-                    break
+                price_whole = item.find("span", {"class": "a-price-whole"})
+                price_fraction = item.find("span", {"class": "a-price-fraction"})
+                prezzo_prodotto = 0.0
+                if price_whole:
+                    whole_clean = price_whole.text.replace(".", "").replace(",", "").strip()
+                    fraction_clean = price_fraction.text.strip() if price_fraction else "00"
+                    try:
+                        prezzo_prodotto = float(f"{whole_clean}.{fraction_clean}")
+                    except ValueError:
+                        prezzo_prodotto = 0.0
 
-                for item in items:
-                    if len(prodotti) >= item_count:
-                        break
+                if prezzo_prodotto <= 0.0:
+                    continue
 
-                    asin = item.get("data-asin", "").strip()
-                    if not asin or asin in asins_visti:
-                        continue
+                item_text = item.text.lower()
+                if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
+                    continue
 
-                    price_whole = item.find("span", {"class": "a-price-whole"})
-                    price_fraction = item.find("span", {"class": "a-price-fraction"})
-                    prezzo_prodotto = 0.0
-                    if price_whole:
-                        whole_clean = price_whole.text.replace(".", "").replace(",", "").strip()
-                        fraction_clean = price_fraction.text.strip() if price_fraction else "00"
+                costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
+
+                title_tag = item.find("h2")
+                titolo_completo = ""
+                if title_tag:
+                    titolo_completo = title_tag.get_text(strip=True)
+                if not titolo_completo:
+                    img_search = item.find("img", {"class": "s-image"})
+                    titolo_completo = img_search.get("alt", "").strip() if img_search else "Prodotto Amazon"
+
+                img_tag = item.find("img", {"class": "s-image"})
+                immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
+
+                prezzo_iniziale = prezzo_prodotto
+                basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
+                if basis_price:
+                    basis_offscreen = basis_price.find("span", {"class": "a-offscreen"})
+                    if basis_offscreen:
+                        text_price = basis_offscreen.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
                         try:
-                            prezzo_prodotto = float(f"{whole_clean}.{fraction_clean}")
+                            prezzo_iniziale = float(text_price)
                         except ValueError:
-                            prezzo_prodotto = 0.0
+                            prezzo_iniziale = prezzo_prodotto
 
-                    if prezzo_prodotto <= 0.0:
-                        continue
+                sconto_val = 0
+                if prezzo_iniziale > prezzo_prodotto and prezzo_iniziale > 0:
+                    sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
+                
+                if sconto_val < min_discount:
+                    continue
 
-                    item_text = item.text.lower()
-                    if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
-                        continue
+                if max_price and max_price > 0 and prezzo_prodotto > max_price:
+                    continue
 
-                    costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
+                asins_visti.add(asin)
+                sconto_perc = f"-{sconto_val}%" if sconto_val > 0 else ""
+                link_affiliato = f"https://www.amazon.it/dp/{asin}?tag={PARTNER_TAG}"
 
-                    title_tag = item.find("h2")
-                    titolo_completo = ""
-                    if title_tag:
-                        titolo_completo = title_tag.get_text(strip=True)
-                    if not titolo_completo:
-                        img_search = item.find("img", {"class": "s-image"})
-                        titolo_completo = img_search.get("alt", "").strip() if img_search else "Prodotto Amazon"
+                prodotti.append({
+                    "asin": asin,
+                    "titolo": titolo_completo,
+                    "costo_spedizione": costo_spedizione,
+                    "info_spedizione": info_spedizione,
+                    "prezzo_iniziale": prezzo_iniziale,
+                    "prezzo_finale": prezzo_prodotto,
+                    "sconto": sconto_perc,
+                    "sconto_val": sconto_val,
+                    "descrizione": titolo_completo,
+                    "immagine_url": immagine_url,
+                    "link_affiliato": link_affiliato
+                })
 
-                    img_tag = item.find("img", {"class": "s-image"})
-                    immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
-
-                    prezzo_iniziale = prezzo_prodotto
-                    basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
-                    if basis_price:
-                        basis_offscreen = basis_price.find("span", {"class": "a-offscreen"})
-                        if basis_offscreen:
-                            text_price = basis_offscreen.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
-                            try:
-                                prezzo_iniziale = float(text_price)
-                            except ValueError:
-                                prezzo_iniziale = prezzo_prodotto
-
-                    sconto_val = 0
-                    if prezzo_iniziale > prezzo_prodotto and prezzo_iniziale > 0:
-                        sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
-                    
-                    if sconto_val < min_discount:
-                        continue
-
-                    if max_price and max_price > 0 and prezzo_prodotto > max_price:
-                        continue
-
-                    asins_visti.add(asin)
-                    sconto_perc = f"-{sconto_val}%" if sconto_val > 0 else ""
-                    link_affiliato = f"https://www.amazon.it/dp/{asin}?tag={PARTNER_TAG}"
-
-                    prodotti.append({
-                        "asin": asin,
-                        "titolo": titolo_completo,
-                        "costo_spedizione": costo_spedizione,
-                        "info_spedizione": info_spedizione,
-                        "prezzo_iniziale": prezzo_iniziale,
-                        "prezzo_finale": prezzo_prodotto,
-                        "sconto": sconto_perc,
-                        "sconto_val": sconto_val,
-                        "descrizione": titolo_completo,
-                        "immagine_url": immagine_url,
-                        "link_affiliato": link_affiliato
-                    })
-
-                page_num += 1
-
-            browser.close()
+            page_num += 1
 
     except Exception as e:
         print(f"Errore Scraping: {e}")
