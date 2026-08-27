@@ -7,6 +7,11 @@ st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
 
 st.markdown("""
 <style>
+    /* Nasconde menu superiore e footer per interfaccia Web App */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+
     /* Card Container Principale Glassmorphism */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, #111827 0%, #1e293b 100%) !important;
@@ -34,7 +39,7 @@ st.markdown("""
         line-height: 1 !important;
     }
 
-    /* Uniformazione Immagine Prodotto */
+    /* Immagine Prodotto */
     .product-img-wrapper {
         width: 100%;
         height: 165px;
@@ -69,7 +74,7 @@ st.markdown("""
         min-height: 5.1em;
     }
 
-    /* Spedizione / Consegna a Pagamento (Arancione Chiaro) */
+    /* Spedizione a Pagamento */
     .shipping-box {
         display: inline-flex;
         align-items: center;
@@ -84,7 +89,7 @@ st.markdown("""
         width: fit-content;
     }
 
-    /* Spedizione / Consegna Gratuita (Verde Chiaro) */
+    /* Spedizione Gratuita */
     .shipping-free {
         display: inline-flex;
         align-items: center;
@@ -99,7 +104,7 @@ st.markdown("""
         width: fit-content;
     }
 
-    /* Contenitore Rigo Prezzo */
+    /* Prezzi */
     .price-container-styled {
         display: flex;
         align-items: baseline;
@@ -117,7 +122,6 @@ st.markdown("""
         font-size: 0.82rem !important;
     }
 
-    /* Scritta Prezzo Finale in Blu Elettrico */
     .deal-price-final {
         font-size: 1.45rem !important;
         font-weight: 900 !important;
@@ -126,7 +130,6 @@ st.markdown("""
         text-shadow: 0 1px 6px rgba(59, 130, 246, 0.35);
     }
 
-    /* Prezzo Precedente in Blu Pastello */
     .deal-price-old {
         font-size: 0.88rem !important;
         color: #93c5fd !important;
@@ -135,57 +138,64 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Contenitore Pulsanti */
-    .action-buttons-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 4px;
-    }
-
-    .buy-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
+    /* Pulsante Acquista Principale */
+    .buy-btn-full {
+        display: block;
+        width: 100%;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.90rem !important;
-        font-weight: 700 !important;
+        font-size: 0.92rem !important;
+        font-weight: 800 !important;
         text-decoration: none !important;
-        padding: 5px 14px;
-        border-radius: 14px;
+        padding: 7px 12px;
+        border-radius: 10px;
         border: 1px solid #fcd200;
         text-align: center;
-        flex: 1;
+        margin-bottom: 8px;
+        transition: background-color 0.15s ease;
     }
 
-    .buy-btn:hover {
+    .buy-btn-full:hover {
         background-color: #f7ca00;
         color: #0f1111 !important;
     }
 
-    .share-btn {
+    /* Griglia Icone Social di Condivisione */
+    .social-share-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .share-icon-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-        color: #ffffff !important;
-        font-size: 0.90rem !important;
-        font-weight: 700 !important;
-        padding: 5px 12px;
-        border-radius: 14px;
-        border: 1px solid #38bdf8;
-        cursor: pointer;
-        flex: 1;
-        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3);
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        text-decoration: none !important;
+        font-size: 1.05rem;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
     }
 
-    .share-btn:hover {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        color: #ffffff !important;
+    .share-icon-btn:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
     }
 
-    /* Adattamento Responsive Schermi Smartphone e Tablet */
+    /* Colori Social */
+    .btn-wa { background-color: #25D366; }
+    .btn-tg { background-color: #229ED9; }
+    .btn-fb { background-color: #1877F2; }
+    .btn-mail { background-color: #EA4335; }
+    .btn-ig { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+    .btn-copy { background-color: #475569; }
+
+    /* Responsive */
     @media (max-width: 900px) {
         div[data-testid="column"] {
             width: 100% !important;
@@ -285,26 +295,26 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
+            # Info Spedizione
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
                 ship_class = "shipping-free" if is_free else "shipping-box"
                 st.markdown(f"<div class='{ship_class}'>🚚 {p['info_spedizione']}</div>", unsafe_allow_html=True)
 
+            # Prezzo e Sconto
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
 
+            # Preparazione URL di Condivisione
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             link = p.get('link_affiliato', '')
-            share_text = f"Guarda questa offerta: {safe_title} a €{p['prezzo_finale']:.2f}!"
-            wa_fallback_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_text + ' ' + link)}"
-            
-            share_js = (
-                f"if(navigator.share){{"
-                f"navigator.share({{title:'{safe_title}',text:'{share_text}',url:'{link}'}}).catch((e)=>console.log(e));"
-                f"}}else{{"
-                f"window.open('{wa_fallback_url}','_blank');"
-                f"}}return false;"
-            )
+            share_msg = f"🔥 Offerta: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
+
+            wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
+            tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(f'🔥 {safe_title} a €{p['prezzo_finale']:.2f}!')}"
+            fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
+            mail_url = f"mailto:?subject={urllib.parse.quote('Offerta Amazon: ' + safe_title)}&body={urllib.parse.quote(share_msg)}"
+            ig_url = "https://www.instagram.com/"
 
             st.markdown(
                 f"<div class='price-container-styled'>"
@@ -312,9 +322,14 @@ def render_product_card(p, tab_key="main"):
                 f"<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>"
                 f"{old_price_html}"
                 f"</div>"
-                f"<div class='action-buttons-row'>"
-                f"<a href='{link}' target='_blank' class='buy-btn'>🛒 Acquista</a>"
-                f"<button onclick=\"{share_js}\" class='share-btn'>🔗 Condividi</button>"
+                f"<a href='{link}' target='_blank' class='buy-btn-full'>🛒 Acquista su Amazon</a>"
+                f"<div class='social-share-row'>"
+                f"<a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='Condividi su WhatsApp'>💬</a>"
+                f"<a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Condividi su Telegram'>✈️</a>"
+                f"<a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Condividi su Facebook'>📘</a>"
+                f"<a href='{mail_url}' target='_blank' class='share-icon-btn btn-mail' title='Condividi via Email'>✉️</a>"
+                f"<a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig' title='Apri Instagram'>📷</a>"
+                f"<a href='{link}' target='_blank' class='share-icon-btn btn-copy' title='Apri / Copia Link Diretto'>🔗</a>"
                 f"</div>",
                 unsafe_allow_html=True
             )
@@ -322,7 +337,7 @@ def render_product_card(p, tab_key="main"):
 with tab_cerca:
     keyword_libera = st.text_input(
         "🔍 Ricerca Testuale Diretta (Prioritaria):",
-        placeholder="Es. cuffie bluetooth, friggitrice ad aria, smartwatch..."
+        placeholder="Es. cuffie bluetooth, notebook, friggitrice ad aria..."
     )
 
     col_cat, col_subcat = st.columns(2)
