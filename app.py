@@ -372,13 +372,23 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    col_sort, col_pmax, col_disc = st.columns([1.5, 1, 1])
+    # 4 Colonne per Ordinamento, Prezzo Min, Prezzo Max e Sconto Minimo
+    col_sort, col_pmin, col_pmax, col_disc = st.columns([1.3, 1, 1, 1])
     with col_sort:
         opzioni_ordinamento = list(SORT_MAPPINGS.keys())
         default_index = opzioni_ordinamento.index("Prezzo: dal più basso") if "Prezzo: dal più basso" in opzioni_ordinamento else 0
         ranking_scelto = st.selectbox("Ordinamento:", opzioni_ordinamento, index=default_index)
 
-    # Slider per il Prezzo Massimo
+    with col_pmin:
+        prezzo_min = st.slider(
+            "Prezzo Min (€):",
+            min_value=0,
+            max_value=500,
+            value=0,
+            step=5,
+            help="0 = Nessun limite minimo"
+        )
+
     with col_pmax:
         prezzo_max = st.slider(
             "Prezzo Max (€):",
@@ -386,8 +396,9 @@ with tab_cerca:
             max_value=500,
             value=0,
             step=5,
-            help="0 = Nessun limite di prezzo"
+            help="0 = Nessun limite massimo"
         )
+
     with col_disc:
         sconto_minimo = st.slider("Sconto Minimo (%):", min_value=0, max_value=80, value=0, step=5)
 
@@ -429,6 +440,7 @@ with tab_cerca:
                 sottocategoria=subcat_pulita,
                 keyword=keyword_libera.strip(),
                 sort_type=ranking_scelto,
+                min_price=float(prezzo_min) if prezzo_min > 0 else None,
                 max_price=float(prezzo_max) if prezzo_max > 0 else None,
                 min_discount=sconto_minimo,
                 item_count=target_items
