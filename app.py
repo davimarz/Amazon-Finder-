@@ -372,7 +372,6 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    # 4 Colonne per Ordinamento, Prezzo Min, Prezzo Max e Sconto Minimo
     col_sort, col_pmin, col_pmax, col_disc = st.columns([1.3, 1, 1, 1])
     with col_sort:
         opzioni_ordinamento = list(SORT_MAPPINGS.keys())
@@ -435,13 +434,19 @@ with tab_cerca:
             cat_pulita = "" if usa_testo else cat_scelta.split(" ", 1)[-1]
             subcat_pulita = "" if usa_testo or subcat_scelta == "Tutte" else subcat_scelta
             
+            # Normalizzazione logica: se il minimo è maggiore del massimo (e max > 0), vengono scambiati
+            val_min = float(prezzo_min) if prezzo_min > 0 else None
+            val_max = float(prezzo_max) if prezzo_max > 0 else None
+            if val_min and val_max and val_min > val_max:
+                val_min, val_max = val_max, val_min
+
             risultati = ottieni_offerte_avanzate(
                 categoria=cat_pulita,
                 sottocategoria=subcat_pulita,
                 keyword=keyword_libera.strip(),
                 sort_type=ranking_scelto,
-                min_price=float(prezzo_min) if prezzo_min > 0 else None,
-                max_price=float(prezzo_max) if prezzo_max > 0 else None,
+                min_price=val_min,
+                max_price=val_max,
                 min_discount=sconto_minimo,
                 item_count=target_items
             )
