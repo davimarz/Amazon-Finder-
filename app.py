@@ -1,7 +1,19 @@
+import os
+import subprocess
 import streamlit as st
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
+
+# --- AUTO-INSTALLAZIONE BROWSER PLAYWRIGHT SU STREAMLIT CLOUD ---
+@st.cache_resource
+def install_playwright():
+    try:
+        subprocess.run(["playwright", "install", "chromium"], check=True)
+    except Exception as e:
+        print(f"Errore installazione browser: {e}")
+
+install_playwright()
 
 st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
 
