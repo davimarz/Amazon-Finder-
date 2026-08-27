@@ -39,7 +39,7 @@ def estrai_costo_spedizione(item_tag):
 
     return 0.0, "Consegna non specificata"
 
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", max_price=None, min_discount=0, item_count=10):
+def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", min_price=None, max_price=None, min_discount=0, item_count=10):
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
         termini.append(sottocategoria)
@@ -55,9 +55,13 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
+    if min_price and min_price > 0:
+        min_centesimi = int(min_price * 100)
+        base_url += f"&low-price={min_centesimi}"
+
     if max_price and max_price > 0:
-        prezzo_centesimi = int(max_price * 100)
-        base_url += f"&low-price=0&high-price={prezzo_centesimi}"
+        max_centesimi = int(max_price * 100)
+        base_url += f"&high-price={max_centesimi}"
 
     headers = {
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -86,7 +90,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
             items = soup.find_all("div", {"data-component-type": "s-search-result"})
 
             if not items:
-                # Fallback di selezione per strutture HTML alternative di Amazon
                 items = [div for div in soup.find_all("div", attrs={"data-asin": True}) if div.get("data-asin", "").strip()]
 
             if not items:
@@ -100,7 +103,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if not asin or asin in asins_visti:
                     continue
 
-                # Estrazione Prezzo Finale
                 prezzo_prodotto = 0.0
                 price_whole = item.find("span", {"class": "a-price-whole"})
                 price_fraction = item.find("span", {"class": "a-price-fraction"})
@@ -130,7 +132,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
 
                 costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
-                # Titolo
                 title_tag = item.find("h2")
                 titolo_completo = ""
                 if title_tag:
@@ -139,11 +140,9 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     img_search = item.find("img", {"class": "s-image"})
                     titolo_completo = img_search.get("alt", "").strip() if img_search else "Prodotto Amazon"
 
-                # Immagine
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
 
-                # Prezzo di partenza / barrato
                 prezzo_iniziale = prezzo_prodotto
                 basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
                 if not basis_price:
@@ -163,6 +162,9 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
                 
                 if sconto_val < min_discount:
+                    continue
+
+                if min_price and min_price > 0 and prezzo_prodotto < min_price:
                     continue
 
                 if max_price and max_price > 0 and prezzo_prodotto > max_price:
