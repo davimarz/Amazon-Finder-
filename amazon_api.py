@@ -55,13 +55,12 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
-    if min_price and min_price > 0:
-        min_centesimi = int(min_price * 100)
-        base_url += f"&low-price={min_centesimi}"
+    # Parametri URL di Amazon in Euro interi (senza moltiplicare per 100)
+    if min_price is not None and min_price > 0:
+        base_url += f"&low-price={int(min_price)}"
 
-    if max_price and max_price > 0:
-        max_centesimi = int(max_price * 100)
-        base_url += f"&high-price={max_centesimi}"
+    if max_price is not None and max_price > 0:
+        base_url += f"&high-price={int(max_price)}"
 
     headers = {
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -75,7 +74,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = (item_count // 15) + 3
+    max_pages = (item_count // 15) + 4
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -103,6 +102,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if not asin or asin in asins_visti:
                     continue
 
+                # Estrazione Prezzo Finale
                 prezzo_prodotto = 0.0
                 price_whole = item.find("span", {"class": "a-price-whole"})
                 price_fraction = item.find("span", {"class": "a-price-fraction"})
@@ -126,6 +126,13 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if prezzo_prodotto <= 0.0:
                     continue
 
+                # Controllo rigoroso del range di prezzo
+                if min_price is not None and min_price > 0 and prezzo_prodotto < min_price:
+                    continue
+
+                if max_price is not None and max_price > 0 and prezzo_prodotto > max_price:
+                    continue
+
                 item_text = item.text.lower()
                 if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
                     continue
@@ -143,6 +150,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
 
+                # Prezzo di listino e calcolo sconto
                 prezzo_iniziale = prezzo_prodotto
                 basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
                 if not basis_price:
@@ -162,12 +170,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
                 
                 if sconto_val < min_discount:
-                    continue
-
-                if min_price and min_price > 0 and prezzo_prodotto < min_price:
-                    continue
-
-                if max_price and max_price > 0 and prezzo_prodotto > max_price:
                     continue
 
                 asins_visti.add(asin)
