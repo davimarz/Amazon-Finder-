@@ -1,6 +1,6 @@
 import urllib.parse
 import re
-import requests
+from curl_cffi import requests
 from bs4 import BeautifulSoup
 
 PARTNER_TAG = "eiapromo-21"
@@ -60,12 +60,11 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
         base_url += f"&low-price=0&high-price={prezzo_centesimi}"
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Referer": "https://www.amazon.it/",
-        "DNT": "1",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
         "Upgrade-Insecure-Requests": "1"
     }
 
@@ -73,18 +72,22 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     asins_visti = set()
     page_num = 1
     max_pages = (item_count // 15) + 3
-    session = requests.Session()
+    session = requests.Session(impersonate="chrome")
 
     try:
         while len(prodotti) < item_count and page_num <= max_pages:
             current_url = f"{base_url}&page={page_num}"
-            response = session.get(current_url, headers=headers, timeout=12)
+            response = session.get(current_url, headers=headers, timeout=15)
 
             if response.status_code != 200:
                 break
 
             soup = BeautifulSoup(response.text, "html.parser")
             items = soup.find_all("div", {"data-component-type": "s-search-result"})
+
+            if not items:
+                # Fallback di selezione per strutture HTML alternative di Amazon
+                items = [div for div in soup.find_all("div", attrs={"data-asin": True}) if div.get("data-asin", "").strip()]
 
             if not items:
                 break
@@ -97,9 +100,11 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if not asin or asin in asins_visti:
                     continue
 
+                # Estrazione Prezzo Finale
+                prezzo_prodotto = 0.0
                 price_whole = item.find("span", {"class": "a-price-whole"})
                 price_fraction = item.find("span", {"class": "a-price-fraction"})
-                prezzo_prodotto = 0.0
+                
                 if price_whole:
                     whole_clean = price_whole.text.replace(".", "").replace(",", "").strip()
                     fraction_clean = price_fraction.text.strip() if price_fraction else "00"
@@ -107,6 +112,14 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                         prezzo_prodotto = float(f"{whole_clean}.{fraction_clean}")
                     except ValueError:
                         prezzo_prodotto = 0.0
+                else:
+                    price_off = item.find("span", {"class": "a-offscreen"})
+                    if price_off:
+                        try:
+                            clean_p = price_off.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
+                            prezzo_prodotto = float(clean_p)
+                        except ValueError:
+                            prezzo_prodotto = 0.0
 
                 if prezzo_prodotto <= 0.0:
                     continue
@@ -117,6 +130,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
 
                 costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
+                # Titolo
                 title_tag = item.find("h2")
                 titolo_completo = ""
                 if title_tag:
@@ -125,11 +139,16 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     img_search = item.find("img", {"class": "s-image"})
                     titolo_completo = img_search.get("alt", "").strip() if img_search else "Prodotto Amazon"
 
+                # Immagine
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
 
+                # Prezzo di partenza / barrato
                 prezzo_iniziale = prezzo_prodotto
                 basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
+                if not basis_price:
+                    basis_price = item.find("span", {"class": "a-text-price"})
+
                 if basis_price:
                     basis_offscreen = basis_price.find("span", {"class": "a-offscreen"})
                     if basis_offscreen:
