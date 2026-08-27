@@ -5,13 +5,13 @@ import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
-# --- AUTO-INSTALLAZIONE BROWSER PLAYWRIGHT SU STREAMLIT CLOUD ---
+# --- AUTO-INSTALLAZIONE BROWSER E DIPENDENZE LINUX PER CLOUD ---
 @st.cache_resource
 def install_playwright():
     try:
-        subprocess.run(["playwright", "install", "chromium"], check=True)
+        subprocess.run(["playwright", "install", "--with-deps", "chromium"], check=True)
     except Exception as e:
-        print(f"Errore installazione browser: {e}")
+        print(f"Errore installazione playwright deps: {e}")
 
 install_playwright()
 
