@@ -60,7 +60,7 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Titolo / Descrizione a 4 righe in Blu Scuro */
+    /* Titolo / Descrizione in Blu Scuro */
     .deal-title {
         font-size: 0.95rem !important;
         font-weight: 700 !important;
@@ -137,7 +137,7 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Pulsante Acquista Amazon Principale */
+    /* Pulsante Acquista Amazon */
     .buy-btn-full {
         display: block;
         width: 100%;
@@ -159,7 +159,7 @@ st.markdown("""
         color: #0f1111 !important;
     }
 
-    /* Griglia Icone Social di Condivisione */
+    /* Griglia Icone Social */
     .social-share-row {
         display: flex;
         align-items: center;
@@ -193,7 +193,7 @@ st.markdown("""
         display: block;
     }
 
-    /* Colori Social Ufficiali */
+    /* Colori Social */
     .btn-wa { background-color: #25D366; }
     .btn-fb { background-color: #1877F2; }
     .btn-gmail { background-color: #EA4335; }
@@ -269,6 +269,13 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
+if "auto_search_triggered" not in st.session_state:
+    st.session_state.auto_search_triggered = False
+
+def trigger_enter_search():
+    if st.session_state.keyword_input.strip():
+        st.session_state.auto_search_triggered = True
+
 st.title("Scaladeiturchi Offerte Amazon")
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
@@ -330,7 +337,6 @@ def render_product_card(p, tab_key="main"):
             svg_tg = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
             svg_copy = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
 
-            # Azione Copia Link con Avviso Alert
             copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato negli appunti!');}});"
 
             st.markdown(
@@ -352,9 +358,12 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
+    # Input collegato alla callback per l'avvio immediato con Invio/Vai da tastiera
     keyword_libera = st.text_input(
         "🔍 Ricerca Testuale Diretta (Prioritaria):",
-        placeholder="Es. cuffie bluetooth, notebook, friggitrice ad aria..."
+        placeholder="Es. cuffie bluetooth, notebook, friggitrice ad aria...",
+        key="keyword_input",
+        on_change=trigger_enter_search
     )
 
     col_cat, col_subcat = st.columns(2)
@@ -398,6 +407,9 @@ with tab_cerca:
         target_items = 50
     elif btn_100:
         target_items = 100
+    elif st.session_state.auto_search_triggered:
+        target_items = 10
+        st.session_state.auto_search_triggered = False
 
     if target_items is not None:
         with st.spinner(f"Estrazione dei Top {target_items} prodotti in corso..."):
