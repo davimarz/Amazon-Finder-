@@ -269,12 +269,15 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
+# Stato per memorizzare l'ultimo target di ricerca e il trigger automatico
+if "last_target_items" not in st.session_state:
+    st.session_state.last_target_items = 10
+
 if "auto_search_triggered" not in st.session_state:
     st.session_state.auto_search_triggered = False
 
-def trigger_enter_search():
-    if st.session_state.keyword_input.strip():
-        st.session_state.auto_search_triggered = True
+def trigger_search():
+    st.session_state.auto_search_triggered = True
 
 st.title("Scaladeiturchi Offerte Amazon")
 
@@ -362,7 +365,7 @@ with tab_cerca:
         "🔍 Ricerca Testuale Diretta (Prioritaria):",
         placeholder="Es. cuffie bluetooth, notebook, friggitrice ad aria...",
         key="keyword_input",
-        on_change=trigger_enter_search
+        on_change=trigger_search
     )
 
     col_cat, col_subcat = st.columns(2)
@@ -385,7 +388,9 @@ with tab_cerca:
             max_value=500,
             value=0,
             step=5,
-            help="0 = Nessun limite minimo"
+            help="0 = Nessun limite minimo",
+            key="slider_pmin",
+            on_change=trigger_search
         )
 
     with col_pmax:
@@ -395,7 +400,9 @@ with tab_cerca:
             max_value=500,
             value=0,
             step=5,
-            help="0 = Nessun limite massimo"
+            help="0 = Nessun limite massimo",
+            key="slider_pmax",
+            on_change=trigger_search
         )
 
     with col_disc:
@@ -416,16 +423,21 @@ with tab_cerca:
     target_items = None
     if btn_10:
         target_items = 10
+        st.session_state.last_target_items = 10
     elif btn_20:
         target_items = 20
+        st.session_state.last_target_items = 20
     elif btn_30:
         target_items = 30
+        st.session_state.last_target_items = 30
     elif btn_50:
         target_items = 50
+        st.session_state.last_target_items = 50
     elif btn_100:
         target_items = 100
+        st.session_state.last_target_items = 100
     elif st.session_state.auto_search_triggered:
-        target_items = 10
+        target_items = st.session_state.last_target_items
         st.session_state.auto_search_triggered = False
 
     if target_items is not None:
@@ -434,7 +446,6 @@ with tab_cerca:
             cat_pulita = "" if usa_testo else cat_scelta.split(" ", 1)[-1]
             subcat_pulita = "" if usa_testo or subcat_scelta == "Tutte" else subcat_scelta
             
-            # Normalizzazione logica: se il minimo è maggiore del massimo (e max > 0), vengono scambiati
             val_min = float(prezzo_min) if prezzo_min > 0 else None
             val_max = float(prezzo_max) if prezzo_max > 0 else None
             if val_min and val_max and val_min > val_max:
