@@ -1,19 +1,7 @@
-import os
-import subprocess
 import streamlit as st
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
-
-# --- AUTO-INSTALLAZIONE BROWSER E DIPENDENZE LINUX PER CLOUD ---
-@st.cache_resource
-def install_playwright():
-    try:
-        subprocess.run(["playwright", "install", "--with-deps", "chromium"], check=True)
-    except Exception as e:
-        print(f"Errore installazione playwright deps: {e}")
-
-install_playwright()
 
 st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
 
@@ -308,7 +296,7 @@ def render_product_card(p, tab_key="main"):
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
 
-            # Condivisione sicura multipiattaforma
+            # Condivisione multipiattaforma
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             link = p.get('link_affiliato', '')
             share_text = f"Guarda questa offerta: {safe_title} a €{p['prezzo_finale']:.2f}!"
