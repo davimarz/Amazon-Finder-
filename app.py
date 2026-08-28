@@ -236,12 +236,12 @@ st.markdown("""
         width: 50% !important;
     }
 
-    /* Griglia 6 Pulsanti Top in una sola riga orizzontale */
+    /* Griglia 6 Pulsanti Top compatti e nitidi in un'unica riga */
     .top-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 4px !important;
+        gap: 3px !important;
         width: 100% !important;
         margin-top: 4px !important;
         margin-bottom: 8px !important;
@@ -256,24 +256,27 @@ st.markdown("""
     .top-single-row-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 6px !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 5px !important;
         font-weight: 800 !important;
-        font-size: clamp(0.64rem, 1.8vw, 0.78rem) !important;
-        padding: 4px 1px !important;
-        min-height: 30px !important;
-        height: 30px !important;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
+        font-size: clamp(0.68rem, 1.9vw, 0.76rem) !important;
+        letter-spacing: -0.2px !important;
+        padding: 0 !important;
+        min-height: 26px !important;
+        height: 26px !important;
+        line-height: 26px !important;
+        box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
         width: 100% !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     .top-single-row-container div[data-testid="stButton"] button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 10px rgba(56, 189, 248, 0.45) !important;
+        box-shadow: 0 3px 8px rgba(56, 189, 248, 0.45) !important;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -896,8 +899,8 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Griglia con tutti e 6 i pulsanti Top su un'unica riga orizzontale
-    col_btn_wrap, _ = st.columns([0.70, 0.30])
+    # Griglia con pulsanti Top compatti e nitidi su un'unica riga orizzontale
+    col_btn_wrap, _ = st.columns([0.65, 0.35])
     with col_btn_wrap:
         st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
         t1, t2, t3, t4, t5, t6 = st.columns(6)
