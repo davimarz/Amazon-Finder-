@@ -12,7 +12,7 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Sfondo Globale Unificato per Tutta la Pagina */
+    /* Sfondo Globale Unificato */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
         background-attachment: fixed !important;
@@ -138,11 +138,20 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* Checkbox Prime */
+    /* Checkbox Prime allineato */
+    div[data-testid="stCheckbox"] {
+        background: rgba(30, 41, 59, 0.85) !important;
+        padding: 5px 12px !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        width: fit-content !important;
+        margin-top: 2px !important;
+    }
+
     div[data-testid="stCheckbox"] label span {
         color: #f8fafc !important;
         font-weight: 800 !important;
-        font-size: 0.92rem !important;
+        font-size: 0.88rem !important;
     }
 
     /* Radio Buttons / Flag Orizzontali */
@@ -151,8 +160,8 @@ st.markdown("""
         flex-direction: row !important;
         align-items: center !important;
         gap: 12px !important;
-        margin-top: 6px !important;
-        margin-bottom: 6px !important;
+        margin-top: 4px !important;
+        margin-bottom: 4px !important;
     }
 
     div[data-testid="stRadio"] > label {
@@ -285,7 +294,6 @@ st.markdown("""
         color: #0f1111 !important;
     }
 
-    /* Titolo Prodotto in Ciano/Azzurro Luminoso */
     .deal-title {
         font-size: 0.88rem !important;
         font-weight: 800 !important;
@@ -375,7 +383,6 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Feedback Box con Fondo Bianco per Contrasto Ufficiale Amazon */
     .feedback-container {
         font-family: Arial, sans-serif;
         background: #ffffff;
@@ -458,7 +465,6 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Social Verticali */
     .social-share-col {
         display: flex;
         flex-direction: column;
@@ -763,19 +769,8 @@ with tab_cerca:
             on_change=trigger_search
         )
 
-    # Riga 2: Flag Prime + Limiti Prezzo Min/Max
-    col_prime, col_pmin, col_pmax = st.columns([0.8, 1.1, 1.1])
-
-    with col_prime:
-        st.write("")
-        st.write("")
-        solo_prime = st.checkbox(
-            "✔ Prime",
-            value=False,
-            key="check_prime",
-            on_change=trigger_search,
-            help="Mostra solo prodotti idonei ad Amazon Prime"
-        )
+    # Riga 2: Prezzo Min e Prezzo Max dimezzati su una sola riga
+    col_pmin, col_pmax, _ = st.columns([1, 1, 2.2])
 
     with col_pmin:
         prezzo_min = st.number_input(
@@ -801,16 +796,29 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite massimo"
         )
 
-    # Riga 3: Flag Ordinamento
-    opzioni_ordinamento = list(SORT_MAPPINGS.keys())
-    ranking_scelto = st.radio(
-        "🏷️ Ordinamento:",
-        opzioni_ordinamento,
-        index=0,
-        horizontal=True,
-        key="radio_sort",
-        on_change=trigger_search
-    )
+    # Riga 3: Gruppo Ordinamento con Flag Prime affiancato
+    col_sort, col_prime = st.columns([3.4, 0.9])
+    
+    with col_sort:
+        opzioni_ordinamento = list(SORT_MAPPINGS.keys())
+        ranking_scelto = st.radio(
+            "🏷️ Ordinamento:",
+            opzioni_ordinamento,
+            index=0,
+            horizontal=True,
+            key="radio_sort",
+            on_change=trigger_search
+        )
+
+    with col_prime:
+        st.write("")
+        solo_prime = st.checkbox(
+            "✔ Prime",
+            value=False,
+            key="check_prime",
+            on_change=trigger_search,
+            help="Mostra solo prodotti idonei ad Amazon Prime"
+        )
 
     # Riga 4: Flag Sconto Minimo
     label_sconto_scelto = st.radio(
