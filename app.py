@@ -129,14 +129,15 @@ st.markdown("""
 
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 6px 12px !important;
+        padding: 4px 10px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        width: fit-content !important;
-        margin-top: 18px !important;
-        min-height: 38px !important;
+        width: 100% !important;
+        margin-top: 22px !important;
+        min-height: 36px !important;
         display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
         transition: border-color 0.15s ease, background 0.15s ease !important;
     }
 
@@ -147,10 +148,11 @@ st.markdown("""
 
     div[data-testid="stCheckbox"] label p {
         font-family: Arial, sans-serif !important;
-        font-size: 0.95rem !important;
+        font-size: 0.82rem !important;
         font-weight: 800 !important;
         color: #4ade80 !important;
         margin: 0 !important;
+        white-space: nowrap !important;
     }
 
     div[data-testid="stRadio"] {
@@ -199,7 +201,27 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Griglia Prezzo Minimo e Massimo in un'unica riga anche da mobile */
+    /* Griglia Ricerca e Spedizione Gratuita in un'unica riga */
+    .search-ship-row-container [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        width: 100% !important;
+        align-items: flex-end !important;
+    }
+
+    .search-ship-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:first-child {
+        flex: 1 1 70% !important;
+        min-width: 0 !important;
+    }
+
+    .search-ship-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:last-child {
+        flex: 0 0 30% !important;
+        min-width: 0 !important;
+    }
+
+    /* Griglia Prezzo Minimo e Massimo in un'unica riga */
     .prices-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -214,7 +236,7 @@ st.markdown("""
         width: 50% !important;
     }
 
-    /* Griglia 6 Pulsanti Top in una sola riga orizzontale anche da mobile */
+    /* Griglia 6 Pulsanti Top in una sola riga orizzontale */
     .top-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -294,6 +316,7 @@ st.markdown("""
         margin: auto;
     }
 
+    /* Pulsante Preferiti (Stella) su misura e allineato */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         border: 1px solid #3b82f6 !important;
@@ -311,6 +334,7 @@ st.markdown("""
         justify-content: center !important;
     }
 
+    /* Pulsante Acquista Giallo compatto sulla stessa riga */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -778,7 +802,9 @@ def render_product_card(p, tab_key="main"):
 with tab_cerca:
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
-        col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
+        # Riga 1: Ricerca Testuale Diretta e Spedizione Gratuita affiancati
+        st.markdown('<div class="search-ship-row-container">', unsafe_allow_html=True)
+        col_kw, col_ship = st.columns([0.72, 0.28])
 
         with col_kw:
             keyword_libera = st.text_input(
@@ -787,6 +813,19 @@ with tab_cerca:
                 key="keyword_input",
                 on_change=trigger_search
             )
+
+        with col_ship:
+            solo_sped_gratis = st.checkbox(
+                "🚚 Sped. gratuita",
+                value=False,
+                key="check_sped_gratis",
+                on_change=trigger_search,
+                help="Mostra solo prodotti con spedizione o consegna gratuita"
+            )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Riga 2: Categoria Principale e Sottocategoria
+        col_cat, col_subcat = st.columns([1.0, 1.0])
 
         with col_cat:
             cat_scelta = st.selectbox(
@@ -807,18 +846,8 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riquadro compatto con Spedizione e Prezzo Min/Max bloccati su un'unica riga
-    col_ship, col_prices_row, _ = st.columns([0.55, 0.85, 1.6])
-
-    with col_ship:
-        solo_sped_gratis = st.checkbox(
-            "🚚 Sped. gratuita",
-            value=False,
-            key="check_sped_gratis",
-            on_change=trigger_search,
-            help="Mostra solo prodotti con spedizione o consegna gratuita"
-        )
-
+    # Prezzo Min e Max su una sola riga
+    col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
         st.markdown('<div class="prices-single-row-container">', unsafe_allow_html=True)
         col_pmin, col_pmax = st.columns(2)
