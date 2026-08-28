@@ -39,7 +39,7 @@ def estrai_costo_spedizione(item_tag):
 
     return 0.0, "Consegna non specificata"
 
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", min_price=None, max_price=None, min_discount=0, item_count=10):
+def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, item_count=10):
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
         termini.append(sottocategoria)
@@ -55,7 +55,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
-    # Parametri URL di Amazon in Euro interi (senza moltiplicare per 100)
+    # Parametri URL di Amazon in Euro interi
     if min_price is not None and min_price > 0:
         base_url += f"&low-price={int(min_price)}"
 
@@ -74,7 +74,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = (item_count // 15) + 4
+    max_pages = (item_count // 12) + 5
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -126,7 +126,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if prezzo_prodotto <= 0.0:
                     continue
 
-                # Controllo rigoroso del range di prezzo
+                # Controllo Limiti di Prezzo
                 if min_price is not None and min_price > 0 and prezzo_prodotto < min_price:
                     continue
 
@@ -139,6 +139,12 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
 
                 costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
+                # Controllo Filtro Spedizione Gratuita
+                if solo_spedizione_gratuita:
+                    is_free = (costo_spedizione == 0.0) or ("gratuit" in info_spedizione.lower()) or ("prime" in item_text)
+                    if not is_free:
+                        continue
+
                 title_tag = item.find("h2")
                 titolo_completo = ""
                 if title_tag:
@@ -150,7 +156,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
 
-                # Prezzo di listino e calcolo sconto
+                # Prezzo di Listino e Sconto
                 prezzo_iniziale = prezzo_prodotto
                 basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
                 if not basis_price:
