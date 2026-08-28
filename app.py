@@ -12,11 +12,16 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Hero Banner Header Responsive */
+    /* Font Globale */
+    html, body, [class*="css"] {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* 1. Header Superiore */
     .hero-header-box {
         text-align: center;
         padding: 24px 16px 20px 16px;
-        margin-bottom: 20px;
+        margin-bottom: 16px;
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 16px;
@@ -25,7 +30,6 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         font-size: clamp(2.2rem, 5vw, 3.4rem);
         font-weight: 900;
         letter-spacing: -1px;
@@ -72,7 +76,128 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Card Container Compatto */
+    /* 2. Styling Pannello Filtri e Controlli */
+    .filter-panel-box {
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.20);
+        padding: 16px 18px 12px 18px;
+        margin-bottom: 20px;
+    }
+
+    /* Etichette di Testo dei Filtri */
+    div[data-testid="stMarkdownContainer"] p,
+    label[data-testid="stWidgetLabel"] p {
+        color: #e2e8f0 !important;
+        font-weight: 700 !important;
+        font-size: 0.88rem !important;
+        letter-spacing: 0.2px;
+    }
+
+    /* Campi di Input (Testo e Numeri) */
+    div[data-baseweb="input"] {
+        background-color: rgba(15, 23, 42, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+    }
+
+    div[data-baseweb="input"]:focus-within {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 0 1px #38bdf8 !important;
+    }
+
+    div[data-baseweb="input"] input {
+        color: #f8fafc !important;
+        font-weight: 600 !important;
+    }
+
+    /* Menu a Tendina / Selectbox */
+    div[data-baseweb="select"] > div {
+        background-color: rgba(15, 23, 42, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        color: #f8fafc !important;
+    }
+
+    div[data-baseweb="select"] span {
+        color: #f8fafc !important;
+        font-weight: 600 !important;
+    }
+
+    /* Checkbox Prime */
+    div[data-testid="stCheckbox"] label span {
+        color: #f8fafc !important;
+        font-weight: 800 !important;
+        font-size: 0.92rem !important;
+    }
+
+    /* Radio Buttons / Flag Orizzontali */
+    div[data-testid="stRadio"] {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
+    }
+
+    div[data-testid="stRadio"] > label {
+        margin-bottom: 0px !important;
+        font-weight: 800 !important;
+        color: #38bdf8 !important;
+        white-space: nowrap !important;
+        font-size: 0.86rem !important;
+    }
+
+    div[data-testid="stRadio"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        align-items: center !important;
+    }
+    
+    div[data-testid="stRadio"] label[data-baseweb="radio"] {
+        background: rgba(30, 41, 59, 0.85) !important;
+        padding: 4px 10px !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.14) !important;
+        cursor: pointer !important;
+        margin: 0 !important;
+        transition: all 0.15s ease !important;
+    }
+
+    div[data-testid="stRadio"] label[data-baseweb="radio"] div {
+        color: #f1f5f9 !important;
+        font-size: 0.80rem !important;
+        font-weight: 600 !important;
+    }
+
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+        background: rgba(56, 189, 248, 0.15) !important;
+        border-color: #38bdf8 !important;
+    }
+
+    /* Pulsanti Top Risultati (Top 10, Top 20...) */
+    div[data-testid="stButton"] button:not([key^="fav_"]) {
+        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 8px !important;
+        font-weight: 800 !important;
+        font-size: 0.90rem !important;
+        padding: 6px 12px !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 16px rgba(56, 189, 248, 0.45) !important;
+    }
+
+    /* 3. Card Prodotto Compatta */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: #ffffff !important;
         border: 1px solid #dcdfe4 !important;
@@ -88,7 +213,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.10) !important;
     }
 
-    /* Immagine Ingrandita a Pieno Spazio */
     .product-img-wrapper-full {
         width: 100%;
         height: 185px;
@@ -148,7 +272,6 @@ st.markdown("""
         color: #0f1111 !important;
     }
 
-    /* Titolo in Blu Scuro */
     .deal-title {
         font-size: 0.88rem !important;
         font-weight: 800 !important;
@@ -162,7 +285,6 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Rigo Spedizione e Dicitura Prime Ufficiale */
     .delivery-prime-container {
         display: flex;
         align-items: center;
@@ -183,7 +305,6 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Badge Amazon Prime Ufficiale */
     .prime-badge-official {
         display: inline-flex;
         align-items: center;
@@ -208,7 +329,6 @@ st.markdown("""
         font-size: 0.96rem !important;
     }
 
-    /* Prezzi */
     .price-container-styled {
         display: flex;
         align-items: baseline;
@@ -240,7 +360,7 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Scheda Feedback */
+    /* Feedback */
     .feedback-container {
         font-family: Arial, sans-serif;
         padding: 0 4px;
@@ -319,7 +439,7 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Pulsanti Social Verticali */
+    /* Social Colonna Verticale */
     .social-share-col {
         display: flex;
         flex-direction: column;
@@ -359,48 +479,6 @@ st.markdown("""
     .btn-ig { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
-
-    /* Allineamento Orizzontale Inline per i Flag Radio */
-    div[data-testid="stRadio"] {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 10px !important;
-        margin-bottom: 4px !important;
-    }
-
-    div[data-testid="stRadio"] > label {
-        margin-bottom: 0px !important;
-        font-weight: 700 !important;
-        color: #0f172a !important;
-        white-space: nowrap !important;
-        font-size: 0.85rem !important;
-    }
-
-    div[data-testid="stRadio"] > div {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-        align-items: center !important;
-    }
-    
-    div[data-testid="stRadio"] label[data-baseweb="radio"] {
-        background: #f8fafc !important;
-        padding: 3px 8px !important;
-        border-radius: 6px !important;
-        border: 1px solid #cbd5e1 !important;
-        cursor: pointer !important;
-        font-size: 0.80rem !important;
-        font-weight: 600 !important;
-        margin: 0 !important;
-        transition: all 0.15s ease !important;
-    }
-
-    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-        background: #f1f5f9 !important;
-        border-color: #0284c7 !important;
-    }
 
     @media (max-width: 900px) {
         div[data-testid="stRadio"] {
@@ -498,7 +576,7 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# Intestazione Personalizzata Responsive
+# Header Principale
 st.markdown("""
 <div class="hero-header-box">
     <div class="hero-title-main">Scaladeiturchi</div>
@@ -636,108 +714,110 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria Principale e Sottocategoria
-    col_kw, col_cat, col_subcat = st.columns([1.4, 1.3, 1.3])
+    # Contenitore Filtri Unificato in Stile Hero
+    with st.container():
+        # Riga 1: Ricerca Testuale, Categoria Principale e Sottocategoria
+        col_kw, col_cat, col_subcat = st.columns([1.4, 1.3, 1.3])
 
-    with col_kw:
-        keyword_libera = st.text_input(
-            "🔍 Ricerca Testuale Diretta:",
-            placeholder="Es. cuffie bluetooth, notebook...",
-            key="keyword_input",
+        with col_kw:
+            keyword_libera = st.text_input(
+                "🔍 Ricerca Testuale Diretta:",
+                placeholder="Es. cuffie bluetooth, notebook...",
+                key="keyword_input",
+                on_change=trigger_search
+            )
+
+        with col_cat:
+            cat_scelta = st.selectbox(
+                "Categoria Principale:",
+                list(CATEGORIE.keys()),
+                key="select_cat",
+                on_change=trigger_search
+            )
+
+        with col_subcat:
+            sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
+            if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
+                st.session_state.select_subcat = "Tutte"
+            subcat_scelta = st.selectbox(
+                "Sottocategoria:",
+                sottocategorie_disponibili,
+                key="select_subcat",
+                on_change=trigger_search
+            )
+
+        # Riga 2: Flag Prime + Limiti Prezzo Min/Max
+        col_prime, col_pmin, col_pmax = st.columns([0.8, 1.1, 1.1])
+
+        with col_prime:
+            st.write("")
+            st.write("")
+            solo_prime = st.checkbox(
+                "✔ Prime",
+                value=False,
+                key="check_prime",
+                on_change=trigger_search,
+                help="Mostra solo prodotti idonei ad Amazon Prime"
+            )
+
+        with col_pmin:
+            prezzo_min = st.number_input(
+                "Prezzo Min (€):",
+                min_value=0.0,
+                value=None,
+                step=1.0,
+                placeholder="Min...",
+                key="input_pmin",
+                on_change=trigger_search,
+                help="Lascia vuoto per nessun limite minimo"
+            )
+
+        with col_pmax:
+            prezzo_max = st.number_input(
+                "Prezzo Max (€):",
+                min_value=0.0,
+                value=None,
+                step=1.0,
+                placeholder="Max...",
+                key="input_pmax",
+                on_change=trigger_search,
+                help="Lascia vuoto per nessun limite massimo"
+            )
+
+        # Riga 3: Flag Ordinamento
+        opzioni_ordinamento = list(SORT_MAPPINGS.keys())
+        ranking_scelto = st.radio(
+            "🏷️ Ordinamento:",
+            opzioni_ordinamento,
+            index=0,
+            horizontal=True,
+            key="radio_sort",
             on_change=trigger_search
         )
 
-    with col_cat:
-        cat_scelta = st.selectbox(
-            "Categoria Principale:",
-            list(CATEGORIE.keys()),
-            key="select_cat",
+        # Riga 4: Flag Sconto Minimo
+        label_sconto_scelto = st.radio(
+            "🔥 Sconto Minimo:",
+            list(OPZIONI_SCONTO.keys()),
+            index=0,
+            horizontal=True,
+            key="radio_disc",
             on_change=trigger_search
         )
+        sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
 
-    with col_subcat:
-        sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
-        if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
-            st.session_state.select_subcat = "Tutte"
-        subcat_scelta = st.selectbox(
-            "Sottocategoria:",
-            sottocategorie_disponibili,
-            key="select_subcat",
-            on_change=trigger_search
-        )
-
-    # Riga 2: Flag Prime + Limiti Prezzo Min/Max
-    col_prime, col_pmin, col_pmax = st.columns([0.8, 1.1, 1.1])
-
-    with col_prime:
-        st.write("")
-        st.write("")
-        solo_prime = st.checkbox(
-            "✔ Prime",
-            value=False,
-            key="check_prime",
-            on_change=trigger_search,
-            help="Mostra solo prodotti idonei ad Amazon Prime"
-        )
-
-    with col_pmin:
-        prezzo_min = st.number_input(
-            "Prezzo Min (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
-            placeholder="Min...",
-            key="input_pmin",
-            on_change=trigger_search,
-            help="Lascia vuoto per nessun limite minimo"
-        )
-
-    with col_pmax:
-        prezzo_max = st.number_input(
-            "Prezzo Max (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
-            placeholder="Max...",
-            key="input_pmax",
-            on_change=trigger_search,
-            help="Lascia vuoto per nessun limite massimo"
-        )
-
-    # Riga 3: Flag Ordinamento (Tutto su una riga orizzontale)
-    opzioni_ordinamento = list(SORT_MAPPINGS.keys())
-    ranking_scelto = st.radio(
-        "🏷️ Ordinamento:",
-        opzioni_ordinamento,
-        index=0,
-        horizontal=True,
-        key="radio_sort",
-        on_change=trigger_search
-    )
-
-    # Riga 4: Flag Sconto Minimo (Tutto su una riga orizzontale)
-    label_sconto_scelto = st.radio(
-        "🔥 Sconto Minimo:",
-        list(OPZIONI_SCONTO.keys()),
-        index=0,
-        horizontal=True,
-        key="radio_disc",
-        on_change=trigger_search
-    )
-    sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
-
-    # Pulsanti Top Risultati
-    b1, b2, b3, b4, b5 = st.columns(5)
-    with b1:
-        btn_10 = st.button("🚀 Top 10", type="primary", use_container_width=True)
-    with b2:
-        btn_20 = st.button("🚀 Top 20", use_container_width=True)
-    with b3:
-        btn_30 = st.button("🚀 Top 30", use_container_width=True)
-    with b4:
-        btn_50 = st.button("🚀 Top 50", use_container_width=True)
-    with b5:
-        btn_100 = st.button("🚀 Top 100", use_container_width=True)
+        # Pulsanti Top Risultati
+        b1, b2, b3, b4, b5 = st.columns(5)
+        with b1:
+            btn_10 = st.button("🚀 Top 10", use_container_width=True)
+        with b2:
+            btn_20 = st.button("🚀 Top 20", use_container_width=True)
+        with b3:
+            btn_30 = st.button("🚀 Top 30", use_container_width=True)
+        with b4:
+            btn_50 = st.button("🚀 Top 50", use_container_width=True)
+        with b5:
+            btn_100 = st.button("🚀 Top 100", use_container_width=True)
 
     target_items = None
     if btn_10:
