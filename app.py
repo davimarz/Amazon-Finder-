@@ -264,40 +264,42 @@ st.markdown("""
         margin: auto;
     }
 
+    /* Pulsante Preferiti (Stella) stile screenshot */
     div[data-testid="stButton"] button[key^="fav_"],
     div[data-testid="stButton"] button[key^="vetrina_fav_"] {
-        background: transparent !important;
-        border: none !important;
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
+        border: 1px solid #3b82f6 !important;
+        border-radius: 8px !important;
         padding: 0 !important;
-        font-size: 1.40rem !important;
-        color: #facc15 !important;
+        font-size: 1.1rem !important;
+        color: #ffffff !important;
         cursor: pointer;
-        box-shadow: none !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        width: 100% !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        line-height: 1 !important;
     }
 
+    /* Pulsante Acquista Giallo stile screenshot */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.74rem !important;
+        font-size: 0.85rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 4px 8px;
-        border-radius: 12px;
+        padding: 6px 12px;
+        border-radius: 8px;
         border: 1px solid #fcd200;
         text-align: center;
-        width: auto !important;
-        max-width: 90px !important;
-        min-height: 28px;
-        box-shadow: 0 1px 4px rgba(213, 175, 0, 0.30);
+        width: 100% !important;
+        min-height: 38px;
+        box-shadow: 0 2px 6px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
     }
@@ -308,16 +310,15 @@ st.markdown("""
     }
 
     .deal-title {
-        font-size: 0.84rem !important;
+        font-size: 0.95rem !important;
         font-weight: 800 !important;
-        line-height: 1.3 !important;
-        color: #60a5fa !important;
-        margin-bottom: 4px !important;
+        line-height: 1.35 !important;
+        color: #38bdf8 !important;
+        margin-bottom: 8px !important;
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 3.4em;
     }
 
     .price-delivery-split-row {
@@ -325,15 +326,15 @@ st.markdown("""
         align-items: center !important;
         justify-content: space-between !important;
         flex-wrap: wrap !important;
-        gap: 6px !important;
+        gap: 8px !important;
         width: 100% !important;
-        margin: 4px 0 6px 0 !important;
+        margin: 8px 0 12px 0 !important;
     }
 
     .price-subgroup-left {
         display: flex !important;
         align-items: baseline !important;
-        gap: 5px !important;
+        gap: 6px !important;
         flex-wrap: wrap !important;
     }
 
@@ -341,7 +342,7 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: 5px !important;
+        gap: 6px !important;
         margin-left: auto !important;
         flex-wrap: wrap !important;
         text-align: right !important;
@@ -350,38 +351,22 @@ st.markdown("""
     .shipping-badge-text {
         display: inline-flex;
         align-items: center;
-        background: rgba(34, 197, 94, 0.15) !important;
+        background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
-        border: 1px solid rgba(34, 197, 94, 0.35) !important;
-        padding: 1px 6px;
-        border-radius: 3px;
-        font-size: 0.70rem !important;
+        border: 1px solid rgba(34, 197, 94, 0.5) !important;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.82rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
 
-    .deal-badge {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: #ffffff;
-        padding: 1px 4px;
-        border-radius: 3px;
-        font-weight: 800;
-        font-size: 0.75rem !important;
-    }
-
     .deal-price-final {
-        font-size: 1.20rem !important;
+        font-size: 1.4rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
         text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-    }
-
-    .deal-price-old {
-        font-size: 0.78rem !important;
-        color: #94a3b8 !important;
-        text-decoration: line-through;
-        font-weight: 500;
     }
 
     .feedback-container {
@@ -620,43 +605,43 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA IN ALTO A DESTRA CON OFFERTA LAMPOA AMAZON ---
-col_head_left, col_head_right = st.columns([0.4, 1.6])
+# --- BLOCCO VETRINA CON IMPOSTATURA GRAFICA ESATTA DELLO SCREENSHOT ---
+col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
     @st.cache_data(ttl=30)
     def ottieni_offerta_vetrina():
-        # Cerca specificamente tra le offerte lampo e bestseller di Amazon
         offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=30)
         if not offerte_vetrina:
-            offerte_vetrina = ottieni_offerte_avanzate(keyword="sconto", item_count=30)
+            offerte_vetrina = ottieni_offerte_avanzate(keyword="bestseller", item_count=30)
         return offerte_vetrina
 
     lista_vetrina = ottieni_offerta_vetrina()
     if lista_vetrina:
-        # Cambia prodotto dinamicamente ad ogni aggiornamento o sessione
         idx_vetrina = (st.session_state.vetrina_index + int(time.time() // 5)) % len(lista_vetrina)
         prod_vetrina = lista_vetrina[idx_vetrina]
 
-        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: center;'>⚡ OFFERTA LAMPO IN VETRINA</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
         
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([1.1, 1.9])
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full' style='height:185px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-full'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
             v_lnk = prod_vetrina.get('link_affiliato', '')
-            st.markdown(f"<div class='deal-title' style='font-size:0.78rem; min-height:2.4em;'>{v_tit}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='deal-title'>{v_tit}</div>", unsafe_allow_html=True)
             
-            v_badge = f"<span class='deal-badge'>{prod_vetrina['sconto']}</span>" if prod_vetrina.get('sconto') else ""
-            v_old = f"<span class='deal-price-old'>€{prod_vetrina['prezzo_iniziale']:.2f}</span>" if prod_vetrina['prezzo_iniziale'] > prod_vetrina['prezzo_finale'] else ""
+            v_price = f"€{prod_vetrina['prezzo_finale']:.2f}"
+            v_ship = prod_vetrina.get('info_spedizione', 'Spedizione gratuita')
+            
             st.markdown(
-                f"<div class='price-subgroup-left'>"
-                f"{v_badge}<span class='deal-price-final' style='font-size:1.05rem;'>€{prod_vetrina['prezzo_finale']:.2f}</span>{v_old}"
+                f"<div class='price-delivery-split-row'>"
+                f"<div class='price-subgroup-left'><span class='deal-price-final'>{v_price}</span></div>"
+                f"<div class='delivery-subgroup-right'><span class='shipping-badge-text'>🚚 {v_ship}</span></div>"
                 f"</div>",
                 unsafe_allow_html=True
             )
@@ -664,7 +649,7 @@ with col_head_right:
             v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
             v_star = "⭐" if v_fav else "☆"
             
-            vc_star, vc_buy = st.columns([0.22, 0.78])
+            vc_star, vc_buy, _ = st.columns([0.22, 0.55, 0.23])
             with vc_star:
                 if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
                     if v_fav:
@@ -675,7 +660,7 @@ with col_head_right:
                         st.session_state.preferiti_asin[prod_vetrina["asin"]] = prod_vetrina
                     st.rerun()
             with vc_buy:
-                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action' style='max-width:85px !important; font-size:0.70rem !important; padding:3px 6px !important;'>🛒 Acquista</a>", unsafe_allow_html=True)
+                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
