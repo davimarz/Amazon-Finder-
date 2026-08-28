@@ -72,7 +72,6 @@ def verifica_se_spedizione_gratuita(item_tag, item_text):
     return True
 
 def pulisci_titolo_descrizione(titolo_grezzo):
-    """Mantiene la descrizione intera del prodotto senza troncare il nome."""
     if not titolo_grezzo:
         return "Prodotto Amazon"
     return titolo_grezzo.strip()
