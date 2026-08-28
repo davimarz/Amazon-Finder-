@@ -201,17 +201,19 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Pulsanti Top Risultati */
+    /* Pulsanti Top Risultati Compatti */
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
         font-weight: 800 !important;
-        font-size: 0.90rem !important;
-        padding: 6px 12px !important;
+        font-size: 0.84rem !important;
+        padding: 5px 8px !important;
+        min-height: auto !important;
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        white-space: nowrap !important;
     }
 
     div[data-testid="stButton"] button:not([key^="fav_"]):hover {
@@ -219,7 +221,7 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
     }
 
-    /* 2. Card Prodotto Glassmorphism */
+    /* Card Prodotto Glassmorphism */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -831,8 +833,8 @@ with tab_cerca:
     )
     sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Pulsanti Top Risultati
-    b1, b2, b3, b4, b5 = st.columns(5)
+    # Riga 5: 6 Pulsanti Top Risultati (Top 10, 20, 30, 50, 70, 100)
+    b1, b2, b3, b4, b5, b6 = st.columns(6)
     with b1:
         btn_10 = st.button("🚀 Top 10", use_container_width=True)
     with b2:
@@ -842,6 +844,8 @@ with tab_cerca:
     with b4:
         btn_50 = st.button("🚀 Top 50", use_container_width=True)
     with b5:
+        btn_70 = st.button("🚀 Top 70", use_container_width=True)
+    with b6:
         btn_100 = st.button("🚀 Top 100", use_container_width=True)
 
     target_items = None
@@ -857,6 +861,9 @@ with tab_cerca:
     elif btn_50:
         target_items = 50
         st.session_state.last_target_items = 50
+    elif btn_70:
+        target_items = 70
+        st.session_state.last_target_items = 70
     elif btn_100:
         target_items = 100
         st.session_state.last_target_items = 100
