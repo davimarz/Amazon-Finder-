@@ -281,35 +281,36 @@ st.markdown("""
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
-        font-size: 1.55rem !important;
+        font-size: 1.45rem !important;
         color: #facc15 !important;
         cursor: pointer;
         box-shadow: none !important;
-        min-height: 38px !important;
-        height: 38px !important;
+        min-height: 32px !important;
+        height: 32px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: flex-start !important;
         line-height: 1 !important;
     }
 
-    /* Pulsante Acquista */
+    /* Pulsante Acquista Dimezzato e Compatto */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.84rem !important;
+        font-size: 0.76rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 8px 10px;
-        border-radius: 18px;
+        padding: 5px 12px;
+        border-radius: 14px;
         border: 1px solid #fcd200;
         text-align: center;
         width: 100%;
-        min-height: 38px;
-        box-shadow: 0 2px 6px rgba(213, 175, 0, 0.35);
+        max-width: 130px;
+        min-height: 30px;
+        box-shadow: 0 1px 4px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
     }
@@ -332,7 +333,7 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Riga Unica: Prezzi a Sinistra + Consegna/Prime a Destra */
+    /* Riga Prezzi e Consegna */
     .price-delivery-split-row {
         display: flex !important;
         align-items: center !important;
@@ -422,7 +423,6 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Feedback */
     .feedback-container {
         font-family: Arial, sans-serif;
         background: #ffffff;
@@ -505,7 +505,6 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Social Colonna Verticale */
     .social-share-col {
         display: flex;
         flex-direction: column;
@@ -673,7 +672,7 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Prezzi + Consegna a destra, Stellina + Acquista
+        # 2. Colonna Centrale: Titolo, Prezzi + Consegna, Stellina + Acquista Dimezzato
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
@@ -696,7 +695,7 @@ def render_product_card(p, tab_key="main"):
             ship_html = f"<span class='shipping-badge-text'>{ship_text}</span>" if ship_text else ""
             delivery_sub_html = f"<div class='delivery-subgroup-right'>{prime_html}{ship_html}</div>"
 
-            # Riga Unica Prezzi + Consegna Allineata a Destra
+            # Riga Unica Prezzi + Consegna
             st.markdown(
                 f"<div class='price-delivery-split-row'>"
                 f"{prices_sub_html}"
@@ -705,8 +704,8 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-            # Stellina a Sinistra + Tasto Acquista su Un'unica Riga
-            c_star_sub, c_buy_sub = st.columns([0.18, 0.82])
+            # Stellina a Sinistra + Pulsante Acquista Dimezzato
+            c_star_sub, c_buy_sub, _ = st.columns([0.16, 0.44, 0.40])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
                     if is_fav:
@@ -786,7 +785,7 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria dimezzate in larghezza orizzontale
+    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
         col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
@@ -818,7 +817,7 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
+    # Riga 2: Flag Prime + Prezzo Min e Prezzo Max
     col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
 
     with col_prime:
@@ -876,7 +875,7 @@ with tab_cerca:
     )
     sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Riga 5: 6 Pulsanti Top Risultati Dimezzati in larghezza con altezza standard
+    # Riga 5: 6 Pulsanti Top Risultati
     col_btn_wrap, _ = st.columns([0.50, 0.50])
     with col_btn_wrap:
         b1, b2, b3, b4, b5, b6 = st.columns(6)
