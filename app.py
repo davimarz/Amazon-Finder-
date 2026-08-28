@@ -509,21 +509,25 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    keyword_libera = st.text_input(
-        "🔍 Ricerca Testuale Diretta (Prioritaria):",
-        placeholder="Es. cuffie bluetooth, notebook, friggitrice ad aria...",
-        key="keyword_input",
-        on_change=trigger_search
-    )
+    # Riga 1: Ricerca Testuale, Categoria Principale e Sottocategoria sulla stessa riga
+    col_kw, col_cat, col_subcat = st.columns([1.4, 1.3, 1.3])
 
-    col_cat, col_subcat = st.columns(2)
+    with col_kw:
+        keyword_libera = st.text_input(
+            "🔍 Ricerca Testuale Diretta:",
+            placeholder="Es. cuffie bluetooth, notebook...",
+            key="keyword_input",
+            on_change=trigger_search
+        )
+
     with col_cat:
         cat_scelta = st.selectbox(
-            "Categoria Principale (se non usi la ricerca testuale):",
+            "Categoria Principale:",
             list(CATEGORIE.keys()),
             key="select_cat",
             on_change=trigger_search
         )
+
     with col_subcat:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
@@ -535,7 +539,7 @@ with tab_cerca:
             on_change=trigger_search
         )
 
-    # Filtri: Flag Prime, Ordinamento, Prezzo Min/Max e Sconto
+    # Riga 2: Flag Prime, Ordinamento, Prezzo Min/Max e Sconto Minimo
     col_prime, col_sort, col_pmin, col_pmax, col_disc = st.columns([0.8, 1.4, 1, 1, 1])
 
     with col_prime:
