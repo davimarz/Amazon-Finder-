@@ -102,7 +102,6 @@ st.markdown("""
         padding: 0 !important;
     }
 
-    /* Etichette Filtri */
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
         color: #e2e8f0 !important;
@@ -235,7 +234,6 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
     }
 
-    /* Card Prodotto Uniforme e Perfettamente Allineata */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -257,7 +255,7 @@ st.markdown("""
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 160px;
+        height: 155px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -612,22 +610,24 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# --- HEADER SUPERIORE CON ALLINEAMENTO CENTRALE DEL TITOLO E VETRINA A DESTRA ---
-col_head_left, col_head_right = st.columns([1.1, 1.9])
-
-with col_head_left:
-    st.markdown("""
-    <div style="padding-top: 10px; text-align: center;">
-        <div class="hero-title-main">Scala dei Turchi</div>
-        <div class="hero-subtitle-box" style="justify-content: center;">
-            <span>Offerte Amazon</span>
-            <span class="ai-badge">AI</span>
-        </div>
-        <div class="hero-author-tag">
-            Realizzato con cura da <strong>Davide Marziano</strong>
-        </div>
+# --- HEADER SUPERIORE: TITOLO CENTRATO E LINEA DI SEPARAZIONE ---
+st.markdown("""
+<div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
+    <div class="hero-title-main">Scala dei Turchi</div>
+    <div class="hero-subtitle-box" style="justify-content: center;">
+        <span>Offerte Amazon</span>
+        <span class="ai-badge">AI</span>
     </div>
-    """, unsafe_allow_html=True)
+    <div class="hero-author-tag">
+        Realizzato con cura da <strong>Davide Marziano</strong>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+# --- BLOCCO VETRINA IN ALTO A DESTRA CON OFFERTA DEL GIORNO ---
+col_head_left, col_head_right = st.columns([0.4, 1.6])
 
 with col_head_right:
     @st.cache_data(ttl=60)
@@ -645,11 +645,11 @@ with col_head_right:
         st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: center;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
         
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
-        vc1, vc2 = st.columns([1.2, 1.8])
+        vc1, vc2 = st.columns([1.1, 1.9])
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full' style='height:130px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-full' style='height:120px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
@@ -660,7 +660,7 @@ with col_head_right:
             v_old = f"<span class='deal-price-old'>€{prod_vetrina['prezzo_iniziale']:.2f}</span>" if prod_vetrina['prezzo_iniziale'] > prod_vetrina['prezzo_finale'] else ""
             st.markdown(
                 f"<div class='price-subgroup-left'>"
-                f"{v_badge}<span class='deal-price-final' style='font-size:1.1rem;'>€{prod_vetrina['prezzo_finale']:.2f}</span>{v_old}"
+                f"{v_badge}<span class='deal-price-final' style='font-size:1.05rem;'>€{prod_vetrina['prezzo_finale']:.2f}</span>{v_old}"
                 f"</div>",
                 unsafe_allow_html=True
             )
@@ -668,8 +668,8 @@ with col_head_right:
             v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
             v_star = "⭐" if v_fav else "☆"
             
-            # Pulsante Preferiti e Pulsante Acquista sulla stessa riga, con Acquista ridimensionato non più grande della foto
-            vc_star, vc_buy = st.columns([0.25, 0.75])
+            # Stella ed Acquista sulla stessa riga
+            vc_star, vc_buy = st.columns([0.22, 0.78])
             with vc_star:
                 if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
                     if v_fav:
