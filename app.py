@@ -255,7 +255,7 @@ st.markdown("""
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 155px;
+        height: 185px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -649,7 +649,7 @@ with col_head_right:
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full' style='height:120px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-full' style='height:185px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
