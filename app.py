@@ -28,7 +28,7 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.10) !important;
     }
 
-    /* Immagine Ingrandita a Pieno Spazio */
+    /* Immagine Ingrandita */
     .product-img-wrapper-full {
         width: 100%;
         height: 185px;
@@ -63,7 +63,7 @@ st.markdown("""
         line-height: 1.3 !important;
     }
 
-    /* Pulsante Acquista Sotto i Prezzi */
+    /* Pulsante Acquista */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -102,7 +102,7 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Rigo Spedizione e Badge Prime */
+    /* Spedizione */
     .delivery-row {
         display: flex;
         align-items: center;
@@ -137,22 +137,30 @@ st.markdown("""
         width: fit-content;
     }
 
-    .prime-badge {
+    /* Stile Ufficiale Amazon Prime */
+    .prime-badge-official {
         display: inline-flex;
         align-items: center;
-        color: #00a8e1 !important;
-        font-family: Arial, sans-serif;
-        font-style: italic;
-        font-weight: 900;
-        font-size: 0.88rem !important;
-        letter-spacing: -0.3px;
-        text-shadow: 0 0 1px rgba(0, 168, 225, 0.4);
+        font-family: "Amazon Ember", Arial, sans-serif;
+        font-weight: 800;
+        font-size: 0.92rem;
+        line-height: 1;
+        letter-spacing: -0.4px;
+        margin-left: 2px;
     }
 
-    .prime-check {
-        color: #ff9900;
-        font-style: normal;
+    .prime-check-mark {
+        color: #ff9900 !important;
+        font-size: 0.98rem !important;
+        font-style: normal !important;
+        font-weight: 900 !important;
         margin-right: 1px;
+    }
+
+    .prime-text-cyan {
+        color: #00a8e1 !important;
+        font-style: italic !important;
+        font-weight: 900 !important;
     }
 
     /* Prezzi */
@@ -403,20 +411,20 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Spedizione/Prime, Prezzi e sotto [Stellina + Acquista]
+        # 2. Colonna Centrale: Titolo, Spedizione, Prime e sotto [Stellina + Acquista]
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Badge Spedizione e Dicitura Prime
+            # Badge Spedizione e Dicitura Prime Ufficiale
             ship_html = ""
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
                 ship_class = "shipping-free" if is_free else "shipping-box"
                 ship_html = f"<span class='{ship_class}'>🚚 {p['info_spedizione']}</span>"
 
-            prime_html = "<span class='prime-badge'><span class='prime-check'>✔</span>prime</span>" if p.get("is_prime") else ""
+            prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
 
             if ship_html or prime_html:
                 st.markdown(f"<div class='delivery-row'>{ship_html}{prime_html}</div>", unsafe_allow_html=True)
@@ -527,8 +535,8 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    # Filtri: Flag Prime, Ordinamento, Prezzo Min, Prezzo Max, Sconto Minimo
-    col_prime, col_sort, col_pmin, col_pmax, col_disc = st.columns([0.7, 1.4, 1, 1, 1])
+    # 4 Colonne per Filtri: Flag Prime, Ordinamento, Prezzo Min/Max e Sconto
+    col_prime, col_sort, col_pmin, col_pmax, col_disc = st.columns([0.8, 1.4, 1, 1, 1])
 
     with col_prime:
         st.write("")
@@ -538,7 +546,7 @@ with tab_cerca:
             value=False,
             key="check_prime",
             on_change=trigger_search,
-            help="Mostra solo prodotti idonei ad Amazon Prime"
+            help="Filtra solo i prodotti idonei alla spedizione Prime"
         )
 
     with col_sort:
