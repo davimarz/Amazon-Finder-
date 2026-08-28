@@ -892,7 +892,7 @@ with tab_cerca:
         on_change=trigger_search
     )
 
-    # Riga 4: Flag Sconto Minimo
+    # Riga 4: Flag Sconto: [Tutti] -> [🔥 Sconto minimo:] -> [da 0 al 20%] -> [dal 20 al 50%] -> [oltre il 50%]
     label_sconto_scelto = st.radio(
         "🔥 Sconto minimo:",
         list(OPZIONI_SCONTO.keys()),
