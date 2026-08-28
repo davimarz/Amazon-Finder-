@@ -109,7 +109,7 @@ st.markdown("""
         margin-bottom: 3px !important;
     }
 
-    /* Campi Input */
+    /* Campi Input con altezza standard confortevole */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -143,7 +143,7 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Checkbox Prime */
+    /* Checkbox Prime Ufficiale */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 12px !important;
@@ -293,7 +293,7 @@ st.markdown("""
         line-height: 1 !important;
     }
 
-    /* Pulsante Acquista Dimezzato e Compatto */
+    /* Pulsante Acquista Dimezzato */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -678,7 +678,7 @@ def render_product_card(p, tab_key="main"):
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Blocco Prezzi (Sinistra)
+            # Prezzi (Sinistra)
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
             prices_sub_html = (
@@ -689,7 +689,7 @@ def render_product_card(p, tab_key="main"):
                 f"</div>"
             )
 
-            # Blocco Consegna & Prime (Destra)
+            # Consegna & Prime (Destra)
             prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
             ship_text = p.get('info_spedizione', 'Consegna senza costi aggiuntivi')
             ship_html = f"<span class='shipping-badge-text'>{ship_text}</span>" if ship_text else ""
@@ -785,7 +785,7 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria
+    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria dimezzate in larghezza orizzontale
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
         col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
@@ -817,7 +817,7 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riga 2: Flag Prime + Prezzo Min e Prezzo Max
+    # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
     col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
 
     with col_prime:
@@ -875,7 +875,7 @@ with tab_cerca:
     )
     sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Riga 5: 6 Pulsanti Top Risultati
+    # Riga 5: 6 Pulsanti Top Risultati Dimezzati in larghezza con altezza standard
     col_btn_wrap, _ = st.columns([0.50, 0.50])
     with col_btn_wrap:
         b1, b2, b3, b4, b5, b6 = st.columns(6)
