@@ -7,22 +7,25 @@ st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
 
 st.markdown("""
 <style>
+    /* Nasconde header e menu superiore */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Card Container Principale con Bordo e Ombreggiatura */
+    /* Card Container Principale */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
         border-radius: 14px !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
-        padding: 10px !important;
-        transition: transform 0.15s ease, border-color 0.15s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06) !important;
+        padding: 12px !important;
+        margin-bottom: 12px !important;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     }
     
     [data-testid="stVerticalBlockBorderWrapper"]:hover {
-        border-color: rgba(56, 189, 248, 0.6) !important;
+        border-color: #0284c7 !important;
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.15) !important;
     }
 
     /* Pulsante Stellina Preferiti */
@@ -30,26 +33,27 @@ st.markdown("""
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
-        font-size: 1.5rem !important;
+        font-size: 1.4rem !important;
         color: #facc15 !important;
         cursor: pointer;
         box-shadow: none !important;
         min-height: auto !important;
         line-height: 1 !important;
+        margin-bottom: 4px !important;
     }
 
-    /* Immagine Prodotto con Zoom Leggero */
+    /* Immagine Prodotto */
     .product-img-wrapper {
         width: 100%;
-        height: 175px;
+        height: 165px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #ffffff;
+        background-color: #f8fafc;
+        border: 1px solid #f1f5f9;
         border-radius: 10px;
         overflow: hidden;
         padding: 6px;
-        box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
     }
 
     .product-img-wrapper img {
@@ -62,18 +66,42 @@ st.markdown("""
     }
 
     .product-img-wrapper:hover img {
-        transform: scale(1.04);
+        transform: scale(1.05);
     }
 
-    /* Titolo ad Alta Leggibilità */
+    /* Pulsante Acquista Sotto la Foto */
+    .buy-btn-under-img {
+        display: block;
+        width: 100%;
+        background-color: #ffd814;
+        color: #0f1111 !important;
+        font-size: 0.88rem !important;
+        font-weight: 800 !important;
+        text-decoration: none !important;
+        padding: 8px 6px;
+        border-radius: 8px;
+        border: 1px solid #fcd200;
+        text-align: center;
+        margin-top: 8px;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+        box-shadow: 0 2px 6px rgba(255, 216, 20, 0.3);
+    }
+
+    .buy-btn-under-img:hover {
+        background-color: #f7ca00;
+        transform: translateY(-1px);
+        color: #0f1111 !important;
+    }
+
+    /* Titolo / Descrizione in Blu Scuro */
     .deal-title {
-        font-size: 0.98rem !important;
-        font-weight: 700 !important;
+        font-size: 1.02rem !important;
+        font-weight: 800 !important;
         line-height: 1.4 !important;
-        color: #f8fafc !important;
-        margin-bottom: 6px !important;
+        color: #0f2b5c !important; /* Blu Scuro */
+        margin-bottom: 8px !important;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 4;
         -webkit-box-orient: vertical;
         overflow: hidden;
         min-height: 4.2em;
@@ -83,74 +111,83 @@ st.markdown("""
     .shipping-box {
         display: inline-flex;
         align-items: center;
-        background: rgba(249, 115, 22, 0.2) !important;
-        color: #fb923c !important;
-        border: 1px solid rgba(251, 146, 60, 0.45) !important;
-        padding: 2px 8px;
+        background: rgba(249, 115, 22, 0.12) !important;
+        color: #ea580c !important;
+        border: 1px solid rgba(234, 88, 12, 0.3) !important;
+        padding: 3px 8px;
         border-radius: 6px;
         font-size: 0.80rem !important;
         font-weight: 700;
-        margin-bottom: 6px !important;
+        margin-bottom: 8px !important;
         width: fit-content;
     }
 
     .shipping-free {
         display: inline-flex;
         align-items: center;
-        background: rgba(34, 197, 94, 0.2) !important;
-        color: #4ade80 !important;
-        border: 1px solid rgba(74, 222, 128, 0.45) !important;
-        padding: 2px 8px;
+        background: rgba(34, 197, 94, 0.12) !important;
+        color: #16a34a !important;
+        border: 1px solid rgba(22, 163, 74, 0.3) !important;
+        padding: 3px 8px;
         border-radius: 6px;
         font-size: 0.80rem !important;
         font-weight: 700;
-        margin-bottom: 6px !important;
+        margin-bottom: 8px !important;
         width: fit-content;
     }
 
-    /* Widget Scheda Feedback & Recensioni Clienti */
-    .feedback-details {
-        background: rgba(15, 23, 42, 0.85);
-        border: 1px solid rgba(255, 255, 255, 0.14);
-        border-radius: 8px;
-        margin: 8px 0;
-        overflow: hidden;
-    }
-
-    .feedback-summary {
-        padding: 6px 10px;
-        cursor: pointer;
+    /* Prezzi */
+    .price-container-styled {
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        font-size: 0.84rem;
-        user-select: none;
-        background: rgba(255, 255, 255, 0.04);
-        color: #e2e8f0;
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px !important;
     }
 
-    .feedback-summary:hover {
-        background: rgba(255, 255, 255, 0.08);
+    .deal-badge {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 800;
+        font-size: 0.84rem !important;
     }
 
-    .feedback-card-content {
-        padding: 12px 14px;
-        background: #ffffff;
-        color: #0f1111;
-        border-top: 1px solid #cbd5e1;
+    .deal-price-final {
+        font-size: 1.55rem !important;
+        font-weight: 900 !important;
+        color: #0284c7 !important;
+        letter-spacing: -0.5px;
+    }
+
+    .deal-price-old {
+        font-size: 0.90rem !important;
+        color: #64748b !important;
+        text-decoration: line-through;
+        font-weight: 500;
+    }
+
+    /* Scheda Feedback Aperta */
+    .feedback-card-open {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        height: 100%;
     }
 
     .feedback-header-title {
-        font-size: 1.15rem;
+        font-size: 1.05rem;
         font-weight: 800;
-        color: #0f1111;
-        margin-bottom: 4px;
+        color: #0f172a;
+        margin-bottom: 2px;
     }
 
     .feedback-rating-header {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         margin-bottom: 2px;
     }
 
@@ -161,144 +198,89 @@ st.markdown("""
     }
 
     .rating-score-big {
-        font-size: 1.1rem;
+        font-size: 0.98rem;
         font-weight: 700;
-        color: #0f1111;
+        color: #0f172a;
     }
 
     .feedback-total-subtitle {
-        font-size: 0.86rem;
-        color: #565959;
-        margin-bottom: 12px;
+        font-size: 0.80rem;
+        color: #64748b;
+        margin-bottom: 8px;
     }
 
     .feedback-row {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 6px;
-        font-size: 0.85rem;
+        gap: 8px;
+        margin-bottom: 4px;
+        font-size: 0.80rem;
     }
 
     .feedback-label {
-        width: 65px;
-        color: #007185;
+        width: 55px;
+        color: #0284c7;
         font-weight: 600;
         white-space: nowrap;
+        font-size: 0.78rem;
     }
 
     .feedback-bar-bg {
         flex: 1;
-        height: 18px;
+        height: 13px;
         background-color: #ffffff;
-        border: 1px solid #888c8c;
-        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        border-radius: 3px;
         overflow: hidden;
         position: relative;
-        box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
     }
 
     .feedback-bar-fill {
         height: 100%;
         background: linear-gradient(to right, #ff9900, #de7921);
-        border-radius: 3px 0 0 3px;
+        border-radius: 2px 0 0 2px;
     }
 
     .feedback-pct {
-        width: 38px;
+        width: 30px;
         text-align: right;
-        color: #007185;
-        font-weight: 600;
+        color: #0284c7;
+        font-weight: 700;
+        font-size: 0.78rem;
     }
 
-    /* Prezzi */
-    .price-container-styled {
+    /* Colonna Pulsanti Social in Verticale */
+    .social-share-col {
         display: flex;
-        align-items: baseline;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin: 8px 0 !important;
-    }
-
-    .deal-badge {
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        color: #ffffff;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: 800;
-        font-size: 0.85rem !important;
-    }
-
-    .deal-price-final {
-        font-size: 1.55rem !important;
-        font-weight: 900 !important;
-        color: #38bdf8 !important;
-        letter-spacing: -0.5px;
-        text-shadow: 0 1px 8px rgba(56, 189, 248, 0.4);
-    }
-
-    .deal-price-old {
-        font-size: 0.90rem !important;
-        color: #94a3b8 !important;
-        text-decoration: line-through;
-        font-weight: 500;
-    }
-
-    /* Pulsante Acquista Amazon */
-    .buy-btn-full {
-        display: block;
-        width: 100%;
-        background-color: #ffd814;
-        color: #0f1111 !important;
-        font-size: 0.95rem !important;
-        font-weight: 800 !important;
-        text-decoration: none !important;
-        padding: 8px 14px;
-        border-radius: 10px;
-        border: 1px solid #fcd200;
-        text-align: center;
-        margin-bottom: 8px;
-        transition: background-color 0.15s ease, transform 0.1s ease;
-        box-shadow: 0 3px 8px rgba(255, 216, 20, 0.25);
-    }
-
-    .buy-btn-full:hover {
-        background-color: #f7ca00;
-        transform: translateY(-1px);
-        color: #0f1111 !important;
-    }
-
-    /* Griglia Icone Social */
-    .social-share-row {
-        display: flex;
+        flex-direction: column;
+        gap: 7px;
         align-items: center;
-        gap: 6px;
-        justify-content: flex-start;
-        flex-wrap: wrap;
+        justify-content: center;
+        height: 100%;
     }
 
     .share-icon-btn {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
+        width: 35px;
+        height: 35px;
         border-radius: 8px;
         text-decoration: none !important;
         cursor: pointer;
         border: none;
         transition: transform 0.15s ease, opacity 0.15s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.12);
     }
 
     .share-icon-btn:hover {
-        transform: translateY(-2px);
-        opacity: 0.92;
+        transform: scale(1.08);
+        opacity: 0.95;
     }
 
     .share-icon-btn svg {
-        width: 20px;
-        height: 20px;
+        width: 19px;
+        height: 19px;
         display: block;
     }
 
@@ -309,11 +291,18 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
+    /* Responsive per Smartphone */
     @media (max-width: 900px) {
         div[data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
             min-width: 100% !important;
+            margin-bottom: 10px;
+        }
+        .social-share-col {
+            flex-direction: row !important;
+            justify-content: center !important;
+            gap: 10px;
         }
     }
 </style>
@@ -391,12 +380,13 @@ tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(
 
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
-        c_star, c_img, c_txt = st.columns([0.25, 1.35, 2.4])
+        col_left, col_center, col_fb, col_social = st.columns([1.3, 2.3, 1.8, 0.45])
         
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        with c_star:
+        # 1. Colonna Sinistra: Stellina, Foto e Pulsante Acquista Sotto
+        with col_left:
             if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
                 if is_fav:
                     rimuovi_preferito(p["asin"])
@@ -406,29 +396,42 @@ def render_product_card(p, tab_key="main"):
                     st.session_state.preferiti_asin[p["asin"]] = p
                 st.rerun()
 
-        with c_img:
             img_url = p.get('immagine_url', '')
+            link = p.get('link_affiliato', '')
             st.markdown(
-                f"<div class='product-img-wrapper'><img src='{img_url}' alt='prodotto'></div>",
+                f"<div class='product-img-wrapper'><img src='{img_url}' alt='prodotto'></div>"
+                f"<a href='{link}' target='_blank' class='buy-btn-under-img'>🛒 Acquista su Amazon</a>",
                 unsafe_allow_html=True
             )
 
-        with c_txt:
+        # 2. Colonna Centrale: Titolo in Blu Scuro, Spedizione e Prezzi
+        with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Spedizione
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
                 ship_class = "shipping-free" if is_free else "shipping-box"
                 st.markdown(f"<div class='{ship_class}'>🚚 {p['info_spedizione']}</div>", unsafe_allow_html=True)
 
-            # Scheda Feedback e Recensioni Clienti
+            badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
+            old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
+
+            st.markdown(
+                f"<div class='price-container-styled'>"
+                f"{badge_html}"
+                f"<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>"
+                f"{old_price_html}"
+                f"</div>",
+                unsafe_allow_html=True
+            )
+
+        # 3. Colonna Destra-Centro: Scheda Feedback Aperta
+        with col_fb:
             voto = p.get("voto_medio", 4.8)
             num_val = p.get("num_recensioni", 765)
             distrib = calcola_distribuzione_recensioni(voto, num_val)
             voto_str = f"{voto:.1f}".replace(".", ",")
-            
             stelle_icon = "★" * int(voto) + "☆" * (5 - int(voto))
             
             righe_feedback = ""
@@ -446,33 +449,23 @@ def render_product_card(p, tab_key="main"):
                 """
 
             feedback_html = f"""
-            <details class="feedback-details">
-                <summary class="feedback-summary">
-                    <span><span class="stars-gold">{stelle_icon}</span> <strong>{voto_str}</strong> su 5 ({num_val})</span>
-                    <span style="color:#38bdf8; font-weight:700;">📊 Scheda Feedback ▼</span>
-                </summary>
-                <div class="feedback-card-content">
-                    <div class="feedback-header-title">Recensioni clienti</div>
-                    <div class="feedback-rating-header">
-                        <span class="stars-gold">{stelle_icon}</span>
-                        <span class="rating-score-big">{voto_str} su 5</span>
-                    </div>
-                    <div class="feedback-total-subtitle">{num_val} valutazioni globali</div>
-                    <div class="feedback-bars-container">
-                        {righe_feedback}
-                    </div>
+            <div class="feedback-card-open">
+                <div class="feedback-header-title">Recensioni clienti</div>
+                <div class="feedback-rating-header">
+                    <span class="stars-gold">{stelle_icon}</span>
+                    <span class="rating-score-big">{voto_str} su 5</span>
                 </div>
-            </details>
+                <div class="feedback-total-subtitle">{num_val} valutazioni globali</div>
+                <div class="feedback-bars-container">
+                    {righe_feedback}
+                </div>
+            </div>
             """
             st.markdown(feedback_html, unsafe_allow_html=True)
 
-            # Prezzo e Sconto
-            badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
-            old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
-
-            # Social URLs
+        # 4. Colonna Destra Estrema: Pulsanti di Condivisione in Verticale
+        with col_social:
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
-            link = p.get('link_affiliato', '')
             share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
 
             wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
@@ -481,7 +474,6 @@ def render_product_card(p, tab_key="main"):
             ig_url = "https://www.instagram.com/"
             tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(f'🔥 {safe_title} a €{p['prezzo_finale']:.2f}!')}"
 
-            # SVGs Ufficiali
             svg_wa = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
             svg_fb = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
             svg_gmail = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
@@ -492,18 +484,12 @@ def render_product_card(p, tab_key="main"):
             copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato negli appunti!');}});"
 
             st.markdown(
-                f"<div class='price-container-styled'>"
-                f"{badge_html}"
-                f"<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>"
-                f"{old_price_html}"
-                f"</div>"
-                f"<a href='{link}' target='_blank' class='buy-btn-full'>🛒 Acquista su Amazon</a>"
-                f"<div class='social-share-row'>"
-                f"<a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='Condividi su WhatsApp'>{svg_wa}</a>"
-                f"<a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Condividi su Facebook'>{svg_fb}</a>"
-                f"<a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail' title='Condividi via Gmail'>{svg_gmail}</a>"
-                f"<a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig' title='Apri Instagram'>{svg_ig}</a>"
-                f"<a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Condividi su Telegram'>{svg_tg}</a>"
+                f"<div class='social-share-col'>"
+                f"<a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='WhatsApp'>{svg_wa}</a>"
+                f"<a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Facebook'>{svg_fb}</a>"
+                f"<a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail' title='Gmail'>{svg_gmail}</a>"
+                f"<a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig' title='Instagram'>{svg_ig}</a>"
+                f"<a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Telegram'>{svg_tg}</a>"
                 f"<button onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{svg_copy}</button>"
                 f"</div>",
                 unsafe_allow_html=True
@@ -524,6 +510,7 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
+    # 5 Colonne Filtri
     col_ship, col_sort, col_pmin, col_pmax, col_disc = st.columns([1.1, 1.3, 1, 1, 1])
     
     with col_ship:
@@ -632,13 +619,8 @@ with tab_cerca:
 
     if st.session_state.offerte:
         st.divider()
-        for idx in range(0, len(st.session_state.offerte), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(st.session_state.offerte[idx], tab_key="search")
-            if idx + 1 < len(st.session_state.offerte):
-                with col_r:
-                    render_product_card(st.session_state.offerte[idx + 1], tab_key="search")
+        for p in st.session_state.offerte:
+            render_product_card(p, tab_key="search")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
@@ -647,10 +629,5 @@ with tab_preferiti:
     else:
         st.markdown(f"Hai **{len(lista_preferiti)}** prodotti salvati nella tua lista privata:")
         st.write("")
-        for idx in range(0, len(lista_preferiti), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(lista_preferiti[idx], tab_key="fav_tab")
-            if idx + 1 < len(lista_preferiti):
-                with col_r:
-                    render_product_card(lista_preferiti[idx + 1], tab_key="fav_tab")
+        for p in lista_preferiti:
+            render_product_card(p, tab_key="fav_tab")
