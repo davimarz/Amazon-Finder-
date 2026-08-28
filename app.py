@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import random
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
@@ -582,9 +583,9 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-# Rotazione casuale dell'offerta lampo ad ogni apertura o aggiornamento pagina
-if "vetrina_index" not in st.session_state:
-    st.session_state.vetrina_index = int(time.time())
+# Gestione randomizzazione offerta lampo al ricaricamento pagina
+if "vetrina_seed" not in st.session_state:
+    st.session_state.vetrina_seed = random.randint(0, 10000)
 
 def trigger_search():
     st.session_state.auto_search_triggered = True
@@ -605,23 +606,25 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA CON IMPOSTATURA GRAFICA ESATTA DELLO SCREENSHOT ---
+# --- BLOCCO VETRINA CON OFFERTA LAMPO (CAMBIA AD OGNI AGGIORNAMENTO PAGINA) ---
 col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
-    @st.cache_data(ttl=30)
+    @st.cache_data(ttl=15)
     def ottieni_offerta_vetrina():
-        offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=30)
+        # Estrae dalla pagina Offerta Lampo / Sconti Amazon
+        offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=40)
         if not offerte_vetrina:
-            offerte_vetrina = ottieni_offerte_avanzate(keyword="bestseller", item_count=30)
+            offerte_vetrina = ottieni_offerte_avanzate(keyword="sconto", item_count=40)
         return offerte_vetrina
 
     lista_vetrina = ottieni_offerta_vetrina()
     if lista_vetrina:
-        idx_vetrina = (st.session_state.vetrina_index + int(time.time() // 5)) % len(lista_vetrina)
-        prod_vetrina = lista_vetrina[idx_vetrina]
+        # Selezione randomica basata sul seed di sessione per cambiare ad ogni reload
+        rnd_idx = (st.session_state.vetrina_seed + int(time.time())) % len(lista_vetrina)
+        prod_vetrina = lista_vetrina[rnd_idx]
 
-        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>⚡ OFFERTA LAMPO</div>", unsafe_allow_html=True)
         
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([1.1, 1.9])
