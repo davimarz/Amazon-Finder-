@@ -208,7 +208,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]) {
+    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -222,9 +222,30 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
+    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]):hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
+    }
+
+    /* Stile Pulsante Immagine / Anteprima Cliccabile */
+    div[data-testid="stButton"] button[key^="img_btn_"] {
+        background: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 185px !important;
+        cursor: pointer !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+    }
+    
+    div[data-testid="stButton"] button[key^="img_btn_"]:hover {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
     }
 
     /* Overlay Fullscreen Lightbox */
@@ -234,24 +255,25 @@ st.markdown("""
         left: 0;
         width: 100vw;
         height: 100vh;
-        background-color: rgba(0, 0, 0, 0.88);
+        background-color: rgba(0, 0, 0, 0.90);
         z-index: 999999;
         display: flex;
         align-items: center;
         justify-content: center;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
         padding: 20px;
+        cursor: pointer;
     }
 
     .lightbox-img-container {
-        max-width: 90%;
-        max-height: 90%;
+        max-width: 95%;
+        max-height: 95%;
         text-align: center;
     }
 
     .lightbox-img-container img {
         max-width: 100%;
-        max-height: 85vh;
+        max-height: 90vh;
         object-fit: contain;
         border-radius: 12px;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
@@ -260,8 +282,8 @@ st.markdown("""
 
     .lightbox-close-hint {
         color: #94a3b8;
-        font-size: 0.9rem;
-        margin-top: 12px;
+        font-size: 0.95rem;
+        margin-top: 14px;
         font-weight: 600;
         letter-spacing: 0.5px;
     }
@@ -282,34 +304,23 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25) !important;
     }
 
-    /* Centratura verticale perfetta di tutti gli elementi interni alla card */
     [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
         align-items: center !important;
     }
 
-    /* Contenitore immagine interattivo perfettamente allineato */
-    .product-img-clickable {
+    .product-img-wrapper-full {
         width: 100%;
         height: 185px;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
+        border-radius: 6px;
         overflow: hidden;
         padding: 4px;
-        cursor: pointer;
-        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .product-img-clickable:hover {
-        transform: scale(1.02);
-        border-color: #38bdf8;
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
-    }
-
-    .product-img-clickable img {
+    .product-img-wrapper-full img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
@@ -677,12 +688,10 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Immagine pulita e allineata con interattività nativa
+        # 1. Colonna Sinistra: Immagine interattiva nativa (senza pulsante testuale)
         with col_left:
             img_url = p.get('immagine_url', '')
-            
-            # Usiamo un form o un pulsante Streamlit pulito per gestire l'apertura del popup in modo nativo
-            if st.button("🔍 Ingrandisci", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
+            if st.button("", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
                 st.session_state.lightbox_img = img_url
                 st.rerun()
             
@@ -692,22 +701,25 @@ def render_product_card(p, tab_key="main"):
                 div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}'] {{
                     background: transparent !important;
                     border: none !important;
-                    color: #38bdf8 !important;
-                    font-size: 0.75rem !important;
                     padding: 0 !important;
-                    min-height: auto !important;
-                    height: auto !important;
-                    margin-bottom: 4px !important;
+                    width: 100% !important;
+                    height: 185px !important;
+                    min-height: 185px !important;
+                    position: absolute !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    z-index: 10 !important;
+                    cursor: pointer !important;
                     box-shadow: none !important;
                 }}
                 div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}']:hover {{
-                    color: #93c5fd !important;
-                    text-decoration: underline !important;
                     transform: none !important;
                 }}
                 </style>
-                <div class="product-img-clickable" onclick="">
-                    <img src="{img_url}" alt="prodotto">
+                <div style="position: relative; width: 100%; height: 185px;">
+                    <div class="product-img-wrapper-full" style="position: absolute; top: 0; left: 0; width: 100%; height: 185px; pointer-events: none;">
+                        <img src="{img_url}" alt="prodotto">
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
@@ -820,11 +832,8 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
+# Lightbox Pop-up Fullscreen (cliccando ovunque si chiude)
 if st.session_state.lightbox_img is not None:
-    if st.button("CHIUDI POP-UP (Clicca ovunque)", key="lightbox_dismiss", use_container_width=True):
-        st.session_state.lightbox_img = None
-        st.rerun()
-    
     st.markdown(
         f"""
         <div class="lightbox-overlay" onclick="window.location.reload();">
@@ -836,6 +845,10 @@ if st.session_state.lightbox_img is not None:
         """,
         unsafe_allow_html=True
     )
+    # Pulsante invisibile o gestito per resettare lo stato al click dell'overlay
+    if st.button("Chiudi", key="close_lightbox_state"):
+        st.session_state.lightbox_img = None
+        st.rerun()
 
 with tab_cerca:
     col_r1_wrap, _ = st.columns([0.55, 0.45])
