@@ -592,7 +592,6 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-# Forza il cambio casuale ad ogni ricaricamento/apertura pagina
 st.session_state.vetrina_seed = random.randint(0, 1000000)
 
 def trigger_search():
@@ -614,7 +613,7 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA CON OFFERTA LAMPO AGGIORNATA A OGNI REFRESH ---
+# --- BLOCCO VETRINA CON TESTO AGGIORNATO ---
 col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
@@ -627,10 +626,14 @@ with col_head_right:
         rnd_idx = (st.session_state.vetrina_seed + int(time.time() * 1000)) % len(lista_vetrina)
         prod_vetrina = lista_vetrina[rnd_idx]
         
-        # Verifica e aggiorna il prezzo reale in tempo reale prima di visualizzarlo
         prod_vetrina = verifica_prezzo_reale_vetrina(prod_vetrina)
 
-        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>⚡ OFFERTA LAMPO</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>"
+            "⚡ OFFERTA LAMPO: attenzione che il prezzo di questo oggetto proposto varia in tempo reale."
+            "</div>", 
+            unsafe_allow_html=True
+        )
         
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([1.1, 1.9])
