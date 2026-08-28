@@ -7,12 +7,10 @@ st.set_page_config(page_title="Scaladeiturchi | Offerte Amazon AI", layout="wide
 
 st.markdown("""
 <style>
-    /* Nasconde header nativo e menu superiore */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Sfondo Globale Unificato */
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
         background-attachment: fixed !important;
@@ -20,7 +18,6 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
 
-    /* Tabs Styling */
     div[data-baseweb="tab-list"] {
         background: transparent !important;
         gap: 8px !important;
@@ -40,7 +37,6 @@ st.markdown("""
         border-bottom-color: #38bdf8 !important;
     }
 
-    /* 1. Header Superiore */
     .hero-header-box {
         text-align: center;
         padding: 22px 16px 18px 16px;
@@ -99,7 +95,6 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Etichette Filtri */
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
         color: #e2e8f0 !important;
@@ -109,7 +104,6 @@ st.markdown("""
         margin-bottom: 3px !important;
     }
 
-    /* Campi Input */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -128,7 +122,6 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Selectbox */
     div[data-baseweb="select"] > div {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -143,7 +136,7 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Checkbox Prime Ufficiale */
+    /* Checkbox Spedizione Gratuita */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 12px !important;
@@ -158,21 +151,18 @@ st.markdown("""
     }
 
     div[data-testid="stCheckbox"]:hover {
-        border-color: #00a8e1 !important;
-        background: rgba(0, 168, 225, 0.10) !important;
+        border-color: #4ade80 !important;
+        background: rgba(34, 197, 94, 0.10) !important;
     }
 
     div[data-testid="stCheckbox"] label p {
-        font-family: "Amazon Ember", Arial, sans-serif !important;
-        font-size: 1rem !important;
-        font-weight: 900 !important;
-        color: #00a8e1 !important;
-        font-style: italic !important;
-        letter-spacing: -0.3px !important;
+        font-family: Arial, sans-serif !important;
+        font-size: 0.95rem !important;
+        font-weight: 800 !important;
+        color: #4ade80 !important;
         margin: 0 !important;
     }
 
-    /* Radio Buttons / Flag Base */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: row !important;
@@ -219,7 +209,6 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Riordino Specifica Riga Sconto: [Tutti] -> [🔥 Sconto minimo:] -> [da 0 al 20%] ... */
     div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) {
         display: flex !important;
         flex-direction: row !important;
@@ -249,7 +238,6 @@ st.markdown("""
         order: 3 !important;
     }
 
-    /* Pulsanti Top Risultati */
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
@@ -269,7 +257,6 @@ st.markdown("""
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
     }
 
-    /* Card Prodotto Glassmorphism */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -306,7 +293,6 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti Stellina */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: transparent !important;
         border: none !important;
@@ -323,7 +309,6 @@ st.markdown("""
         line-height: 1 !important;
     }
 
-    /* Pulsante Acquista Dimezzato */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -363,7 +348,6 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Riga Prezzi e Consegna */
     .price-delivery-split-row {
         display: flex !important;
         align-items: center !important;
@@ -402,31 +386,6 @@ st.markdown("""
         font-size: 0.70rem !important;
         font-weight: 700;
         white-space: nowrap;
-    }
-
-    .prime-badge-official {
-        display: inline-flex;
-        align-items: center;
-        font-family: "Amazon Ember", Arial, sans-serif;
-        font-size: 0.95rem;
-        line-height: 1;
-        letter-spacing: -0.4px;
-        white-space: nowrap;
-    }
-
-    .prime-check-mark {
-        color: #ff9900 !important;
-        font-size: 1.05rem !important;
-        font-style: normal !important;
-        font-weight: 900 !important;
-        margin-right: 1px;
-    }
-
-    .prime-text-cyan {
-        color: #00a8e1 !important;
-        font-style: italic !important;
-        font-weight: 900 !important;
-        font-size: 0.96rem !important;
     }
 
     .deal-badge {
@@ -669,7 +628,6 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# Header Principale
 st.markdown("""
 <div class="hero-header-box">
     <div class="hero-title-main">Scaladeiturchi</div>
@@ -692,7 +650,6 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Foto Ingrandita
         with col_left:
             img_url = p.get('immagine_url', '')
             st.markdown(
@@ -700,13 +657,11 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Prezzi + Consegna, Stellina + Acquista Dimezzato
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Prezzi (Sinistra)
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
             prices_sub_html = (
@@ -717,13 +672,10 @@ def render_product_card(p, tab_key="main"):
                 f"</div>"
             )
 
-            # Consegna & Prime (Destra)
-            prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
-            ship_text = p.get('info_spedizione', 'Consegna senza costi aggiuntivi')
-            ship_html = f"<span class='shipping-badge-text'>{ship_text}</span>" if ship_text else ""
-            delivery_sub_html = f"<div class='delivery-subgroup-right'>{prime_html}{ship_html}</div>"
+            ship_text = p.get('info_spedizione', 'Spedizione gratuita')
+            ship_html = f"<span class='shipping-badge-text'>🚚 {ship_text}</span>" if ship_text else ""
+            delivery_sub_html = f"<div class='delivery-subgroup-right'>{ship_html}</div>"
 
-            # Riga Unica Prezzi + Consegna
             st.markdown(
                 f"<div class='price-delivery-split-row'>"
                 f"{prices_sub_html}"
@@ -732,7 +684,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-            # Stellina a Sinistra + Pulsante Acquista Dimezzato
             c_star_sub, c_buy_sub, _ = st.columns([0.16, 0.44, 0.40])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
@@ -746,7 +697,6 @@ def render_product_card(p, tab_key="main"):
             with c_buy_sub:
                 st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
 
-        # 3. Colonna Destra: Scheda Feedback Ufficiale
         with col_fb:
             voto = p.get("voto_medio", 4.8)
             num_val = p.get("num_recensioni", 765)
@@ -780,7 +730,6 @@ def render_product_card(p, tab_key="main"):
             )
             st.markdown(feedback_full_html, unsafe_allow_html=True)
 
-        # 4. Colonna Destra Estrema: Pulsanti Social Verticali
         with col_social:
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
@@ -813,7 +762,6 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
         col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
@@ -845,16 +793,15 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
-    col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
+    col_ship, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
 
-    with col_prime:
-        solo_prime = st.checkbox(
-            ":orange[✔] prime",
+    with col_ship:
+        solo_sped_gratis = st.checkbox(
+            "🚚 Sped. gratuita",
             value=False,
-            key="check_prime",
+            key="check_sped_gratis",
             on_change=trigger_search,
-            help="Mostra solo prodotti idonei ad Amazon Prime"
+            help="Mostra solo prodotti con spedizione o consegna gratuita"
         )
 
     with col_pmin:
@@ -881,7 +828,6 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite massimo"
         )
 
-    # Riga 3: Flag Ordinamento
     opzioni_ordinamento = list(SORT_MAPPINGS.keys())
     ranking_scelto = st.radio(
         "🏷️ Ordinamento:",
@@ -892,7 +838,6 @@ with tab_cerca:
         on_change=trigger_search
     )
 
-    # Riga 4: Flag Sconto: [Tutti] -> [🔥 Sconto minimo:] -> [da 0 al 20%] -> [dal 20 al 50%] -> [oltre il 50%]
     label_sconto_scelto = st.radio(
         "🔥 Sconto minimo:",
         list(OPZIONI_SCONTO.keys()),
@@ -903,7 +848,6 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Riga 5: 6 Pulsanti Top Risultati
     col_btn_wrap, _ = st.columns([0.50, 0.50])
     with col_btn_wrap:
         b1, b2, b3, b4, b5, b6 = st.columns(6)
@@ -959,7 +903,7 @@ with tab_cerca:
                 sottocategoria=subcat_pulita,
                 keyword=keyword_libera.strip(),
                 sort_type=ranking_scelto,
-                solo_prime=solo_prime,
+                solo_spedizione_gratuita=solo_sped_gratis,
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=min_disc,
@@ -973,15 +917,19 @@ with tab_cerca:
                 st.session_state.offerte = []
                 st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
-    if st.session_state.offerte:
+    offerte_da_mostrare = st.session_state.offerte
+    if solo_sped_gratis and offerte_da_mostrare:
+        offerte_da_mostrare = [p for p in offerte_da_mostrare if p.get("is_sped_gratis")]
+
+    if offerte_da_mostrare:
         st.divider()
-        for idx in range(0, len(st.session_state.offerte), 2):
+        for idx in range(0, len(offerte_da_mostrare), 2):
             col_l, col_r = st.columns(2)
             with col_l:
-                render_product_card(st.session_state.offerte[idx], tab_key=f"search_{idx}")
-            if idx + 1 < len(st.session_state.offerte):
+                render_product_card(offerte_da_mostrare[idx], tab_key=f"search_{idx}")
+            if idx + 1 < len(offerte_da_mostrare):
                 with col_r:
-                    render_product_card(st.session_state.offerte[idx + 1], tab_key=f"search_{idx + 1}")
+                    render_product_card(offerte_da_mostrare[idx + 1], tab_key=f"search_{idx + 1}")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
