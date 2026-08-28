@@ -40,7 +40,7 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-size: clamp(1.5rem, 2.8vw, 2.4rem);
+        font-size: clamp(1.4rem, 2.5vw, 2.2rem);
         font-weight: 900;
         letter-spacing: -1px;
         line-height: 1.1;
@@ -55,7 +55,7 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+        font-size: clamp(0.9rem, 1.6vw, 1.1rem);
         font-weight: 700;
         color: #f1f5f9;
         margin-bottom: 4px;
@@ -64,15 +64,15 @@ st.markdown("""
     .ai-badge {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
         color: #ffffff;
-        font-size: 0.7em;
+        font-size: 0.65em;
         font-weight: 800;
-        padding: 1px 6px;
+        padding: 1px 5px;
         border-radius: 4px;
         border: 1px solid rgba(255, 255, 255, 0.25);
     }
 
     .hero-author-tag {
-        font-size: clamp(0.75rem, 1.4vw, 0.88rem);
+        font-size: clamp(0.7rem, 1.3vw, 0.85rem);
         color: #94a3b8;
         font-weight: 500;
         margin-top: 2px;
@@ -83,11 +83,13 @@ st.markdown("""
         font-weight: 700;
     }
 
-    .vetrina-box-wrapper {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
+    /* Riquadro Vetrina ottimizzato per i 2/3 destri */
+    .vetrina-compact-wrapper {
+        background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 10px !important;
+        padding: 8px 10px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
     }
 
     div[data-testid="stMarkdownContainer"] p,
@@ -241,9 +243,31 @@ st.markdown("""
         align-items: center !important;
     }
 
+    /* Immagine ridotta per la vetrina */
+    .product-img-wrapper-vetrina {
+        width: 100%;
+        height: 105px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        overflow: hidden;
+        padding: 3px;
+    }
+
+    .product-img-wrapper-vetrina img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        display: block;
+        margin: auto;
+    }
+
     .product-img-wrapper-full {
         width: 100%;
-        height: 140px;
+        height: 185px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -266,14 +290,14 @@ st.markdown("""
     div[data-testid="stButton"] button[key^="vetrina_fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         border: 1px solid #3b82f6 !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         padding: 0 !important;
-        font-size: 1rem !important;
+        font-size: 0.9rem !important;
         color: #ffffff !important;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
-        min-height: 34px !important;
-        height: 34px !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
+        min-height: 30px !important;
+        height: 30px !important;
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
@@ -286,16 +310,16 @@ st.markdown("""
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.75rem !important;
+        font-size: 0.70rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 4px 6px;
-        border-radius: 8px;
+        padding: 2px 4px;
+        border-radius: 6px;
         border: 1px solid #fcd200;
         text-align: center;
         width: 100% !important;
-        min-height: 34px;
-        box-shadow: 0 2px 6px rgba(213, 175, 0, 0.30);
+        min-height: 30px;
+        box-shadow: 0 2px 4px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
     }
@@ -330,14 +354,26 @@ st.markdown("""
         color: #0f1111 !important;
     }
 
-    .deal-title {
-        font-size: 0.85rem !important;
+    .deal-title-vetrina {
+        font-size: 0.78rem !important;
         font-weight: 800 !important;
-        line-height: 1.3 !important;
+        line-height: 1.25 !important;
         color: #38bdf8 !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 4px !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .deal-title {
+        font-size: 0.95rem !important;
+        font-weight: 800 !important;
+        line-height: 1.35 !important;
+        color: #38bdf8 !important;
+        margin-bottom: 8px !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -347,9 +383,9 @@ st.markdown("""
         align-items: center !important;
         justify-content: space-between !important;
         flex-wrap: wrap !important;
-        gap: 6px !important;
+        gap: 4px !important;
         width: 100% !important;
-        margin: 6px 0 8px 0 !important;
+        margin: 4px 0 6px 0 !important;
     }
 
     .price-subgroup-left {
@@ -363,7 +399,7 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: 6px !important;
+        gap: 4px !important;
         margin-left: auto !important;
         flex-wrap: wrap !important;
         text-align: right !important;
@@ -375,15 +411,15 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.75rem !important;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.70rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
 
     .deal-price-final {
-        font-size: 1.15rem !important;
+        font-size: 1.1rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
@@ -612,7 +648,7 @@ col_title, col_vetrina = st.columns([1.0, 2.0], gap="medium")
 
 with col_title:
     st.markdown("""
-    <div style="text-align: left; padding: 5px 0;">
+    <div style="text-align: left; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; height: 100%;">
         <div class="hero-title-main">Scala dei Turchi</div>
         <div class="hero-subtitle-box">
             <span>Offerte Amazon</span>
@@ -637,26 +673,26 @@ with col_vetrina:
         prod_vetrina = verifica_prezzo_reale_vetrina(prod_vetrina)
 
         st.markdown(
-            "<div style='font-size: 0.78rem; font-weight: 800; color: #facc15; margin-bottom: 1px;'>"
+            "<div style='font-size: 0.72rem; font-weight: 800; color: #facc15; margin-bottom: 1px;'>"
             "⚡ OFFERTA LAMPO:"
             "</div>"
-            "<div style='font-size: 0.72rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;'>"
+            "<div style='font-size: 0.68rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;'>"
             "attenzione che il prezzo di questo oggetto proposto varia in tempo reale."
             "</div>", 
             unsafe_allow_html=True
         )
         
-        st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
-        vc1, vc2 = st.columns([1.0, 1.8])
+        st.markdown("<div class='vetrina-compact-wrapper'>", unsafe_allow_html=True)
+        vc1, vc2 = st.columns([0.9, 2.1])
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-vetrina'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
             v_lnk = prod_vetrina.get('link_affiliato', '')
-            st.markdown(f"<div class='deal-title'>{v_tit}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='deal-title-vetrina'>{v_tit}</div>", unsafe_allow_html=True)
             
             v_price = f"€{prod_vetrina['prezzo_finale']:.2f}"
             v_ship = prod_vetrina.get('info_spedizione', 'Spedizione gratuita')
