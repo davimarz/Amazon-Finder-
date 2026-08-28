@@ -701,9 +701,13 @@ with col_head_right:
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- BARRA DI SEPARAZIONE E TITOLO "Cerca il tuo prodotto" SOPRA I FILTRI ---
+# --- BARRA DI SEPARAZIONE E TITOLO "Cerca il tuo prodotto" CON SFONDO VERDE CHIARO ---
 st.divider()
-st.markdown("<h3 style='color: #38bdf8; font-size: 1.35rem; font-weight: 800; margin-bottom: 12px;'>🔍 Cerca il tuo prodotto</h3>", unsafe_allow_html=True)
+st.markdown("""
+<div style="background-color: #d1fae5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
+    <h3 style="color: #065f46; font-size: 1.35rem; font-weight: 800; margin: 0;">Cerca il tuo prodotto</h3>
+</div>
+""", unsafe_allow_html=True)
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
 
