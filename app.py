@@ -95,13 +95,12 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Vetrina In Evidenza pulita senza bordo giallo */
+    /* Vetrina In Evidenza senza nessun box o rettangolo esterno */
     .vetrina-box-wrapper {
-        background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30) !important;
-        padding: 12px 14px !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
     }
 
     /* Etichette Filtri */
@@ -646,24 +645,24 @@ with col_head_right:
     if prod_vetrina:
         st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: right;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
         
-        # Riquadro vetrina senza bordo giallo e senza feedback (diviso in 2 colonne interne: Immagine | Dettagli)
+        # Riquadro vetrina senza bordo esterno e senza feedback (diviso in 2 colonne interne: Immagine | Dettagli)
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([1.2, 1.8])
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full' style='height:140px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-full' style='height:130px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
             v_lnk = prod_vetrina.get('link_affiliato', '')
-            st.markdown(f"<div class='deal-title' style='font-size:0.80rem; min-height:2.6em;'>{v_tit}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='deal-title' style='font-size:0.78rem; min-height:2.4em;'>{v_tit}</div>", unsafe_allow_html=True)
             
             v_badge = f"<span class='deal-badge'>{prod_vetrina['sconto']}</span>" if prod_vetrina.get('sconto') else ""
             v_old = f"<span class='deal-price-old'>€{prod_vetrina['prezzo_iniziale']:.2f}</span>" if prod_vetrina['prezzo_iniziale'] > prod_vetrina['prezzo_finale'] else ""
             st.markdown(
                 f"<div class='price-subgroup-left'>"
-                f"{v_badge}<span class='deal-price-final' style='font-size:1.15rem;'>€{prod_vetrina['prezzo_finale']:.2f}</span>{v_old}"
+                f"{v_badge}<span class='deal-price-final' style='font-size:1.1rem;'>€{prod_vetrina['prezzo_finale']:.2f}</span>{v_old}"
                 f"</div>",
                 unsafe_allow_html=True
             )
@@ -681,7 +680,7 @@ with col_head_right:
                         st.session_state.preferiti_asin[prod_vetrina["asin"]] = prod_vetrina
                     st.rerun()
             with vc_buy:
-                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action' style='max-width:100%; font-size:0.75rem; min-height:30px; padding:4px 8px;'>🛒 Acquista</a>", unsafe_allow_html=True)
+                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action' style='max-width:100%; font-size:0.72rem; min-height:28px; padding:3px 8px;'>🛒 Acquista</a>", unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
