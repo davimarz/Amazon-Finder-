@@ -63,7 +63,7 @@ st.markdown("""
         line-height: 1.3 !important;
     }
 
-    /* Pulsante Acquista Sotto i Prezzi */
+    /* Pulsante Acquista */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -300,6 +300,29 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
+    /* Stile per Flag / Radio orizzontali */
+    div[data-testid="stRadio"] > div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    div[data-testid="stRadio"] label {
+        background: #f1f5f9;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        cursor: pointer;
+        font-size: 0.82rem !important;
+        font-weight: 600;
+        transition: all 0.15s ease;
+    }
+
+    div[data-testid="stRadio"] label:hover {
+        background: #e2e8f0;
+        border-color: #0284c7;
+    }
+
     @media (max-width: 900px) {
         .social-share-col {
             flex-direction: row !important;
@@ -361,6 +384,16 @@ CATEGORIE = {
     ]
 }
 
+OPZIONI_SCONTO = {
+    "Tutti (0%)": 0,
+    "-10% o più": 10,
+    "-20% o più": 20,
+    "-30% o più": 30,
+    "-50% o più": 50,
+    "-70% o più": 70
+}
+
+# Inizializzazione Session State
 if "preferiti_asin" not in st.session_state:
     salvati = ottieni_tutti_preferiti()
     st.session_state.preferiti_asin = {p["asin"]: p for p in salvati}
@@ -509,7 +542,7 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria Principale e Sottocategoria sulla stessa riga
+    # Riga 1: Ricerca Testuale, Categoria Principale e Sottocategoria
     col_kw, col_cat, col_subcat = st.columns([1.4, 1.3, 1.3])
 
     with col_kw:
@@ -539,8 +572,8 @@ with tab_cerca:
             on_change=trigger_search
         )
 
-    # Riga 2: Flag Prime, Ordinamento, Prezzo Min/Max e Sconto Minimo
-    col_prime, col_sort, col_pmin, col_pmax, col_disc = st.columns([0.8, 1.4, 1, 1, 1])
+    # Riga 2: Flag Prime + Limiti Prezzo Min/Max
+    col_prime, col_pmin, col_pmax = st.columns([0.8, 1.1, 1.1])
 
     with col_prime:
         st.write("")
@@ -551,17 +584,6 @@ with tab_cerca:
             key="check_prime",
             on_change=trigger_search,
             help="Mostra solo prodotti idonei ad Amazon Prime"
-        )
-
-    with col_sort:
-        opzioni_ordinamento = list(SORT_MAPPINGS.keys())
-        default_index = opzioni_ordinamento.index("Prezzo: dal più basso") if "Prezzo: dal più basso" in opzioni_ordinamento else 0
-        ranking_scelto = st.selectbox(
-            "Ordinamento:",
-            opzioni_ordinamento,
-            index=default_index,
-            key="select_sort",
-            on_change=trigger_search
         )
 
     with col_pmin:
@@ -588,17 +610,29 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite massimo"
         )
 
-    with col_disc:
-        sconto_minimo = st.slider(
-            "Sconto Minimo (%):",
-            min_value=0,
-            max_value=80,
-            value=0,
-            step=5,
-            key="slider_disc",
-            on_change=trigger_search
-        )
+    # Riga 3: Flag Ordinamento
+    opzioni_ordinamento = list(SORT_MAPPINGS.keys())
+    ranking_scelto = st.radio(
+        "🏷️ Ordinamento:",
+        opzioni_ordinamento,
+        index=0,
+        horizontal=True,
+        key="radio_sort",
+        on_change=trigger_search
+    )
 
+    # Riga 4: Flag Sconto Minimo
+    label_sconto_scelto = st.radio(
+        "🔥 Sconto Minimo:",
+        list(OPZIONI_SCONTO.keys()),
+        index=0,
+        horizontal=True,
+        key="radio_disc",
+        on_change=trigger_search
+    )
+    sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
+
+    # Pulsanti Top Risultati
     b1, b2, b3, b4, b5 = st.columns(5)
     with b1:
         btn_10 = st.button("🚀 Top 10", type="primary", use_container_width=True)
