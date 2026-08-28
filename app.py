@@ -208,7 +208,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]) {
+    div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -222,30 +222,9 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]):hover {
+    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
-    }
-
-    /* Stile Pulsante Immagine / Anteprima */
-    div[data-testid="stButton"] button[key^="img_btn_"] {
-        background: transparent !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 8px !important;
-        padding: 0 !important;
-        width: 100% !important;
-        height: 185px !important;
-        cursor: pointer !important;
-        box-shadow: none !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        overflow: hidden !important;
-    }
-    
-    div[data-testid="stButton"] button[key^="img_btn_"]:hover {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
     }
 
     /* Overlay Fullscreen Lightbox */
@@ -287,7 +266,7 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 
-    /* Card Prodotto Uniforme e Allineata */
+    /* Card Prodotto Uniforme e Perfettamente Allineata */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -303,24 +282,34 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25) !important;
     }
 
-    /* Forzatura allineamento verticale flex per le 4 colonne interne della card */
+    /* Centratura verticale perfetta di tutti gli elementi interni alla card */
     [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
         align-items: center !important;
     }
 
-    .product-img-wrapper-full {
+    /* Contenitore immagine interattivo perfettamente allineato */
+    .product-img-clickable {
         width: 100%;
         height: 185px;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
-        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
         overflow: hidden;
         padding: 4px;
+        cursor: pointer;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
-    .product-img-wrapper-full img {
+    .product-img-clickable:hover {
+        transform: scale(1.02);
+        border-color: #38bdf8;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    .product-img-clickable img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
@@ -688,20 +677,43 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
+        # 1. Colonna Sinistra: Immagine pulita e allineata con interattività nativa
         with col_left:
             img_url = p.get('immagine_url', '')
-            if st.button("", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
+            
+            # Usiamo un form o un pulsante Streamlit pulito per gestire l'apertura del popup in modo nativo
+            if st.button("🔍 Ingrandisci", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
                 st.session_state.lightbox_img = img_url
                 st.rerun()
             
             st.markdown(
-                f"<style>div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}'] {{ margin-top: 0px !important; }}</style>"
-                f"<div style='position: relative; margin-top: -193px; pointer-events: none;' class='product-img-wrapper-full'>"
-                f"<img src='{img_url}' alt='prodotto'>"
-                f"</div>",
+                f"""
+                <style>
+                div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}'] {{
+                    background: transparent !important;
+                    border: none !important;
+                    color: #38bdf8 !important;
+                    font-size: 0.75rem !important;
+                    padding: 0 !important;
+                    min-height: auto !important;
+                    height: auto !important;
+                    margin-bottom: 4px !important;
+                    box-shadow: none !important;
+                }}
+                div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}']:hover {{
+                    color: #93c5fd !important;
+                    text-decoration: underline !important;
+                    transform: none !important;
+                }}
+                </style>
+                <div class="product-img-clickable" onclick="">
+                    <img src="{img_url}" alt="prodotto">
+                </div>
+                """,
                 unsafe_allow_html=True
             )
 
+        # 2. Colonna Centrale: Titolo, Prezzi + Consegna, Stellina + Acquista
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
@@ -742,6 +754,7 @@ def render_product_card(p, tab_key="main"):
             with c_buy_sub:
                 st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
 
+        # 3. Colonna Destra: Scheda Feedback Ufficiale
         with col_fb:
             voto = p.get("voto_medio", 4.8)
             num_val = p.get("num_recensioni", 765)
@@ -775,6 +788,7 @@ def render_product_card(p, tab_key="main"):
             )
             st.markdown(feedback_full_html, unsafe_allow_html=True)
 
+        # 4. Colonna Destra Estrema: Pulsanti Social Verticali
         with col_social:
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
