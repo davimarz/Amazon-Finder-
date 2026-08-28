@@ -83,12 +83,11 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Riquadro Vetrina ottimizzato per i 2/3 destri */
     .vetrina-compact-wrapper {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 10px !important;
-        padding: 8px 10px !important;
+        padding: 6px 8px !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
     }
 
@@ -243,10 +242,10 @@ st.markdown("""
         align-items: center !important;
     }
 
-    /* Immagine ridotta per la vetrina */
+    /* Immagine ultraridotta per la vetrina */
     .product-img-wrapper-vetrina {
         width: 100%;
-        height: 105px;
+        height: 75px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -254,7 +253,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 6px;
         overflow: hidden;
-        padding: 3px;
+        padding: 2px;
     }
 
     .product-img-wrapper-vetrina img {
@@ -292,12 +291,12 @@ st.markdown("""
         border: 1px solid #3b82f6 !important;
         border-radius: 6px !important;
         padding: 0 !important;
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important;
         color: #ffffff !important;
         cursor: pointer;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4) !important;
-        min-height: 30px !important;
-        height: 30px !important;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4) !important;
+        min-height: 28px !important;
+        height: 28px !important;
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
@@ -318,7 +317,7 @@ st.markdown("""
         border: 1px solid #fcd200;
         text-align: center;
         width: 100% !important;
-        min-height: 30px;
+        min-height: 28px;
         box-shadow: 0 2px 4px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
@@ -355,11 +354,11 @@ st.markdown("""
     }
 
     .deal-title-vetrina {
-        font-size: 0.78rem !important;
+        font-size: 0.75rem !important;
         font-weight: 800 !important;
-        line-height: 1.25 !important;
+        line-height: 1.2 !important;
         color: #38bdf8 !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 3px !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -385,13 +384,13 @@ st.markdown("""
         flex-wrap: wrap !important;
         gap: 4px !important;
         width: 100% !important;
-        margin: 4px 0 6px 0 !important;
+        margin: 3px 0 5px 0 !important;
     }
 
     .price-subgroup-left {
         display: flex !important;
         align-items: baseline !important;
-        gap: 6px !important;
+        gap: 4px !important;
         flex-wrap: wrap !important;
     }
 
@@ -411,15 +410,15 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        padding: 2px 6px;
+        padding: 1px 5px;
         border-radius: 4px;
-        font-size: 0.70rem !important;
+        font-size: 0.68rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
 
     .deal-price-final {
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
@@ -683,15 +682,32 @@ with col_vetrina:
         )
         
         st.markdown("<div class='vetrina-compact-wrapper'>", unsafe_allow_html=True)
-        vc1, vc2 = st.columns([0.9, 2.1])
+        vc1, vc2 = st.columns([0.8, 2.2])
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
             st.markdown(f"<div class='product-img-wrapper-vetrina'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
-        
+            
+            # Stella e Acquista posizionati sotto l'immagine ridotta
+            v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
+            v_star = "⭐" if v_fav else "☆"
+            
+            vs1, vs2 = st.columns([0.35, 0.65])
+            with vs1:
+                if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
+                    if v_fav:
+                        rimuovi_preferito(prod_vetrina["asin"])
+                        st.session_state.preferiti_asin.pop(prod_vetrina["asin"], None)
+                    else:
+                        aggiungi_preferito(prod_vetrina)
+                        st.session_state.preferiti_asin[prod_vetrina["asin"]] = prod_vetrina
+                    st.rerun()
+            with vs2:
+                v_lnk = prod_vetrina.get('link_affiliato', '')
+                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action-vetrina'>🛒 Acquista</a>", unsafe_allow_html=True)
+
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
-            v_lnk = prod_vetrina.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title-vetrina'>{v_tit}</div>", unsafe_allow_html=True)
             
             v_price = f"€{prod_vetrina['prezzo_finale']:.2f}"
@@ -704,22 +720,6 @@ with col_vetrina:
                 f"</div>",
                 unsafe_allow_html=True
             )
-            
-            v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
-            v_star = "⭐" if v_fav else "☆"
-            
-            vc_star, vc_buy = st.columns([0.25, 0.75])
-            with vc_star:
-                if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
-                    if v_fav:
-                        rimuovi_preferito(prod_vetrina["asin"])
-                        st.session_state.preferiti_asin.pop(prod_vetrina["asin"], None)
-                    else:
-                        aggiungi_preferito(prod_vetrina)
-                        st.session_state.preferiti_asin[prod_vetrina["asin"]] = prod_vetrina
-                    st.rerun()
-            with vc_buy:
-                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action-vetrina'>🛒 Acquista</a>", unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
