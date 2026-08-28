@@ -76,8 +76,29 @@ def pulisci_titolo_descrizione(titolo_grezzo):
         return "Prodotto Amazon"
     return titolo_grezzo.strip()
 
+def estrai_prezzo_pulito_da_stringa(testo_prezzo):
+    """Converte stringhe come '3,98 €' o 'EUR 3,98' in float."""
+    if not testo_prezzo:
+        return 0.0
+    clean = re.sub(r'[^\d.,]', '', testo_prezzo)
+    if not clean:
+        return 0.0
+    # Gestione formati italiani (es. 3,98 oppure 1.234,56)
+    if ',' in clean and '.' in clean:
+        if clean.find('.') < clean.find(','):
+            clean = clean.replace('.', '').replace(',', '.')
+        else:
+            clean = clean.replace(',', '')
+    elif ',' in clean:
+        clean = clean.replace(',', '.')
+    try:
+        val = float(clean)
+        return val if val > 0 else 0.0
+    except ValueError:
+        return 0.0
+
 def verifica_prezzo_reale_vetrina(prodotto):
-    """Controlla e aggiorna in tempo reale il prezzo esatto e aggiornato dal sito Amazon."""
+    """Controlla e aggiorna in tempo reale il prezzo esatto dal box d'acquisto di Amazon."""
     asin = prodotto.get("asin")
     if not asin:
         return prodotto
@@ -97,28 +118,27 @@ def verifica_prezzo_reale_vetrina(prodotto):
         if res.status_code == 200:
             soup_det = BeautifulSoup(res.text, "html.parser")
             
-            # Cerca nel blocco principale del prezzo in evidenza
-            price_block = soup_det.find("span", {"class": "priceToPay"}) or soup_det.find("div", {"id": "corePriceDisplay_desktop_feature_div"})
-            if price_block:
-                p_whole = price_block.find("span", {"class": "a-price-whole"})
-                p_frac = price_block.find("span", {"class": "a-price-fraction"})
-                if p_whole:
-                    w_c = p_whole.text.replace(".", "").replace(",", "").strip()
-                    f_c = p_frac.text.strip() if p_frac else "00"
-                    p_reale = float(f"{w_c}.{f_c}")
-                    if p_reale > 0:
-                        prodotto["prezzo_finale"] = p_reale
+            # 1. Cerca nel blocco d'acquisto principale (.priceToPay o #corePrice_feature_div)
+            price_container = soup_det.find("span", {"class": "priceToPay"}) or soup_det.find("div", {"id": "corePrice_feature_div"}) or soup_det.find("div", {"id": "apex_desktop"})
+            if price_container:
+                offscreen = price_container.find("span", {"class": "a-offscreen"})
+                if offscreen:
+                    p_val = estrai_prezzo_pulito_da_stringa(offscreen.text)
+                    if p_val > 0:
+                        prodotto["prezzo_finale"] = p_val
                         return prodotto
 
-            # Fallback generico sul prezzo intero della pagina
-            price_whole = soup_det.find("span", {"class": "a-price-whole"})
-            price_fraction = soup_det.find("span", {"class": "a-price-fraction"})
-            if price_whole:
-                w_clean = price_whole.text.replace(".", "").replace(",", "").strip()
-                f_clean = price_fraction.text.strip() if price_fraction else "00"
-                p_reale = float(f"{w_clean}.{f_clean}")
-                if p_reale > 0:
-                    prodotto["prezzo_finale"] = p_reale
+            # 2. Cerca qualsiasi etichetta offscreen che rappresenti il prezzo principale nel blocco buybox
+            buybox = soup_det.find("div", {"id": "desktop_buybox"}) or soup_det.find("div", {"id": "rightCol"})
+            if buybox:
+                off_list = buybox.find_all("span", {"class": "a-offscreen"})
+                for off in off_list:
+                    txt = off.text.strip()
+                    if "€" in txt or "EUR" in txt:
+                        p_val = estrai_prezzo_pulito_da_stringa(txt)
+                        if p_val > 0:
+                            prodotto["prezzo_finale"] = p_val
+                            return prodotto
     except Exception as e:
         print(f"Errore verifica prezzo live: {e}")
         
