@@ -38,16 +38,6 @@ st.markdown("""
         border-bottom-color: #38bdf8 !important;
     }
 
-    .hero-header-box {
-        padding: 20px 24px;
-        margin-bottom: 20px;
-        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-        backdrop-filter: blur(10px);
-    }
-
     .hero-title-main {
         font-size: clamp(2.2rem, 4.5vw, 3.4rem);
         font-weight: 900;
