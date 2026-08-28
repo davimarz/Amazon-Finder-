@@ -287,19 +287,25 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 
+    /* Card Prodotto Uniforme e Allineata */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 12px !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30) !important;
-        padding: 10px 8px !important;
-        margin-bottom: 8px !important;
+        padding: 12px 10px !important;
+        margin-bottom: 12px !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     
     [data-testid="stVerticalBlockBorderWrapper"]:hover {
         border-color: #38bdf8 !important;
         box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25) !important;
+    }
+
+    /* Forzatura allineamento verticale flex per le 4 colonne interne della card */
+    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
+        align-items: center !important;
     }
 
     .product-img-wrapper-full {
@@ -654,7 +660,6 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-# Stato per il Lightbox Pop-up immagine
 if "lightbox_img" not in st.session_state:
     st.session_state.lightbox_img = None
 
@@ -683,23 +688,20 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Immagine interattiva per aprire il Pop-up Lightbox
         with col_left:
             img_url = p.get('immagine_url', '')
-            # Pulsante trasparente con immagine interna per gestire il click in Streamlit
             if st.button("", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
                 st.session_state.lightbox_img = img_url
                 st.rerun()
             
-            # Mostra l'immagine sopra il pulsante tramite HTML assoluto
             st.markdown(
+                f"<style>div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}'] {{ margin-top: 0px !important; }}</style>"
                 f"<div style='position: relative; margin-top: -193px; pointer-events: none;' class='product-img-wrapper-full'>"
                 f"<img src='{img_url}' alt='prodotto'>"
                 f"</div>",
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Prezzi + Consegna, Stellina + Acquista Dimezzato
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
@@ -804,9 +806,7 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-# Gestione Pop-up Immagine Fullscreen (Lightbox)
 if st.session_state.lightbox_img is not None:
-    # Contenitore overlay interattivo: cliccando ovunque si chiude
     if st.button("CHIUDI POP-UP (Clicca ovunque)", key="lightbox_dismiss", use_container_width=True):
         st.session_state.lightbox_img = None
         st.rerun()
