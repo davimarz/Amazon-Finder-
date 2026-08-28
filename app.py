@@ -597,6 +597,10 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
+# Rotazione casuale dell'offerta lampo ad ogni apertura o aggiornamento pagina
+if "vetrina_index" not in st.session_state:
+    st.session_state.vetrina_index = int(time.time())
+
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
@@ -616,23 +620,25 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA IN ALTO A DESTRA CON OFFERTA DEL GIORNO ---
+# --- BLOCCO VETRINA IN ALTO A DESTRA CON OFFERTA LAMPOA AMAZON ---
 col_head_left, col_head_right = st.columns([0.4, 1.6])
 
 with col_head_right:
-    @st.cache_data(ttl=60)
+    @st.cache_data(ttl=30)
     def ottieni_offerta_vetrina():
-        offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=20)
+        # Cerca specificamente tra le offerte lampo e bestseller di Amazon
+        offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=30)
         if not offerte_vetrina:
-            offerte_vetrina = ottieni_offerte_avanzate(keyword="bestseller", item_count=20)
-        if offerte_vetrina:
-            idx = int(time.time() // 10) % len(offerte_vetrina)
-            return offerte_vetrina[idx]
-        return None
+            offerte_vetrina = ottieni_offerte_avanzate(keyword="sconto", item_count=30)
+        return offerte_vetrina
 
-    prod_vetrina = ottieni_offerta_vetrina()
-    if prod_vetrina:
-        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: center;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
+    lista_vetrina = ottieni_offerta_vetrina()
+    if lista_vetrina:
+        # Cambia prodotto dinamicamente ad ogni aggiornamento o sessione
+        idx_vetrina = (st.session_state.vetrina_index + int(time.time() // 5)) % len(lista_vetrina)
+        prod_vetrina = lista_vetrina[idx_vetrina]
+
+        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: center;'>⚡ OFFERTA LAMPO IN VETRINA</div>", unsafe_allow_html=True)
         
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([1.1, 1.9])
@@ -658,7 +664,6 @@ with col_head_right:
             v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
             v_star = "⭐" if v_fav else "☆"
             
-            # Stella ed Acquista sulla stessa riga
             vc_star, vc_buy = st.columns([0.22, 0.78])
             with vc_star:
                 if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
