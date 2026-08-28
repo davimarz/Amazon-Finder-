@@ -40,45 +40,42 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+        font-size: clamp(1.5rem, 2.8vw, 2.4rem);
         font-weight: 900;
         letter-spacing: -1px;
         line-height: 1.1;
-        margin: 0 0 6px 0;
+        margin: 0 0 4px 0;
         background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+        text-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
     }
 
     .hero-subtitle-box {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        gap: 6px;
+        font-size: clamp(0.95rem, 1.8vw, 1.2rem);
         font-weight: 700;
         color: #f1f5f9;
-        letter-spacing: 0.2px;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
     }
 
     .ai-badge {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
         color: #ffffff;
-        font-size: 0.75em;
+        font-size: 0.7em;
         font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 6px;
+        padding: 1px 6px;
+        border-radius: 4px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
     }
 
     .hero-author-tag {
-        font-size: clamp(0.85rem, 1.8vw, 0.98rem);
+        font-size: clamp(0.75rem, 1.4vw, 0.88rem);
         color: #94a3b8;
         font-weight: 500;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
+        margin-top: 2px;
     }
 
     .hero-author-tag strong {
@@ -246,7 +243,7 @@ st.markdown("""
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 185px;
+        height: 140px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -271,12 +268,12 @@ st.markdown("""
         border: 1px solid #3b82f6 !important;
         border-radius: 8px !important;
         padding: 0 !important;
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         color: #ffffff !important;
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
-        min-height: 38px !important;
-        height: 38px !important;
+        min-height: 34px !important;
+        height: 34px !important;
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
@@ -296,9 +293,8 @@ st.markdown("""
         border-radius: 8px;
         border: 1px solid #fcd200;
         text-align: center;
-        width: 20% !important;
-        min-width: 55px;
-        min-height: 38px;
+        width: 100% !important;
+        min-height: 34px;
         box-shadow: 0 2px 6px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
@@ -335,13 +331,13 @@ st.markdown("""
     }
 
     .deal-title {
-        font-size: 0.95rem !important;
+        font-size: 0.85rem !important;
         font-weight: 800 !important;
-        line-height: 1.35 !important;
+        line-height: 1.3 !important;
         color: #38bdf8 !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -351,9 +347,9 @@ st.markdown("""
         align-items: center !important;
         justify-content: space-between !important;
         flex-wrap: wrap !important;
-        gap: 8px !important;
+        gap: 6px !important;
         width: 100% !important;
-        margin: 8px 0 12px 0 !important;
+        margin: 6px 0 8px 0 !important;
     }
 
     .price-subgroup-left {
@@ -379,19 +375,18 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        padding: 4px 10px;
+        padding: 2px 8px;
         border-radius: 6px;
-        font-size: 0.82rem !important;
+        font-size: 0.75rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
 
     .deal-price-final {
-        font-size: 1.4rem !important;
+        font-size: 1.15rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
-        text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
     }
 
     .feedback-container {
@@ -527,11 +522,6 @@ st.markdown("""
             gap: 6px;
             margin-top: 6px;
         }
-        .buy-btn-action-vetrina {
-            width: 25% !important;
-            font-size: 0.70rem !important;
-            padding: 4px 4px !important;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -617,26 +607,24 @@ st.session_state.vetrina_seed = random.randint(0, 1000000)
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# --- HEADER SUPERIORE: TITOLO CENTRATO E LINEA DI SEPARAZIONE ---
-st.markdown("""
-<div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
-    <div class="hero-title-main">Scala dei Turchi</div>
-    <div class="hero-subtitle-box" style="justify-content: center;">
-        <span>Offerte Amazon</span>
-        <span class="ai-badge">AI</span>
+# --- DISPOSIZIONE ORIZZONTALE: INTESTAZIONE (1/3) E VETRINA (2/3) ---
+col_title, col_vetrina = st.columns([1.0, 2.0], gap="medium")
+
+with col_title:
+    st.markdown("""
+    <div style="text-align: left; padding: 5px 0;">
+        <div class="hero-title-main">Scala dei Turchi</div>
+        <div class="hero-subtitle-box">
+            <span>Offerte Amazon</span>
+            <span class="ai-badge">AI</span>
+        </div>
+        <div class="hero-author-tag">
+            Realizzato da <strong>Davide Marziano</strong>
+        </div>
     </div>
-    <div class="hero-author-tag">
-        Realizzato con cura da <strong>Davide Marziano</strong>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-st.divider()
-
-# --- BLOCCO VETRINA CON OFFERTA LAMPO E AVVISO PREZZO ---
-col_head_left, col_head_right = st.columns([0.2, 1.8])
-
-with col_head_right:
+with col_vetrina:
     @st.cache_data(ttl=5)
     def ottieni_offerta_vetrina():
         return ottieni_offerte_pagina_speciale(item_count=40)
@@ -649,21 +637,21 @@ with col_head_right:
         prod_vetrina = verifica_prezzo_reale_vetrina(prod_vetrina)
 
         st.markdown(
-            "<div style='font-size: 0.85rem; font-weight: 800; color: #facc15; margin-bottom: 2px;'>"
+            "<div style='font-size: 0.78rem; font-weight: 800; color: #facc15; margin-bottom: 1px;'>"
             "⚡ OFFERTA LAMPO:"
             "</div>"
-            "<div style='font-size: 0.80rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;'>"
+            "<div style='font-size: 0.72rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;'>"
             "attenzione che il prezzo di questo oggetto proposto varia in tempo reale."
             "</div>", 
             unsafe_allow_html=True
         )
         
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
-        vc1, vc2 = st.columns([1.1, 1.9])
+        vc1, vc2 = st.columns([1.0, 1.8])
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full' style='height:185px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-full'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
@@ -684,7 +672,7 @@ with col_head_right:
             v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
             v_star = "⭐" if v_fav else "☆"
             
-            vc_star, vc_buy = st.columns([0.15, 0.85])
+            vc_star, vc_buy = st.columns([0.25, 0.75])
             with vc_star:
                 if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
                     if v_fav:
@@ -957,7 +945,6 @@ with tab_cerca:
         target_items = st.session_state.last_target_items
         st.session_state.auto_search_triggered = False
 
-    # Assicuriamoci che min_disc e max_discount siano sempre definiti per prevenire qualsiasi NameError
     if 'min_disc' not in locals():
         min_disc, max_disc = 0, 100
 
@@ -984,7 +971,7 @@ with tab_cerca:
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=min_disc,
-                max_discount=max_disc,
+                max_discount=max_discount,
                 item_count=target_items
             )
             
