@@ -28,7 +28,7 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.10) !important;
     }
 
-    /* Immagine Ingrandita */
+    /* Immagine Ingrandita a Pieno Spazio */
     .product-img-wrapper-full {
         width: 100%;
         height: 185px;
@@ -63,7 +63,7 @@ st.markdown("""
         line-height: 1.3 !important;
     }
 
-    /* Pulsante Acquista */
+    /* Pulsante Acquista Sotto i Prezzi */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -102,56 +102,40 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Spedizione */
-    .delivery-row {
+    /* Rigo Spedizione e Dicitura Prime Ufficiale */
+    .delivery-prime-container {
         display: flex;
         align-items: center;
         gap: 6px;
         flex-wrap: wrap;
-        margin-bottom: 4px !important;
+        margin: 2px 0 4px 0 !important;
     }
 
-    .shipping-box {
-        display: inline-flex;
-        align-items: center;
-        background: rgba(249, 115, 22, 0.10) !important;
-        color: #ea580c !important;
-        border: 1px solid rgba(234, 88, 12, 0.25) !important;
-        padding: 1px 6px;
-        border-radius: 3px;
-        font-size: 0.72rem !important;
-        font-weight: 700;
-        width: fit-content;
-    }
-
-    .shipping-free {
+    .shipping-badge-text {
         display: inline-flex;
         align-items: center;
         background: rgba(34, 197, 94, 0.10) !important;
-        color: #16a34a !important;
-        border: 1px solid rgba(22, 163, 74, 0.25) !important;
+        color: #15803d !important;
+        border: 1px solid rgba(34, 197, 94, 0.3) !important;
         padding: 1px 6px;
         border-radius: 3px;
         font-size: 0.72rem !important;
         font-weight: 700;
-        width: fit-content;
     }
 
-    /* Stile Ufficiale Amazon Prime */
+    /* Badge Amazon Prime Ufficiale */
     .prime-badge-official {
         display: inline-flex;
         align-items: center;
         font-family: "Amazon Ember", Arial, sans-serif;
-        font-weight: 800;
-        font-size: 0.92rem;
+        font-size: 0.95rem;
         line-height: 1;
         letter-spacing: -0.4px;
-        margin-left: 2px;
     }
 
     .prime-check-mark {
-        color: #ff9900 !important;
-        font-size: 0.98rem !important;
+        color: #e47911 !important;
+        font-size: 1.05rem !important;
         font-style: normal !important;
         font-weight: 900 !important;
         margin-right: 1px;
@@ -161,6 +145,7 @@ st.markdown("""
         color: #00a8e1 !important;
         font-style: italic !important;
         font-weight: 900 !important;
+        font-size: 0.96rem !important;
     }
 
     /* Prezzi */
@@ -169,7 +154,7 @@ st.markdown("""
         align-items: baseline;
         gap: 5px;
         flex-wrap: wrap;
-        margin: 2px 0 6px 0 !important;
+        margin: 2px 0 2px 0 !important;
     }
 
     .deal-badge {
@@ -376,7 +361,6 @@ CATEGORIE = {
     ]
 }
 
-# Inizializzazione Session State
 if "preferiti_asin" not in st.session_state:
     salvati = ottieni_tutti_preferiti()
     st.session_state.preferiti_asin = {p["asin"]: p for p in salvati}
@@ -418,24 +402,13 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Spedizione, Prime e sotto [Stellina + Acquista]
+        # 2. Colonna Centrale: Titolo, Prezzi, Prime e sotto [Stellina + Acquista]
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Spedizione e Badge Prime Ufficiale
-            ship_html = ""
-            if p.get('info_spedizione'):
-                is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
-                ship_class = "shipping-free" if is_free else "shipping-box"
-                ship_html = f"<span class='{ship_class}'>🚚 {p['info_spedizione']}</span>"
-
-            prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
-
-            if ship_html or prime_html:
-                st.markdown(f"<div class='delivery-row'>{ship_html}{prime_html}</div>", unsafe_allow_html=True)
-
+            # Prezzi
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
 
@@ -448,6 +421,14 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
+            # Badge Prime Ufficiale e Spedizione sotto il prezzo
+            prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
+            ship_text = p.get('info_spedizione', 'Consegna senza costi aggiuntivi')
+            ship_html = f"<span class='shipping-badge-text'>{ship_text}</span>" if ship_text else ""
+
+            st.markdown(f"<div class='delivery-prime-container'>{prime_html}{ship_html}</div>", unsafe_allow_html=True)
+
+            # Stellina + Tasto Acquista
             c_star_sub, c_buy_sub = st.columns([0.24, 0.76])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
@@ -565,7 +546,7 @@ with tab_cerca:
             value=False,
             key="check_prime",
             on_change=trigger_search,
-            help="Filtra solo i prodotti idonei alla spedizione Prime"
+            help="Mostra solo prodotti idonei ad Amazon Prime"
         )
 
     with col_sort:
