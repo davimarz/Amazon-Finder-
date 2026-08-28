@@ -77,7 +77,7 @@ def pulisci_titolo_descrizione(titolo_grezzo):
     return titolo_grezzo.strip()
 
 def verifica_prezzo_reale_vetrina(prodotto):
-    """Controlla e aggiorna in tempo reale il prezzo esatto dal sito Amazon prima di pubblicare in vetrina."""
+    """Controlla e aggiorna in tempo reale il prezzo esatto e aggiornato dal sito Amazon."""
     asin = prodotto.get("asin")
     if not asin:
         return prodotto
@@ -97,28 +97,28 @@ def verifica_prezzo_reale_vetrina(prodotto):
         if res.status_code == 200:
             soup_det = BeautifulSoup(res.text, "html.parser")
             
-            # Cerca il prezzo attuale nella pagina di dettaglio
+            # Cerca nel blocco principale del prezzo in evidenza
+            price_block = soup_det.find("span", {"class": "priceToPay"}) or soup_det.find("div", {"id": "corePriceDisplay_desktop_feature_div"})
+            if price_block:
+                p_whole = price_block.find("span", {"class": "a-price-whole"})
+                p_frac = price_block.find("span", {"class": "a-price-fraction"})
+                if p_whole:
+                    w_c = p_whole.text.replace(".", "").replace(",", "").strip()
+                    f_c = p_frac.text.strip() if p_frac else "00"
+                    p_reale = float(f"{w_c}.{f_c}")
+                    if p_reale > 0:
+                        prodotto["prezzo_finale"] = p_reale
+                        return prodotto
+
+            # Fallback generico sul prezzo intero della pagina
             price_whole = soup_det.find("span", {"class": "a-price-whole"})
             price_fraction = soup_det.find("span", {"class": "a-price-fraction"})
             if price_whole:
                 w_clean = price_whole.text.replace(".", "").replace(",", "").strip()
                 f_clean = price_fraction.text.strip() if price_fraction else "00"
-                try:
-                    p_reale = float(f"{w_clean}.{f_clean}")
-                    if p_reale > 0:
-                        prodotto["prezzo_finale"] = p_reale
-                except ValueError:
-                    pass
-            else:
-                price_off = soup_det.find("span", {"class": "a-offscreen"})
-                if price_off:
-                    try:
-                        clean_p = price_off.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
-                        p_reale = float(clean_p)
-                        if p_reale > 0:
-                            prodotto["prezzo_finale"] = p_reale
-                    except ValueError:
-                        pass
+                p_reale = float(f"{w_clean}.{f_clean}")
+                if p_reale > 0:
+                    prodotto["prezzo_finale"] = p_reale
     except Exception as e:
         print(f"Errore verifica prezzo live: {e}")
         
