@@ -953,11 +953,18 @@ with tab_cerca:
     elif btn_100:
         target_items = 100
         st.session_state.last_target_items = 100
-    elif st.session_state.auto_search_triggered:
+    elif st.session_state.auto_search_triggered or (keyword_libera.strip() and st.session_state.get("keyword_input") != keyword_libera):
         target_items = st.session_state.last_target_items
         st.session_state.auto_search_triggered = False
 
-    if target_items is not None:
+    # Assicuriamoci che min_disc e max_discount siano sempre definiti per prevenire qualsiasi NameError
+    if 'min_disc' not in locals():
+        min_disc, max_disc = 0, 100
+
+    if target_items is not None or keyword_libera.strip():
+        if target_items is None:
+            target_items = st.session_state.last_target_items
+        
         with st.spinner(f"Estrazione dei Top {target_items} prodotti in corso..."):
             usa_testo = bool(keyword_libera.strip())
             cat_pulita = "" if usa_testo else cat_scelta.split(" ", 1)[-1]
@@ -977,7 +984,7 @@ with tab_cerca:
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=min_disc,
-                max_discount=max_discount,
+                max_discount=max_disc,
                 item_count=target_items
             )
             
