@@ -95,7 +95,6 @@ st.markdown("""
         font-weight: 700;
     }
 
-    /* Vetrina In Evidenza senza nessun box o rettangolo esterno */
     .vetrina-box-wrapper {
         background: transparent !important;
         border: none !important;
@@ -300,16 +299,16 @@ st.markdown("""
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.76rem !important;
+        font-size: 0.74rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 5px 12px;
-        border-radius: 14px;
+        padding: 4px 8px;
+        border-radius: 12px;
         border: 1px solid #fcd200;
         text-align: center;
-        width: 100%;
-        max-width: 130px;
-        min-height: 30px;
+        width: auto !important;
+        max-width: 90px !important;
+        min-height: 28px;
         box-shadow: 0 1px 4px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
@@ -613,14 +612,14 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# --- HEADER SUPERIORE STRUTTURATO A DUE COLONNE ---
+# --- HEADER SUPERIORE CON ALLINEAMENTO CENTRALE DEL TITOLO E VETRINA A DESTRA ---
 col_head_left, col_head_right = st.columns([1.1, 1.9])
 
 with col_head_left:
     st.markdown("""
-    <div style="padding-top: 10px;">
+    <div style="padding-top: 10px; text-align: center;">
         <div class="hero-title-main">Scala dei Turchi</div>
-        <div class="hero-subtitle-box">
+        <div class="hero-subtitle-box" style="justify-content: center;">
             <span>Offerte Amazon</span>
             <span class="ai-badge">AI</span>
         </div>
@@ -643,9 +642,8 @@ with col_head_right:
 
     prod_vetrina = ottieni_offerta_vetrina()
     if prod_vetrina:
-        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: right;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px; text-align: center;'>🔥 OFFERTA DEL GIORNO IN VETRINA</div>", unsafe_allow_html=True)
         
-        # Riquadro vetrina senza bordo esterno e senza feedback (diviso in 2 colonne interne: Immagine | Dettagli)
         st.markdown("<div class='vetrina-box-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([1.2, 1.8])
         
@@ -669,7 +667,9 @@ with col_head_right:
             
             v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
             v_star = "⭐" if v_fav else "☆"
-            vc_star, vc_buy = st.columns([0.22, 0.78])
+            
+            # Pulsante Preferiti e Pulsante Acquista sulla stessa riga, con Acquista ridimensionato non più grande della foto
+            vc_star, vc_buy = st.columns([0.25, 0.75])
             with vc_star:
                 if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
                     if v_fav:
@@ -680,7 +680,7 @@ with col_head_right:
                         st.session_state.preferiti_asin[prod_vetrina["asin"]] = prod_vetrina
                     st.rerun()
             with vc_buy:
-                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action' style='max-width:100%; font-size:0.72rem; min-height:28px; padding:3px 8px;'>🛒 Acquista</a>", unsafe_allow_html=True)
+                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action' style='max-width:85px !important; font-size:0.70rem !important; padding:3px 6px !important;'>🛒 Acquista</a>", unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
