@@ -76,16 +76,26 @@ def estrai_costo_spedizione(item_tag):
     return 0.0, "Consegna standard"
 
 def verifica_se_prime(item_tag, item_text):
-    if item_tag.find(["i", "span"], class_=re.compile(r"a-icon-prime|s-prime|s-icon-text-medium", re.I)):
-        return True
-    if item_tag.find(attrs={"aria-label": re.compile(r"prime|amazon prime", re.I)}):
+    # 1. Rilevamento tramite classi CSS e icone Amazon Prime
+    if item_tag.find(["i", "span", "em", "div"], class_=re.compile(r"a-icon-prime|s-prime|s-icon-text-medium|s-prime-label", re.I)):
         return True
     
+    # 2. Rilevamento tramite attributi aria-label
+    if item_tag.find(attrs={"aria-label": re.compile(r"prime|amazon prime|consegna senza costi aggiuntivi", re.I)}):
+        return True
+
+    # 3. Rilevamento tramite immagini/loghi Prime
+    if item_tag.find("img", attrs={"alt": re.compile(r"prime", re.I)}) or item_tag.find("img", attrs={"src": re.compile(r"prime", re.I)}):
+        return True
+
+    # 4. Rilevamento testuale avanzato nel riquadro prodotto
     segnali_prime = [
         "consegna senza costi aggiuntivi",
         "spedizione gratuita con prime",
+        "consegna gratuita con prime",
         "consegna con prime",
         "spedito da amazon",
+        "gestito da amazon",
         "amazon prime",
         "prime"
     ]
@@ -93,22 +103,26 @@ def verifica_se_prime(item_tag, item_text):
 
 def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
     termini = []
+    
+    # Se l'utente incolla un link Amazon completo, estrae l'ASIN o il termine pulito
+    clean_keyword = keyword.strip()
+    asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.IGNORECASE)
+    if asin_url_match:
+        clean_keyword = asin_url_match.group(1)
+
     if sottocategoria and sottocategoria != "Tutte":
         termini.append(sottocategoria)
     elif categoria:
         termini.append(categoria)
         
-    if keyword.strip():
-        termini.append(keyword.strip())
+    if clean_keyword:
+        termini.append(clean_keyword)
         
     query_str = " ".join(termini) if termini else "offerte"
     query_encoded = urllib.parse.quote_plus(query_str)
     
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
-    
-    if solo_prime:
-        base_url += "&rh=p_76%3A490209031"
 
     if min_price is not None and min_price > 0:
         base_url += f"&low-price={int(min_price)}"
@@ -128,7 +142,8 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = (item_count // 8) + 8
+    # Paginazione estesa: se il filtro Prime è attivo cerca fino a 15-20 pagine
+    max_pages = max(15, (item_count // 4) + 8)
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -242,7 +257,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if prezzo_iniziale > prezzo_prodotto and prezzo_iniziale > 0:
                     sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
                 
-                # Filtraggio per intervallo di sconto (min e max)
+                # Filtraggio per intervallo di sconto
                 if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
                     continue
 
