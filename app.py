@@ -1,4 +1,5 @@
 import streamlit as st
+import time
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
@@ -37,10 +38,10 @@ st.markdown("""
         border-bottom-color: #38bdf8 !important;
     }
 
+    /* Header Superiore Strutturato a Due Colonne */
     .hero-header-box {
-        text-align: center;
-        padding: 22px 16px 18px 16px;
-        margin-bottom: 16px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 16px;
@@ -49,11 +50,11 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-size: clamp(2rem, 4.5vw, 3.2rem);
+        font-size: clamp(2.2rem, 4.5vw, 3.4rem);
         font-weight: 900;
         letter-spacing: -1px;
         line-height: 1.1;
-        margin: 0 0 4px 0;
+        margin: 0 0 6px 0;
         background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -64,11 +65,11 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        font-size: clamp(1rem, 2.5vw, 1.4rem);
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
         font-weight: 700;
         color: #f1f5f9;
         letter-spacing: 0.2px;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
     }
 
     .ai-badge {
@@ -76,18 +77,18 @@ st.markdown("""
         color: #ffffff;
         font-size: 0.75em;
         font-weight: 800;
-        padding: 2px 7px;
+        padding: 2px 8px;
         border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.25);
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
     }
 
     .hero-author-tag {
-        font-size: clamp(0.82rem, 1.8vw, 0.94rem);
+        font-size: clamp(0.85rem, 1.8vw, 0.98rem);
         color: #94a3b8;
         font-weight: 500;
         letter-spacing: 0.5px;
-        margin-top: 2px;
+        margin-top: 4px;
     }
 
     .hero-author-tag strong {
@@ -95,6 +96,7 @@ st.markdown("""
         font-weight: 700;
     }
 
+    /* Etichette Filtri */
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
         color: #e2e8f0 !important;
@@ -603,18 +605,60 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-st.markdown("""
-<div class="hero-header-box">
-    <div class="hero-title-main">Scaladeiturchi</div>
-    <div class="hero-subtitle-box">
-        <span>Offerte Amazon</span>
-        <span class="ai-badge">AI</span>
+# --- HEADER SUPERIORE CON OFFERTA DEL GIORNO DINAMICA A DESTRA ---
+col_head_left, col_head_right = st.columns([1.2, 1.8])
+
+with col_head_left:
+    st.markdown("""
+    <div style="padding-top: 10px;">
+        <div class="hero-title-main">Scala dei Turchi</div>
+        <div class="hero-subtitle-box">
+            <span>Offerte Amazon</span>
+            <span class="ai-badge">AI</span>
+        </div>
+        <div class="hero-author-tag">
+            Realizzato con cura da <strong>Davide Marziano</strong>
+        </div>
     </div>
-    <div class="hero-author-tag">
-        Realizzato con cura da <strong>Davide Marziano</strong>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+with col_head_right:
+    # Estrae un'offerta di oggi casuale basata sul tempo o sul caricamento pagina
+    @st.cache_data(ttl=60)
+    def ottieni_offerta_vetrina():
+        # Ricerca un termine popolare per le offerte del giorno
+        offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=20)
+        if not offerte_vetrina:
+            offerte_vetrina = ottieni_offerte_avanzate(keyword="bestseller", item_count=20)
+        if offerte_vetrina:
+            # Seleziona un prodotto ruotando in base al minuto corrente
+            idx = int(time.time() // 10) % len(offerte_vetrina)
+            return offerte_vetrina[idx]
+        return None
+
+    prod_vetrina = ottieni_offerta_vetrina()
+    if prod_vetrina:
+        st.markdown("<div style='font-size: 0.82rem; font-weight: 800; color: #38bdf8; margin-bottom: 4px; text-align: right;'>🔥 OFFERTA DEL GIORNO IN EVIDENZA</div>", unsafe_allow_html=True)
+        # Riquadro vetrina in stile scheda prodotto compatta
+        with st.container(border=True):
+            vc1, vc2, vc3 = st.columns([1.1, 1.6, 1.2])
+            with vc1:
+                st.markdown(f"<div class='product-img-wrapper-full'><img src='{prod_vetrina.get('immagine_url','')}' alt='vetrina'></div>", unsafe_allow_html=True)
+            with vc2:
+                st.markdown(f"<div class='deal-title' style='font-size:0.78rem; min-height:2.8em;'>{prod_vetrina.get('titolo','')}</div>", unsafe_allow_html=True)
+                v_badge = f"<span class='deal-badge'>{prod_vetrina['sconto']}</span>" if prod_vetrina.get('sconto') else ""
+                v_old = f"<span class='deal-price-old'>€{prod_vetrina['prezzo_iniziale']:.2f}</span>" if prod_vetrina['prezzo_iniziale'] > prod_vetrina['prezzo_finale'] else ""
+                st.markdown(
+                    f"<div class='price-subgroup-left'>"
+                    f"{v_badge}<span class='deal-price-final' style='font-size:1.1rem;'>€{prod_vetrina['prezzo_finale']:.2f}</span>{v_old}"
+                    f"</div>",
+                    unsafe_allow_html=True
+                )
+            with vc3:
+                v_link = prod_vetrina.get('link_affiliato', '')
+                st.markdown(f"<br><a href='{v_link}' target='_blank' class='buy-btn-action' style='max-width:100%; font-size:0.75rem;'>🛒 Acquista</a>", unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
 
@@ -625,7 +669,6 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Immagine statica standard pulita e allineata
         with col_left:
             img_url = p.get('immagine_url', '')
             st.markdown(
@@ -635,7 +678,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Prezzi + Consegna, Stellina + Acquista
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
@@ -676,7 +718,6 @@ def render_product_card(p, tab_key="main"):
             with c_buy_sub:
                 st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
 
-        # 3. Colonna Destra: Scheda Feedback Ufficiale
         with col_fb:
             voto = p.get("voto_medio", 4.8)
             num_val = p.get("num_recensioni", 765)
@@ -710,7 +751,6 @@ def render_product_card(p, tab_key="main"):
             )
             st.markdown(feedback_full_html, unsafe_allow_html=True)
 
-        # 4. Colonna Destra Estrema: Pulsanti Social Verticali
         with col_social:
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
