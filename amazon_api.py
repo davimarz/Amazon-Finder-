@@ -91,7 +91,7 @@ def verifica_se_prime(item_tag, item_text):
     ]
     return any(seg in item_text for seg in segnali_prime)
 
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, item_count=10):
+def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
         termini.append(sottocategoria)
@@ -107,7 +107,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
-    # Parametro ufficiale Amazon per filtro Prime
     if solo_prime:
         base_url += "&rh=p_76%3A490209031"
 
@@ -243,7 +242,8 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if prezzo_iniziale > prezzo_prodotto and prezzo_iniziale > 0:
                     sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
                 
-                if sconto_val < min_discount:
+                # Filtraggio per intervallo di sconto (min e max)
+                if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
                     continue
 
                 asins_visti.add(asin)
