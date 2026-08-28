@@ -75,6 +75,22 @@ def estrai_costo_spedizione(item_tag):
 
     return 0.0, "Consegna standard"
 
+def verifica_se_prime(item_tag, item_text):
+    if item_tag.find(["i", "span"], class_=re.compile(r"a-icon-prime|s-prime|s-icon-text-medium", re.I)):
+        return True
+    if item_tag.find(attrs={"aria-label": re.compile(r"prime|amazon prime", re.I)}):
+        return True
+    
+    segnali_prime = [
+        "consegna senza costi aggiuntivi",
+        "spedizione gratuita con prime",
+        "consegna con prime",
+        "spedito da amazon",
+        "amazon prime",
+        "prime"
+    ]
+    return any(seg in item_text for seg in segnali_prime)
+
 def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, item_count=10):
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
@@ -91,7 +107,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
-    # Filtro Prime nativo Amazon
+    # Parametro ufficiale Amazon per filtro Prime
     if solo_prime:
         base_url += "&rh=p_76%3A490209031"
 
@@ -113,7 +129,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = (item_count // 10) + 6
+    max_pages = (item_count // 8) + 8
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -145,20 +161,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
                     continue
 
-                # Rilevamento accurato Prime
-                prime_icon = item.find("i", class_=re.compile(r"a-icon-prime", re.I))
-                prime_aria = item.find(attrs={"aria-label": re.compile(r"prime", re.I)})
-                prime_class = item.find(class_=re.compile(r"s-prime|s-icon-text-medium", re.I))
-                is_prime = bool(
-                    prime_icon or 
-                    prime_aria or 
-                    prime_class or 
-                    "consegna senza costi aggiuntivi" in item_text or 
-                    "spedizione gratuita con prime" in item_text or
-                    "amazon prime" in item_text
-                )
-
-                # Se il filtro Prime è attivo, scarta i non-Prime
+                is_prime = verifica_se_prime(item, item_text)
                 if solo_prime and not is_prime:
                     continue
 
