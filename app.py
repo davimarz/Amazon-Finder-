@@ -28,21 +28,21 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.10) !important;
     }
 
-    /* Immagine Prodotto Compatta */
-    .product-img-wrapper {
+    /* Immagine Ingrandita a Pieno Spazio */
+    .product-img-wrapper-full {
         width: 100%;
-        height: 125px;
+        height: 185px;
         display: flex;
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
         border: 1px solid #edf2f7;
-        border-radius: 6px;
+        border-radius: 8px;
         overflow: hidden;
-        padding: 3px;
+        padding: 4px;
     }
 
-    .product-img-wrapper img {
+    .product-img-wrapper-full img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
@@ -50,52 +50,50 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti Stellina */
+    /* Pulsante Preferiti Stellina Sotto i Prezzi */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
-        font-size: 1.35rem !important;
+        font-size: 1.45rem !important;
         color: #facc15 !important;
         cursor: pointer;
         box-shadow: none !important;
         min-height: auto !important;
-        line-height: 1 !important;
-        margin-top: 5px !important;
+        line-height: 1.3 !important;
     }
 
-    /* Pulsante Acquista Ristretto */
-    .buy-btn-compact {
+    /* Pulsante Acquista Sotto i Prezzi */
+    .buy-btn-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.78rem !important;
+        font-size: 0.82rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 5px 6px;
-        border-radius: 16px;
+        padding: 6px 10px;
+        border-radius: 18px;
         border: 1px solid #fcd200;
         text-align: center;
         width: 100%;
-        margin-top: 4px;
         box-shadow: 0 1px 3px rgba(213, 175, 0, 0.25);
         transition: background-color 0.15s ease;
         white-space: nowrap;
     }
 
-    .buy-btn-compact:hover {
+    .buy-btn-action:hover {
         background-color: #f7ca00;
         color: #0f1111 !important;
     }
 
-    /* Titolo in Blu Scuro Compatto */
+    /* Titolo in Blu Scuro */
     .deal-title {
         font-size: 0.88rem !important;
         font-weight: 800 !important;
         line-height: 1.3 !important;
-        color: #0a2540 !important; /* Blu Scuro */
+        color: #0a2540 !important;
         margin-bottom: 4px !important;
         display: -webkit-box;
         -webkit-line-clamp: 3;
@@ -104,7 +102,7 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Badge Consegna e Spedizione */
+    /* Badge Spedizione */
     .shipping-box {
         display: inline-flex;
         align-items: center;
@@ -139,7 +137,7 @@ st.markdown("""
         align-items: baseline;
         gap: 5px;
         flex-wrap: wrap;
-        margin-top: 2px !important;
+        margin: 2px 0 6px 0 !important;
     }
 
     .deal-badge {
@@ -165,7 +163,7 @@ st.markdown("""
         font-weight: 500;
     }
 
-    /* Scheda Feedback (Fedele a feedback.png) */
+    /* Scheda Feedback */
     .feedback-container {
         font-family: Arial, sans-serif;
         padding: 0 4px;
@@ -369,36 +367,23 @@ tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(
 
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
-        col_left, col_center, col_fb, col_social = st.columns([1.1, 1.4, 1.4, 0.3])
+        col_left, col_center, col_fb, col_social = st.columns([1.2, 1.5, 1.35, 0.3])
         
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Immagine e sotto [Stellina + Pulsante Acquista]
+        # 1. Colonna Sinistra: Foto Ingrandita che riempie lo spazio
         with col_left:
             img_url = p.get('immagine_url', '')
-            link = p.get('link_affiliato', '')
             st.markdown(
-                f"<div class='product-img-wrapper'><img src='{img_url}' alt='prodotto'></div>",
+                f"<div class='product-img-wrapper-full'><img src='{img_url}' alt='prodotto'></div>",
                 unsafe_allow_html=True
             )
-            
-            c_star_sub, c_buy_sub = st.columns([0.28, 0.72])
-            with c_star_sub:
-                if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
-                    if is_fav:
-                        rimuovi_preferito(p["asin"])
-                        st.session_state.preferiti_asin.pop(p["asin"], None)
-                    else:
-                        aggiungi_preferito(p)
-                        st.session_state.preferiti_asin[p["asin"]] = p
-                    st.rerun()
-            with c_buy_sub:
-                st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-compact'>🛒 Acquista</a>", unsafe_allow_html=True)
 
-        # 2. Colonna Centrale: Titolo Blu Scuro, Spedizione e Prezzi
+        # 2. Colonna Centrale: Titolo, Spedizione, Prezzi e sotto [Stellina + Acquista]
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
+            link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
             if p.get('info_spedizione'):
@@ -417,6 +402,20 @@ def render_product_card(p, tab_key="main"):
                 f"</div>",
                 unsafe_allow_html=True
             )
+
+            # Sottocolonne per Stellina + Pulsante Acquista posizionati sotto i prezzi
+            c_star_sub, c_buy_sub = st.columns([0.24, 0.76])
+            with c_star_sub:
+                if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
+                    if is_fav:
+                        rimuovi_preferito(p["asin"])
+                        st.session_state.preferiti_asin.pop(p["asin"], None)
+                    else:
+                        aggiungi_preferito(p)
+                        st.session_state.preferiti_asin[p["asin"]] = p
+                    st.rerun()
+            with c_buy_sub:
+                st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
 
         # 3. Colonna Destra: Scheda Feedback Ufficiale
         with col_fb:
@@ -605,7 +604,6 @@ with tab_cerca:
             else:
                 st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
-    # Griglia a 2 Colonne per Pagina
     if st.session_state.offerte:
         st.divider()
         for idx in range(0, len(st.session_state.offerte), 2):
