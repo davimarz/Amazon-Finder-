@@ -72,14 +72,10 @@ def verifica_se_spedizione_gratuita(item_tag, item_text):
     return True
 
 def pulisci_titolo_descrizione(titolo_grezzo):
-    """
-    Rimuove o riduce la parte iniziale della marca/brand per dare risalto alla descrizione reale.
-    """
     if not titolo_grezzo:
         return "Prodotto Amazon"
-    # Se il titolo contiene trattoni o separatori tipici della marca all'inizio (es. "MARCA - Descrizione")
     parti = re.split(r'\s*[-–—]\s*', titolo_grezzo, maxsplit=1)
-    if len(parti) > 1 and len(parti[0]) < 20:
+    if len(parti) > 1 and len(parti[0]) < 25:
         return parti[1].strip()
     return titolo_grezzo.strip()
 
