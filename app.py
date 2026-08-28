@@ -376,6 +376,7 @@ CATEGORIE = {
     ]
 }
 
+# Inizializzazione Session State
 if "preferiti_asin" not in st.session_state:
     salvati = ottieni_tutti_preferiti()
     st.session_state.preferiti_asin = {p["asin"]: p for p in salvati}
@@ -388,6 +389,12 @@ if "last_target_items" not in st.session_state:
 
 if "auto_search_triggered" not in st.session_state:
     st.session_state.auto_search_triggered = False
+
+if "keyword_input" not in st.session_state:
+    st.session_state.keyword_input = ""
+
+if "select_cat" not in st.session_state:
+    st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
 def trigger_search():
     st.session_state.auto_search_triggered = True
@@ -417,7 +424,7 @@ def render_product_card(p, tab_key="main"):
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Badge Spedizione e Dicitura Prime Ufficiale
+            # Spedizione e Badge Prime Ufficiale
             ship_html = ""
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
@@ -530,12 +537,24 @@ with tab_cerca:
 
     col_cat, col_subcat = st.columns(2)
     with col_cat:
-        cat_scelta = st.selectbox("Categoria Principale (se non usi la ricerca testuale):", list(CATEGORIE.keys()))
+        cat_scelta = st.selectbox(
+            "Categoria Principale (se non usi la ricerca testuale):",
+            list(CATEGORIE.keys()),
+            key="select_cat",
+            on_change=trigger_search
+        )
     with col_subcat:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
-        subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
+        if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
+            st.session_state.select_subcat = "Tutte"
+        subcat_scelta = st.selectbox(
+            "Sottocategoria:",
+            sottocategorie_disponibili,
+            key="select_subcat",
+            on_change=trigger_search
+        )
 
-    # 4 Colonne per Filtri: Flag Prime, Ordinamento, Prezzo Min/Max e Sconto
+    # Filtri: Flag Prime, Ordinamento, Prezzo Min/Max e Sconto
     col_prime, col_sort, col_pmin, col_pmax, col_disc = st.columns([0.8, 1.4, 1, 1, 1])
 
     with col_prime:
@@ -652,8 +671,8 @@ with tab_cerca:
             
             if risultati:
                 st.session_state.offerte = risultati
-                st.rerun()
             else:
+                st.session_state.offerte = []
                 st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
     if st.session_state.offerte:
