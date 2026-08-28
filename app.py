@@ -198,17 +198,32 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Pulsanti Top compatti e ridotti */
+    /* Regola per forzare le 3 colonne dei pulsanti Top su smartphone senza andare a capo */
+    .top-buttons-container [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+
+    .top-buttons-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: 33.333% !important;
+    }
+
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 6px !important;
-        font-weight: 700 !important;
-        font-size: 0.78rem !important;
-        padding: 4px 6px !important;
-        min-height: 30px !important;
-        height: 30px !important;
+        font-weight: 800 !important;
+        font-size: clamp(0.72rem, 2vw, 0.80rem) !important;
+        padding: 4px 2px !important;
+        min-height: 32px !important;
+        height: 32px !important;
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
@@ -260,7 +275,6 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti (Stella) su misura e allineato */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         border: 1px solid #3b82f6 !important;
@@ -278,7 +292,6 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    /* Pulsante Acquista Giallo compatto sulla stessa riga */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -503,7 +516,6 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* Linea divisoria evidente tra i prodotti */
     .custom-deal-divider {
         height: 2px;
         background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0.6) 50%, rgba(56, 189, 248, 0.1) 100%);
@@ -667,7 +679,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-            # Pulsante stella e acquista allineati sulla stessa riga
             c_star_sub, c_buy_sub = st.columns([0.25, 0.75])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
@@ -777,7 +788,6 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riquadro compatto con Spedizione e Prezzo Min/Max sulla stessa riga
     col_ship, col_prices_row, _ = st.columns([0.55, 0.85, 1.6])
 
     with col_ship:
@@ -835,9 +845,11 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Pulsanti Top: 3 colonne x 2 righe
-    col_btn_wrap, _ = st.columns([0.45, 0.55])
+    # Griglia 3 pulsanti x 2 righe (bloccata anche da smartphone)
+    col_btn_wrap, _ = st.columns([0.50, 0.50])
     with col_btn_wrap:
+        st.markdown('<div class="top-buttons-container">', unsafe_allow_html=True)
+        
         # Riga 1: Top 10, Top 20, Top 30
         r1_c1, r1_c2, r1_c3 = st.columns(3)
         with r1_c1:
@@ -855,6 +867,8 @@ with tab_cerca:
             btn_70 = st.button("🚀 Top 70", use_container_width=True)
         with r2_c3:
             btn_100 = st.button("🚀 Top 100", use_container_width=True)
+            
+        st.markdown('</div>', unsafe_allow_html=True)
 
     target_items = None
     if btn_10:
