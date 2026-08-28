@@ -51,8 +51,6 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
 
 def estrai_costo_spedizione(item_tag):
     testo_completo = item_tag.text.lower()
-
-    # Cerca esplicitamente se c'è un costo di spedizione a pagamento
     match_generico = re.search(r'(?:€\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))', testo_completo, re.IGNORECASE)
     if match_generico:
         val_str = next(v for v in match_generico.groups() if v is not None)
@@ -62,26 +60,15 @@ def estrai_costo_spedizione(item_tag):
                 return costo, f"Consegna a €{costo:.2f}"
         except ValueError:
             pass
-
-    if any(k in testo_completo for k in ["consegna a €", "+ spedizione di €"]):
-        # Se c'è un match con prezzo ma fallisce la regex sopra, analizza meglio
-        pass
-
     return 0.0, "Spedizione gratuita"
 
 def verifica_se_spedizione_gratuita(item_tag, item_text):
-    """
-    Rileva se il prodotto ha spedizione gratuita o standard inclusa.
-    Esclude solo i prodotti che mostrano in modo inequivocabile un costo di spedizione aggiuntivo a pagamento.
-    """
     if "+ spedizione" in item_text or "di spedizione" in item_text:
-        # Controlla se c'è un importo maggiore di zero associato alla spedizione
         match = re.search(r'(?:spedizione.*?(\d+[.,]\d{2})\s*€)|(?:(\d+[.,]\d{2})\s*€.*?spedizione)', item_text)
         if match:
             val = float(next(v for v in match.groups() if v is not None).replace(",", "."))
             if val > 0:
                 return False
-
     return True
 
 def ottieni_offerte_avanzate(
@@ -97,7 +84,6 @@ def ottieni_offerte_avanzate(
     item_count=10
 ):
     termini = []
-    
     clean_keyword = keyword.strip()
     asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.IGNORECASE)
     if asin_url_match:
@@ -278,7 +264,6 @@ def ottieni_offerte_avanzate(
     except Exception as e:
         print(f"Errore Scraping: {e}")
 
-    # Fallback di sicurezza: se la ricerca con filtro rigido non ha prodotto risultati, riprova senza forzare il filtro di spedizione a monte
     if not prodotti and solo_spedizione_gratuita and clean_keyword:
         return ottieni_offerte_avanzate(
             categoria=categoria,
