@@ -55,7 +55,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
-    # Parametri URL di Amazon in Euro interi
     if min_price is not None and min_price > 0:
         base_url += f"&low-price={int(min_price)}"
 
@@ -126,7 +125,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if prezzo_prodotto <= 0.0:
                     continue
 
-                # Controllo Limiti di Prezzo
+                # Controllo Limiti di Prezzo Min e Max
                 if min_price is not None and min_price > 0 and prezzo_prodotto < min_price:
                     continue
 
@@ -139,7 +138,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
 
                 costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
-                # Controllo Filtro Spedizione Gratuita
+                # Controllo Spedizione Gratuita
                 if solo_spedizione_gratuita:
                     is_free = (costo_spedizione == 0.0) or ("gratuit" in info_spedizione.lower()) or ("prime" in item_text)
                     if not is_free:
@@ -156,7 +155,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
 
-                # Prezzo di Listino e Sconto
+                # Prezzo di Listino e Calcolo Sconto
                 prezzo_iniziale = prezzo_prodotto
                 basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"})
                 if not basis_price:
