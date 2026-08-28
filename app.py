@@ -50,7 +50,7 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti Stellina Sotto i Prezzi */
+    /* Pulsante Preferiti Stellina */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: transparent !important;
         border: none !important;
@@ -102,7 +102,15 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    /* Badge Spedizione */
+    /* Rigo Spedizione e Badge Prime */
+    .delivery-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-bottom: 4px !important;
+    }
+
     .shipping-box {
         display: inline-flex;
         align-items: center;
@@ -113,7 +121,6 @@ st.markdown("""
         border-radius: 3px;
         font-size: 0.72rem !important;
         font-weight: 700;
-        margin-bottom: 4px !important;
         width: fit-content;
     }
 
@@ -127,8 +134,25 @@ st.markdown("""
         border-radius: 3px;
         font-size: 0.72rem !important;
         font-weight: 700;
-        margin-bottom: 4px !important;
         width: fit-content;
+    }
+
+    .prime-badge {
+        display: inline-flex;
+        align-items: center;
+        color: #00a8e1 !important;
+        font-family: Arial, sans-serif;
+        font-style: italic;
+        font-weight: 900;
+        font-size: 0.88rem !important;
+        letter-spacing: -0.3px;
+        text-shadow: 0 0 1px rgba(0, 168, 225, 0.4);
+    }
+
+    .prime-check {
+        color: #ff9900;
+        font-style: normal;
+        margin-right: 1px;
     }
 
     /* Prezzi */
@@ -283,7 +307,6 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* Responsive per Smartphone */
     @media (max-width: 900px) {
         .social-share-col {
             flex-direction: row !important;
@@ -380,16 +403,23 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Spedizione, Prezzi e sotto [Stellina + Acquista]
+        # 2. Colonna Centrale: Titolo, Spedizione/Prime, Prezzi e sotto [Stellina + Acquista]
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
+            # Badge Spedizione e Dicitura Prime
+            ship_html = ""
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
                 ship_class = "shipping-free" if is_free else "shipping-box"
-                st.markdown(f"<div class='{ship_class}'>🚚 {p['info_spedizione']}</div>", unsafe_allow_html=True)
+                ship_html = f"<span class='{ship_class}'>🚚 {p['info_spedizione']}</span>"
+
+            prime_html = "<span class='prime-badge'><span class='prime-check'>✔</span>prime</span>" if p.get("is_prime") else ""
+
+            if ship_html or prime_html:
+                st.markdown(f"<div class='delivery-row'>{ship_html}{prime_html}</div>", unsafe_allow_html=True)
 
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
@@ -497,18 +527,8 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    col_ship, col_sort, col_pmin, col_pmax, col_disc = st.columns([1.1, 1.3, 1, 1, 1])
-    
-    with col_ship:
-        st.write("")
-        st.write("")
-        solo_sped_gratis = st.checkbox(
-            "🚚 Sped. Gratuita",
-            value=False,
-            key="check_sped_gratis",
-            on_change=trigger_search,
-            help="Mostra solo i prodotti con spedizione o consegna gratuita"
-        )
+    # 4 Colonne per Ordinamento, Prezzo Min, Prezzo Max e Sconto Minimo
+    col_sort, col_pmin, col_pmax, col_disc = st.columns([1.3, 1, 1, 1])
 
     with col_sort:
         opzioni_ordinamento = list(SORT_MAPPINGS.keys())
@@ -604,7 +624,6 @@ with tab_cerca:
                 sottocategoria=subcat_pulita,
                 keyword=keyword_libera.strip(),
                 sort_type=ranking_scelto,
-                solo_spedizione_gratuita=solo_sped_gratis,
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=sconto_minimo,
