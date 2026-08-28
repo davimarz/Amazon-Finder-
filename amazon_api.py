@@ -52,24 +52,18 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
 def estrai_costo_spedizione(item_tag):
     testo_completo = item_tag.text.lower()
 
-    match_consegna_a = re.search(r'consegna\s+a\s*€?\s*(\d+[.,]\d{2})|consegna\s+a\s*(\d+[.,]\d{2})\s*€', testo_completo, re.IGNORECASE)
-    if match_consegna_a:
-        val_str = next(v for v in match_consegna_a.groups() if v is not None)
-        try:
-            costo = float(val_str.replace(",", "."))
-            return costo, f"Consegna a €{costo:.2f}"
-        except ValueError:
-            pass
-
-    if any(k in testo_completo for k in ["consegna senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "gratis", "prime"]):
+    # Se il testo contiene indicatori espliciti di gratuità, restituisce sempre 0 e Spedizione gratuita
+    if any(k in testo_completo for k in ["consegna senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "gratis", "prime", "senza costi aggiuntivi"]):
         return 0.0, "Spedizione gratuita"
 
-    match_generico = re.search(r'(?:€\s*(\d+[.,]\d{2})\s*di\s*spedizione)|(?:(\d+[.,]\d{2})\s*€\s*di\s*spedizione)|(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))', testo_completo, re.IGNORECASE)
+    # Cerca solo pattern di spedizione a pagamento evidenti ed espliciti
+    match_generico = re.search(r'(?:€\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))', testo_completo, re.IGNORECASE)
     if match_generico:
         val_str = next(v for v in match_generico.groups() if v is not None)
         try:
             costo = float(val_str.replace(",", "."))
-            return costo, f"Consegna a €{costo:.2f}"
+            if costo > 0:
+                return costo, f"Consegna a €{costo:.2f}"
         except ValueError:
             pass
 
@@ -80,6 +74,7 @@ def verifica_se_spedizione_gratuita(item_tag, item_text):
         "spedizione gratuita",
         "consegna gratuita",
         "consegna senza costi aggiuntivi",
+        "senza costi aggiuntivi",
         "gratis",
         "prime",
         "spedizione gratis"
@@ -87,7 +82,8 @@ def verifica_se_spedizione_gratuita(item_tag, item_text):
     if any(k in item_text for k in parole_chiave_free):
         return True
     
-    if " più spedizione" not in item_text and "di spedizione" not in item_text:
+    # Se non viene menzionata alcuna spesa di spedizione a pagamento, considerala gratuita di default
+    if " di spedizione" not in item_text and "+ spedizione" not in item_text:
         return True
 
     return False
