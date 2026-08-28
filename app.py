@@ -613,7 +613,7 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA CON TESTO AGGIORNATO ---
+# --- BLOCCO VETRINA CON OFFERTA LAMPO E AVVISO PREZZO ---
 col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
@@ -629,8 +629,11 @@ with col_head_right:
         prod_vetrina = verifica_prezzo_reale_vetrina(prod_vetrina)
 
         st.markdown(
-            "<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>"
-            "⚡ OFFERTA LAMPO: attenzione che il prezzo di questo oggetto proposto varia in tempo reale."
+            "<div style='font-size: 0.85rem; font-weight: 800; color: #facc15; margin-bottom: 2px;'>"
+            "⚡ OFFERTA LAMPO:"
+            "</div>"
+            "<div style='font-size: 0.80rem; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;'>"
+            "attenzione che il prezzo di questo oggetto proposto varia in tempo reale."
             "</div>", 
             unsafe_allow_html=True
         )
@@ -677,6 +680,10 @@ with col_head_right:
         st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
+
+# --- BARRA DI SEPARAZIONE E TITOLO "Cerca il tuo prodotto" SOPRA I FILTRI ---
+st.divider()
+st.markdown("<h3 style='color: #38bdf8; font-size: 1.35rem; font-weight: 800; margin-bottom: 12px;'>🔍 Cerca il tuo prodotto</h3>", unsafe_allow_html=True)
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
 
