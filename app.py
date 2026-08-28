@@ -612,19 +612,12 @@ st.markdown("""
         <span class="ai-badge">AI</span>
     </div>
     <div class="hero-author-tag">
-        Realizzato con cura da <strong>Davide Marziano</strong>
+        Realizzato da <strong>Davide Marziano</strong>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 st.divider()
-
-# --- TITOLO "Cerca il tuo prodotto" CON SFONDO VERDE CHIARO ---
-st.markdown("""
-<div style="background-color: #d1fae5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
-    <h3 style="color: #065f46; font-size: 1.35rem; font-weight: 800; margin: 0;">Cerca il tuo prodotto</h3>
-</div>
-""", unsafe_allow_html=True)
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
 
@@ -671,7 +664,7 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-            # Pulsante stella e acquista perfettamente allineati sulla stessa riga
+            # Pulsante stella e acquista allineati sulla stessa riga
             c_star_sub, c_buy_sub = st.columns([0.25, 0.75])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
@@ -756,7 +749,7 @@ with tab_cerca:
 
         with col_kw:
             keyword_libera = st.text_input(
-                "🔍 Ricerca Testuale Diretta:",
+                "🔍 Inserisci cosa vuoi cercare:",
                 placeholder="Es. cuffie bluetooth, notebook...",
                 key="keyword_input",
                 on_change=trigger_search
@@ -925,7 +918,6 @@ with tab_cerca:
                 with col_r:
                     render_product_card(offerte_da_mostrare[idx + 1], tab_key=f"search_{idx + 1}")
             
-            # Linea di separazione orizzontale visibile tra i prodotti
             st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
 
 with tab_preferiti:
@@ -943,5 +935,4 @@ with tab_preferiti:
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
             
-            # Linea di separazione orizzontale visibile tra i preferiti
             st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
