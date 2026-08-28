@@ -592,8 +592,8 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-if "vetrina_seed" not in st.session_state:
-    st.session_state.vetrina_seed = random.randint(0, 10000)
+# Forza il cambio casuale ad ogni ricaricamento/apertura pagina
+st.session_state.vetrina_seed = random.randint(0, 1000000)
 
 def trigger_search():
     st.session_state.auto_search_triggered = True
@@ -614,18 +614,17 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA CON OFFERTA LAMPO AGGIORNATA LIVE ---
+# --- BLOCCO VETRINA CON OFFERTA LAMPO AGGIORNATA A OGNI REFRESH ---
 col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
-    @st.cache_data(ttl=15)
+    @st.cache_data(ttl=5)
     def ottieni_offerta_vetrina():
-        lista = ottieni_offerte_pagina_speciale(item_count=40)
-        return lista
+        return ottieni_offerte_pagina_speciale(item_count=40)
 
     lista_vetrina = ottieni_offerta_vetrina()
     if lista_vetrina:
-        rnd_idx = (st.session_state.vetrina_seed + int(time.time())) % len(lista_vetrina)
+        rnd_idx = (st.session_state.vetrina_seed + int(time.time() * 1000)) % len(lista_vetrina)
         prod_vetrina = lista_vetrina[rnd_idx]
         
         # Verifica e aggiorna il prezzo reale in tempo reale prima di visualizzarlo
