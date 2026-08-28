@@ -265,7 +265,7 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti (Stella) stile screenshot */
+    /* Pulsante Preferiti (Stella) */
     div[data-testid="stButton"] button[key^="fav_"],
     div[data-testid="stButton"] button[key^="vetrina_fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
@@ -284,7 +284,7 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    /* Pulsante Acquista Giallo stile screenshot */
+    /* Pulsante Acquista Giallo */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -492,6 +492,7 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
+    /* Adattamento Responsive Specifico per Smartphone */
     @media (max-width: 900px) {
         div[data-testid="stRadio"] {
             flex-direction: column !important;
@@ -502,6 +503,18 @@ st.markdown("""
             justify-content: center !important;
             gap: 6px;
             margin-top: 6px;
+        }
+        /* Ottimizzazione pulsante acquista e stella sulla stessa riga su mobile */
+        .buy-btn-action {
+            max-width: 100% !important;
+            font-size: 0.75rem !important;
+            padding: 4px 6px !important;
+            min-height: 34px !important;
+        }
+        div[data-testid="stButton"] button[key^="vetrina_fav_"] {
+            min-height: 34px !important;
+            height: 34px !important;
+            font-size: 0.95rem !important;
         }
     }
 </style>
@@ -583,7 +596,6 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-# Gestione randomizzazione offerta lampo al ricaricamento pagina
 if "vetrina_seed" not in st.session_state:
     st.session_state.vetrina_seed = random.randint(0, 10000)
 
@@ -612,7 +624,6 @@ col_head_left, col_head_right = st.columns([0.2, 1.8])
 with col_head_right:
     @st.cache_data(ttl=15)
     def ottieni_offerta_vetrina():
-        # Estrae dalla pagina Offerta Lampo / Sconti Amazon
         offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=40)
         if not offerte_vetrina:
             offerte_vetrina = ottieni_offerte_avanzate(keyword="sconto", item_count=40)
@@ -620,8 +631,7 @@ with col_head_right:
 
     lista_vetrina = ottieni_offerta_vetrina()
     if lista_vetrina:
-        # Selezione randomica basata sul seed di sessione per cambiare ad ogni reload
-        rnd_idx = (st.session_state.vetrina_seed + int(time.time())) % len(lista_vetrina)
+        rnd_idx = (st.session_state.vetrina_seed + int(time.time() // 5)) % len(lista_vetrina)
         prod_vetrina = lista_vetrina[rnd_idx]
 
         st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>⚡ OFFERTA LAMPO</div>", unsafe_allow_html=True)
@@ -631,7 +641,7 @@ with col_head_right:
         
         with vc1:
             img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-full'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='product-img-wrapper-full' style='height:185px;'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
         
         with vc2:
             v_tit = prod_vetrina.get('titolo', '')
@@ -652,7 +662,7 @@ with col_head_right:
             v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
             v_star = "⭐" if v_fav else "☆"
             
-            vc_star, vc_buy, _ = st.columns([0.22, 0.55, 0.23])
+            vc_star, vc_buy = st.columns([0.25, 0.75])
             with vc_star:
                 if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
                     if v_fav:
