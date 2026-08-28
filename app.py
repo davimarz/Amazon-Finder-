@@ -83,14 +83,6 @@ st.markdown("""
         font-weight: 700;
     }
 
-    .vetrina-compact-wrapper {
-        background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 10px !important;
-        padding: 6px 8px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-    }
-
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
         color: #e2e8f0 !important;
@@ -681,7 +673,6 @@ with col_vetrina:
             unsafe_allow_html=True
         )
         
-        st.markdown("<div class='vetrina-compact-wrapper'>", unsafe_allow_html=True)
         vc1, vc2 = st.columns([0.8, 2.2])
         
         with vc1:
@@ -720,8 +711,6 @@ with col_vetrina:
                 f"</div>",
                 unsafe_allow_html=True
             )
-        
-        st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -854,194 +843,3 @@ def render_product_card(p, tab_key="main"):
                 f"</div>",
                 unsafe_allow_html=True
             )
-
-with tab_cerca:
-    col_r1_wrap, _ = st.columns([0.55, 0.45])
-    with col_r1_wrap:
-        col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
-
-        with col_kw:
-            keyword_libera = st.text_input(
-                "🔍 Ricerca Testuale Diretta:",
-                placeholder="Es. cuffie bluetooth, notebook...",
-                key="keyword_input",
-                on_change=trigger_search
-            )
-
-        with col_cat:
-            cat_scelta = st.selectbox(
-                "Categoria Principale:",
-                list(CATEGORIE.keys()),
-                key="select_cat",
-                on_change=trigger_search
-            )
-
-        with col_subcat:
-            sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
-            if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
-                st.session_state.select_subcat = "Tutte"
-            subcat_scelta = st.selectbox(
-                "Sottocategoria:",
-                sottocategorie_disponibili,
-                key="select_subcat",
-                on_change=trigger_search
-            )
-
-    col_ship, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
-
-    with col_ship:
-        solo_sped_gratis = st.checkbox(
-            "🚚 Sped. gratuita",
-            value=False,
-            key="check_sped_gratis",
-            on_change=trigger_search,
-            help="Mostra solo prodotti con spedizione o consegna gratuita"
-        )
-
-    with col_pmin:
-        prezzo_min = st.number_input(
-            "Prezzo Min (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
-            placeholder="Min...",
-            key="input_pmin",
-            on_change=trigger_search,
-            help="Lascia vuoto per nessun limite minimo"
-        )
-
-    with col_pmax:
-        prezzo_max = st.number_input(
-            "Prezzo Max (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
-            placeholder="Max...",
-            key="input_pmax",
-            on_change=trigger_search,
-            help="Lascia vuoto per nessun limite massimo"
-        )
-
-    opzioni_ordinamento = list(SORT_MAPPINGS.keys())
-    ranking_scelto = st.radio(
-        "🏷️ Ordinamento:",
-        opzioni_ordinamento,
-        index=0,
-        horizontal=True,
-        key="radio_sort",
-        on_change=trigger_search
-    )
-
-    label_sconto_scelto = st.radio(
-        "🔥 Sconto minimo:",
-        list(OPZIONI_SCONTO.keys()),
-        index=0,
-        horizontal=True,
-        key="radio_disc",
-        on_change=trigger_search
-    )
-    min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
-
-    col_btn_wrap, _ = st.columns([0.50, 0.50])
-    with col_btn_wrap:
-        b1, b2, b3, b4, b5, b6 = st.columns(6)
-        with b1:
-            btn_10 = st.button("🚀 Top 10", use_container_width=True)
-        with b2:
-            btn_20 = st.button("🚀 Top 20", use_container_width=True)
-        with b3:
-            btn_30 = st.button("🚀 Top 30", use_container_width=True)
-        with b4:
-            btn_50 = st.button("🚀 Top 50", use_container_width=True)
-        with b5:
-            btn_70 = st.button("🚀 Top 70", use_container_width=True)
-        with b6:
-            btn_100 = st.button("🚀 Top 100", use_container_width=True)
-
-    target_items = None
-    if btn_10:
-        target_items = 10
-        st.session_state.last_target_items = 10
-    elif btn_20:
-        target_items = 20
-        st.session_state.last_target_items = 20
-    elif btn_30:
-        target_items = 30
-        st.session_state.last_target_items = 30
-    elif btn_50:
-        target_items = 50
-        st.session_state.last_target_items = 50
-    elif btn_70:
-        target_items = 70
-        st.session_state.last_target_items = 70
-    elif btn_100:
-        target_items = 100
-        st.session_state.last_target_items = 100
-    elif st.session_state.auto_search_triggered or (keyword_libera.strip() and st.session_state.get("keyword_input") != keyword_libera):
-        target_items = st.session_state.last_target_items
-        st.session_state.auto_search_triggered = False
-
-    if 'min_disc' not in locals():
-        min_disc, max_disc = 0, 100
-
-    if target_items is not None or keyword_libera.strip():
-        if target_items is None:
-            target_items = st.session_state.last_target_items
-        
-        with st.spinner(f"Estrazione dei Top {target_items} prodotti in corso..."):
-            usa_testo = bool(keyword_libera.strip())
-            cat_pulita = "" if usa_testo else cat_scelta.split(" ", 1)[-1]
-            subcat_pulita = "" if usa_testo or subcat_scelta == "Tutte" else subcat_scelta
-            
-            val_min = float(prezzo_min) if (prezzo_min is not None and prezzo_min > 0) else None
-            val_max = float(prezzo_max) if (prezzo_max is not None and prezzo_max > 0) else None
-            if val_min and val_max and val_min > val_max:
-                val_min, val_max = val_max, val_min
-
-            risultati = ottieni_offerte_avanzate(
-                categoria=cat_pulita,
-                sottocategoria=subcat_pulita,
-                keyword=keyword_libera.strip(),
-                sort_type=ranking_scelto,
-                solo_spedizione_gratuita=solo_sped_gratis,
-                min_price=val_min,
-                max_price=val_max,
-                min_discount=min_disc,
-                max_discount=max_discount,
-                item_count=target_items
-            )
-            
-            if risultati:
-                st.session_state.offerte = risultati
-            else:
-                st.session_state.offerte = []
-                st.warning("Nessun prodotto trovato con i filtri selezionati.")
-
-    offerte_da_mostrare = st.session_state.offerte
-    if solo_sped_gratis and offerte_da_mostrare:
-        offerte_da_mostrare = [p for p in offerte_da_mostrare if p.get("is_sped_gratis")]
-
-    if offerte_da_mostrare:
-        st.divider()
-        for idx in range(0, len(offerte_da_mostrare), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(offerte_da_mostrare[idx], tab_key=f"search_{idx}")
-            if idx + 1 < len(offerte_da_mostrare):
-                with col_r:
-                    render_product_card(offerte_da_mostrare[idx + 1], tab_key=f"search_{idx + 1}")
-
-with tab_preferiti:
-    lista_preferiti = list(st.session_state.preferiti_asin.values())
-    if not lista_preferiti:
-        st.info("Nessun prodotto nei preferiti. Clicca sulla stellina (☆) accanto a qualsiasi prodotto per salvarlo qui!")
-    else:
-        st.markdown(f"Hai **{len(lista_preferiti)}** prodotti salvati nella tua lista privata:")
-        st.write("")
-        for idx in range(0, len(lista_preferiti), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(lista_preferiti[idx], tab_key=f"fav_{idx}")
-            if idx + 1 < len(lista_preferiti):
-                with col_r:
-                    render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
