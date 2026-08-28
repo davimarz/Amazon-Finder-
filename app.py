@@ -300,30 +300,53 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* Stile per Flag / Radio orizzontali */
-    div[data-testid="stRadio"] > div {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    
-    div[data-testid="stRadio"] label {
-        background: #f1f5f9;
-        padding: 4px 10px;
-        border-radius: 6px;
-        border: 1px solid #cbd5e1;
-        cursor: pointer;
-        font-size: 0.82rem !important;
-        font-weight: 600;
-        transition: all 0.15s ease;
+    /* Allineamento Orizzontale Inline per i Flag Radio */
+    div[data-testid="stRadio"] {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+        margin-bottom: 4px !important;
     }
 
-    div[data-testid="stRadio"] label:hover {
-        background: #e2e8f0;
-        border-color: #0284c7;
+    div[data-testid="stRadio"] > label {
+        margin-bottom: 0px !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        white-space: nowrap !important;
+        font-size: 0.85rem !important;
+    }
+
+    div[data-testid="stRadio"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        align-items: center !important;
+    }
+    
+    div[data-testid="stRadio"] label[data-baseweb="radio"] {
+        background: #f8fafc !important;
+        padding: 3px 8px !important;
+        border-radius: 6px !important;
+        border: 1px solid #cbd5e1 !important;
+        cursor: pointer !important;
+        font-size: 0.80rem !important;
+        font-weight: 600 !important;
+        margin: 0 !important;
+        transition: all 0.15s ease !important;
+    }
+
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
+        background: #f1f5f9 !important;
+        border-color: #0284c7 !important;
     }
 
     @media (max-width: 900px) {
+        div[data-testid="stRadio"] {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+        }
         .social-share-col {
             flex-direction: row !important;
             justify-content: center !important;
@@ -385,12 +408,12 @@ CATEGORIE = {
 }
 
 OPZIONI_SCONTO = {
-    "Tutti (0%)": 0,
-    "-10% o più": 10,
-    "-20% o più": 20,
-    "-30% o più": 30,
-    "-50% o più": 50,
-    "-70% o più": 70
+    "Tutti": 0,
+    "-10%": 10,
+    "-20%": 20,
+    "-30%": 30,
+    "-50%": 50,
+    "-70%": 70
 }
 
 # Inizializzazione Session State
@@ -610,7 +633,7 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite massimo"
         )
 
-    # Riga 3: Flag Ordinamento
+    # Riga 3: Flag Ordinamento sulla stessa riga
     opzioni_ordinamento = list(SORT_MAPPINGS.keys())
     ranking_scelto = st.radio(
         "🏷️ Ordinamento:",
@@ -621,7 +644,7 @@ with tab_cerca:
         on_change=trigger_search
     )
 
-    # Riga 4: Flag Sconto Minimo
+    # Riga 4: Flag Sconto Minimo sulla stessa riga
     label_sconto_scelto = st.radio(
         "🔥 Sconto Minimo:",
         list(OPZIONI_SCONTO.keys()),
