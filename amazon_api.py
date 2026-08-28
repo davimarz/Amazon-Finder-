@@ -91,6 +91,10 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
+    # Filtro Prime nativo Amazon se abilitato
+    if solo_prime:
+        base_url += "&rh=p_76%3A490209031"
+
     if min_price is not None and min_price > 0:
         base_url += f"&low-price={int(min_price)}"
 
@@ -109,7 +113,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = (item_count // 12) + 5
+    max_pages = (item_count // 10) + 6
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -170,9 +174,10 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
                     continue
 
-                # Rilevamento presenza di Amazon Prime
-                prime_elem = item.find("i", class_=re.compile(r"a-icon-prime", re.I)) or item.find("span", class_=re.compile(r"a-icon-prime", re.I))
-                is_prime = bool(prime_elem or "prime" in item_text or "amazon prime" in item_text)
+                # Rilevamento accurato Prime
+                prime_icon = item.find("i", class_=re.compile(r"a-icon-prime", re.I))
+                prime_span = item.find(attrs={"aria-label": re.compile(r"Prime", re.I)})
+                is_prime = bool(prime_icon or prime_span or "prime" in item_text or "amazon prime" in item_text)
 
                 if solo_prime and not is_prime:
                     continue
