@@ -269,7 +269,6 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
-# Stato per memorizzare l'ultimo target di ricerca e il trigger automatico
 if "last_target_items" not in st.session_state:
     st.session_state.last_target_items = 10
 
@@ -375,7 +374,20 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    col_sort, col_pmin, col_pmax, col_disc = st.columns([1.3, 1, 1, 1])
+    # 5 Colonne: Checkbox Spedizione, Ordinamento, Prezzo Min, Prezzo Max, Sconto Minimo
+    col_ship, col_sort, col_pmin, col_pmax, col_disc = st.columns([1.1, 1.3, 1, 1, 1])
+    
+    with col_ship:
+        st.write("")
+        st.write("")
+        solo_sped_gratis = st.checkbox(
+            "🚚 Sped. Gratuita",
+            value=False,
+            key="check_sped_gratis",
+            on_change=trigger_search,
+            help="Mostra solo i prodotti con spedizione o consegna gratuita"
+        )
+
     with col_sort:
         opzioni_ordinamento = list(SORT_MAPPINGS.keys())
         default_index = opzioni_ordinamento.index("Prezzo: dal più basso") if "Prezzo: dal più basso" in opzioni_ordinamento else 0
@@ -456,6 +468,7 @@ with tab_cerca:
                 sottocategoria=subcat_pulita,
                 keyword=keyword_libera.strip(),
                 sort_type=ranking_scelto,
+                solo_spedizione_gratuita=solo_sped_gratis,
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=sconto_minimo,
