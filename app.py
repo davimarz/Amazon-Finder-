@@ -108,7 +108,7 @@ st.markdown("""
         letter-spacing: 0.2px;
     }
 
-    /* Campi Input (Testo e Numeri) */
+    /* Campi Input */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -138,20 +138,30 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* Checkbox Prime allineato */
+    /* Checkbox Prime Ufficiale */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 5px 12px !important;
+        padding: 6px 12px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.14) !important;
         width: fit-content !important;
-        margin-top: 2px !important;
+        margin-top: 18px !important;
+        transition: border-color 0.15s ease, background 0.15s ease !important;
     }
 
-    div[data-testid="stCheckbox"] label span {
-        color: #f8fafc !important;
-        font-weight: 800 !important;
-        font-size: 0.88rem !important;
+    div[data-testid="stCheckbox"]:hover {
+        border-color: #00a8e1 !important;
+        background: rgba(0, 168, 225, 0.10) !important;
+    }
+
+    div[data-testid="stCheckbox"] label p {
+        font-family: "Amazon Ember", Arial, sans-serif !important;
+        font-size: 1.05rem !important;
+        font-weight: 900 !important;
+        color: #00a8e1 !important;
+        font-style: italic !important;
+        letter-spacing: -0.3px !important;
+        margin: 0 !important;
     }
 
     /* Radio Buttons / Flag Orizzontali */
@@ -201,7 +211,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Pulsanti Top Risultati Compatti */
+    /* Pulsanti Top Risultati */
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
@@ -771,8 +781,17 @@ with tab_cerca:
             on_change=trigger_search
         )
 
-    # Riga 2: Prezzo Min e Prezzo Max dimezzati su una sola riga
-    col_pmin, col_pmax, _ = st.columns([1, 1, 2.2])
+    # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
+    col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
+
+    with col_prime:
+        solo_prime = st.checkbox(
+            ":orange[✔] prime",
+            value=False,
+            key="check_prime",
+            on_change=trigger_search,
+            help="Mostra solo prodotti idonei ad Amazon Prime"
+        )
 
     with col_pmin:
         prezzo_min = st.number_input(
@@ -798,29 +817,16 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite massimo"
         )
 
-    # Riga 3: Gruppo Ordinamento con Flag Prime affiancato
-    col_sort, col_prime = st.columns([3.4, 0.9])
-    
-    with col_sort:
-        opzioni_ordinamento = list(SORT_MAPPINGS.keys())
-        ranking_scelto = st.radio(
-            "🏷️ Ordinamento:",
-            opzioni_ordinamento,
-            index=0,
-            horizontal=True,
-            key="radio_sort",
-            on_change=trigger_search
-        )
-
-    with col_prime:
-        st.write("")
-        solo_prime = st.checkbox(
-            "✔ Prime",
-            value=False,
-            key="check_prime",
-            on_change=trigger_search,
-            help="Mostra solo prodotti idonei ad Amazon Prime"
-        )
+    # Riga 3: Flag Ordinamento
+    opzioni_ordinamento = list(SORT_MAPPINGS.keys())
+    ranking_scelto = st.radio(
+        "🏷️ Ordinamento:",
+        opzioni_ordinamento,
+        index=0,
+        horizontal=True,
+        key="radio_sort",
+        on_change=trigger_search
+    )
 
     # Riga 4: Flag Sconto Minimo
     label_sconto_scelto = st.radio(
