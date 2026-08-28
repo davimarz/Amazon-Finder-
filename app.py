@@ -109,7 +109,7 @@ st.markdown("""
         margin-bottom: 3px !important;
     }
 
-    /* Campi Input con altezza standard confortevole */
+    /* Campi Input */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -128,7 +128,7 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Selectbox con altezza standard confortevole */
+    /* Selectbox */
     div[data-baseweb="select"] > div {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -219,7 +219,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Pulsanti Top Risultati (Altezza standard completa) */
+    /* Pulsanti Top Risultati */
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
@@ -276,17 +276,21 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti Stellina */
+    /* Pulsante Preferiti Stellina a Sinistra */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
-        font-size: 1.45rem !important;
+        font-size: 1.55rem !important;
         color: #facc15 !important;
         cursor: pointer;
         box-shadow: none !important;
-        min-height: auto !important;
-        line-height: 1.3 !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        line-height: 1 !important;
     }
 
     /* Pulsante Acquista */
@@ -296,14 +300,15 @@ st.markdown("""
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.82rem !important;
+        font-size: 0.84rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 6px 10px;
+        padding: 8px 10px;
         border-radius: 18px;
         border: 1px solid #fcd200;
         text-align: center;
         width: 100%;
+        min-height: 38px;
         box-shadow: 0 2px 6px rgba(213, 175, 0, 0.35);
         transition: background-color 0.15s ease;
         white-space: nowrap;
@@ -327,12 +332,32 @@ st.markdown("""
         min-height: 3.4em;
     }
 
-    .delivery-prime-container {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin: 2px 0 4px 0 !important;
+    /* Riga Unica: Prezzi a Sinistra + Consegna/Prime a Destra */
+    .price-delivery-split-row {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin: 4px 0 6px 0 !important;
+    }
+
+    .price-subgroup-left {
+        display: flex !important;
+        align-items: baseline !important;
+        gap: 5px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .delivery-subgroup-right {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 5px !important;
+        margin-left: auto !important;
+        flex-wrap: wrap !important;
+        text-align: right !important;
     }
 
     .shipping-badge-text {
@@ -343,8 +368,9 @@ st.markdown("""
         border: 1px solid rgba(34, 197, 94, 0.35) !important;
         padding: 1px 6px;
         border-radius: 3px;
-        font-size: 0.72rem !important;
+        font-size: 0.70rem !important;
         font-weight: 700;
+        white-space: nowrap;
     }
 
     .prime-badge-official {
@@ -354,6 +380,7 @@ st.markdown("""
         font-size: 0.95rem;
         line-height: 1;
         letter-spacing: -0.4px;
+        white-space: nowrap;
     }
 
     .prime-check-mark {
@@ -371,14 +398,6 @@ st.markdown("""
         font-size: 0.96rem !important;
     }
 
-    .price-container-styled {
-        display: flex;
-        align-items: baseline;
-        gap: 5px;
-        flex-wrap: wrap;
-        margin: 2px 0 2px 0 !important;
-    }
-
     .deal-badge {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #ffffff;
@@ -389,7 +408,7 @@ st.markdown("""
     }
 
     .deal-price-final {
-        font-size: 1.30rem !important;
+        font-size: 1.25rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
@@ -397,12 +416,13 @@ st.markdown("""
     }
 
     .deal-price-old {
-        font-size: 0.80rem !important;
+        font-size: 0.78rem !important;
         color: #94a3b8 !important;
         text-decoration: line-through;
         font-weight: 500;
     }
 
+    /* Feedback */
     .feedback-container {
         font-family: Arial, sans-serif;
         background: #ffffff;
@@ -485,6 +505,7 @@ st.markdown("""
         font-weight: 500;
     }
 
+    /* Social Colonna Verticale */
     .social-share-col {
         display: flex;
         flex-direction: column;
@@ -652,34 +673,40 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 2. Colonna Centrale: Titolo, Prezzi, Prime e sotto [Stellina + Acquista]
+        # 2. Colonna Centrale: Titolo, Prezzi + Consegna a destra, Stellina + Acquista
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Prezzi
+            # Blocco Prezzi (Sinistra)
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
-
-            st.markdown(
-                f"<div class='price-container-styled'>"
+            prices_sub_html = (
+                f"<div class='price-subgroup-left'>"
                 f"{badge_html}"
                 f"<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>"
                 f"{old_price_html}"
+                f"</div>"
+            )
+
+            # Blocco Consegna & Prime (Destra)
+            prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
+            ship_text = p.get('info_spedizione', 'Consegna senza costi aggiuntivi')
+            ship_html = f"<span class='shipping-badge-text'>{ship_text}</span>" if ship_text else ""
+            delivery_sub_html = f"<div class='delivery-subgroup-right'>{prime_html}{ship_html}</div>"
+
+            # Riga Unica Prezzi + Consegna Allineata a Destra
+            st.markdown(
+                f"<div class='price-delivery-split-row'>"
+                f"{prices_sub_html}"
+                f"{delivery_sub_html}"
                 f"</div>",
                 unsafe_allow_html=True
             )
 
-            # Badge Prime Ufficiale e Spedizione sotto il prezzo
-            prime_html = "<span class='prime-badge-official'><span class='prime-check-mark'>✔</span><span class='prime-text-cyan'>prime</span></span>" if p.get("is_prime") else ""
-            ship_text = p.get('info_spedizione', 'Consegna senza costi aggiuntivi')
-            ship_html = f"<span class='shipping-badge-text'>{ship_text}</span>" if ship_text else ""
-
-            st.markdown(f"<div class='delivery-prime-container'>{prime_html}{ship_html}</div>", unsafe_allow_html=True)
-
-            # Stellina + Tasto Acquista
-            c_star_sub, c_buy_sub = st.columns([0.24, 0.76])
+            # Stellina a Sinistra + Tasto Acquista su Un'unica Riga
+            c_star_sub, c_buy_sub = st.columns([0.18, 0.82])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
                     if is_fav:
