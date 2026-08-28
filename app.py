@@ -749,7 +749,7 @@ with tab_cerca:
 
         with col_kw:
             keyword_libera = st.text_input(
-                "🔍 Inserisci cosa vuoi cercare:",
+                "🔍 Scrivi cosa ti serve:",
                 placeholder="Es. cuffie bluetooth, notebook...",
                 key="keyword_input",
                 on_change=trigger_search
@@ -774,7 +774,8 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    col_ship, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
+    # Riquadro compatto con Spedizione e Prezzo Min/Max sulla stessa riga
+    col_ship, col_prices_row, _ = st.columns([0.55, 0.85, 1.6])
 
     with col_ship:
         solo_sped_gratis = st.checkbox(
@@ -785,29 +786,31 @@ with tab_cerca:
             help="Mostra solo prodotti con spedizione o consegna gratuita"
         )
 
-    with col_pmin:
-        prezzo_min = st.number_input(
-            "Prezzo Min (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
-            placeholder="Min...",
-            key="input_pmin",
-            on_change=trigger_search,
-            help="Lascia vuoto per nessun limite minimo"
-        )
+    with col_prices_row:
+        col_pmin, col_pmax = st.columns(2)
+        with col_pmin:
+            prezzo_min = st.number_input(
+                "Prezzo Min (€):",
+                min_value=0.0,
+                value=None,
+                step=1.0,
+                placeholder="Min...",
+                key="input_pmin",
+                on_change=trigger_search,
+                help="Lascia vuoto per nessun limite minimo"
+            )
 
-    with col_pmax:
-        prezzo_max = st.number_input(
-            "Prezzo Max (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
-            placeholder="Max...",
-            key="input_pmax",
-            on_change=trigger_search,
-            help="Lascia vuoto per nessun limite massimo"
-        )
+        with col_pmax:
+            prezzo_max = st.number_input(
+                "Prezzo Max (€):",
+                min_value=0.0,
+                value=None,
+                step=1.0,
+                placeholder="Max...",
+                key="input_pmax",
+                on_change=trigger_search,
+                help="Lascia vuoto per nessun limite massimo"
+            )
 
     opzioni_ordinamento = list(SORT_MAPPINGS.keys())
     ranking_scelto = st.radio(
@@ -829,20 +832,17 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    col_btn_wrap, _ = st.columns([0.50, 0.50])
+    # Pulsanti Top disposti in 2 colonne
+    col_btn_wrap, _ = st.columns([0.35, 0.65])
     with col_btn_wrap:
-        b1, b2, b3, b4, b5, b6 = st.columns(6)
-        with b1:
+        b_col1, b_col2 = st.columns(2)
+        with b_col1:
             btn_10 = st.button("🚀 Top 10", use_container_width=True)
-        with b2:
             btn_20 = st.button("🚀 Top 20", use_container_width=True)
-        with b3:
             btn_30 = st.button("🚀 Top 30", use_container_width=True)
-        with b4:
+        with b_col2:
             btn_50 = st.button("🚀 Top 50", use_container_width=True)
-        with b5:
             btn_70 = st.button("🚀 Top 70", use_container_width=True)
-        with b6:
             btn_100 = st.button("🚀 Top 100", use_container_width=True)
 
     target_items = None
