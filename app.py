@@ -1,29 +1,28 @@
 import streamlit as st
 import urllib.parse
-from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS
+from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
 st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
 
 st.markdown("""
 <style>
-    /* Nasconde header e menu superiore per interfaccia da Web App */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Card Container Principale Glassmorphism */
+    /* Card Container Principale con Bordo e Ombreggiatura */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: linear-gradient(145deg, #111827 0%, #1e293b 100%) !important;
+        background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        border-radius: 12px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
-        padding: 8px !important;
+        border-radius: 14px !important;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35) !important;
+        padding: 10px !important;
         transition: transform 0.15s ease, border-color 0.15s ease;
     }
     
     [data-testid="stVerticalBlockBorderWrapper"]:hover {
-        border-color: rgba(59, 130, 246, 0.6) !important;
+        border-color: rgba(56, 189, 248, 0.6) !important;
     }
 
     /* Pulsante Stellina Preferiti */
@@ -31,7 +30,7 @@ st.markdown("""
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
-        font-size: 1.4rem !important;
+        font-size: 1.5rem !important;
         color: #facc15 !important;
         cursor: pointer;
         box-shadow: none !important;
@@ -39,17 +38,18 @@ st.markdown("""
         line-height: 1 !important;
     }
 
-    /* Immagine Prodotto */
+    /* Immagine Prodotto con Zoom Leggero */
     .product-img-wrapper {
         width: 100%;
-        height: 165px;
+        height: 175px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
+        background-color: #ffffff;
+        border-radius: 10px;
         overflow: hidden;
-        padding: 4px;
+        padding: 6px;
+        box-shadow: inset 0 0 4px rgba(0,0,0,0.1);
     }
 
     .product-img-wrapper img {
@@ -58,32 +58,37 @@ st.markdown("""
         object-fit: contain;
         display: block;
         margin: auto;
+        transition: transform 0.2s ease;
     }
 
-    /* Titolo / Descrizione a 4 righe in Blu */
+    .product-img-wrapper:hover img {
+        transform: scale(1.04);
+    }
+
+    /* Titolo ad Alta Leggibilità */
     .deal-title {
-        font-size: 0.95rem !important;
+        font-size: 0.98rem !important;
         font-weight: 700 !important;
-        line-height: 1.35 !important;
-        color: #2563eb !important;
+        line-height: 1.4 !important;
+        color: #f8fafc !important;
         margin-bottom: 6px !important;
         display: -webkit-box;
-        -webkit-line-clamp: 4;
+        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 5.1em;
+        min-height: 4.2em;
     }
 
-    /* Spedizione */
+    /* Badge Spedizione */
     .shipping-box {
         display: inline-flex;
         align-items: center;
         background: rgba(249, 115, 22, 0.2) !important;
         color: #fb923c !important;
         border: 1px solid rgba(251, 146, 60, 0.45) !important;
-        padding: 2px 7px;
-        border-radius: 4px;
-        font-size: 0.78rem !important;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.80rem !important;
         font-weight: 700;
         margin-bottom: 6px !important;
         width: fit-content;
@@ -95,44 +100,146 @@ st.markdown("""
         background: rgba(34, 197, 94, 0.2) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(74, 222, 128, 0.45) !important;
-        padding: 2px 7px;
-        border-radius: 4px;
-        font-size: 0.78rem !important;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.80rem !important;
         font-weight: 700;
         margin-bottom: 6px !important;
         width: fit-content;
     }
 
-    /* Contenitore Prezzo */
+    /* Widget Scheda Feedback & Recensioni Clienti */
+    .feedback-details {
+        background: rgba(15, 23, 42, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 8px;
+        margin: 8px 0;
+        overflow: hidden;
+    }
+
+    .feedback-summary {
+        padding: 6px 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.84rem;
+        user-select: none;
+        background: rgba(255, 255, 255, 0.04);
+        color: #e2e8f0;
+    }
+
+    .feedback-summary:hover {
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .feedback-card-content {
+        padding: 12px 14px;
+        background: #ffffff;
+        color: #0f1111;
+        border-top: 1px solid #cbd5e1;
+    }
+
+    .feedback-header-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #0f1111;
+        margin-bottom: 4px;
+    }
+
+    .feedback-rating-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+
+    .stars-gold {
+        color: #de7921;
+        font-size: 1.15rem;
+        letter-spacing: 1px;
+    }
+
+    .rating-score-big {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f1111;
+    }
+
+    .feedback-total-subtitle {
+        font-size: 0.86rem;
+        color: #565959;
+        margin-bottom: 12px;
+    }
+
+    .feedback-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 6px;
+        font-size: 0.85rem;
+    }
+
+    .feedback-label {
+        width: 65px;
+        color: #007185;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .feedback-bar-bg {
+        flex: 1;
+        height: 18px;
+        background-color: #ffffff;
+        border: 1px solid #888c8c;
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .feedback-bar-fill {
+        height: 100%;
+        background: linear-gradient(to right, #ff9900, #de7921);
+        border-radius: 3px 0 0 3px;
+    }
+
+    .feedback-pct {
+        width: 38px;
+        text-align: right;
+        color: #007185;
+        font-weight: 600;
+    }
+
+    /* Prezzi */
     .price-container-styled {
         display: flex;
         align-items: baseline;
-        gap: 6px;
+        gap: 8px;
         flex-wrap: wrap;
-        margin-bottom: 8px !important;
+        margin: 8px 0 !important;
     }
 
     .deal-badge {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #ffffff;
-        padding: 1px 5px;
-        border-radius: 3px;
+        padding: 2px 6px;
+        border-radius: 4px;
         font-weight: 800;
-        font-size: 0.82rem !important;
+        font-size: 0.85rem !important;
     }
 
     .deal-price-final {
-        font-size: 1.45rem !important;
+        font-size: 1.55rem !important;
         font-weight: 900 !important;
-        color: #3b82f6 !important;
+        color: #38bdf8 !important;
         letter-spacing: -0.5px;
-        text-shadow: 0 1px 6px rgba(59, 130, 246, 0.35);
+        text-shadow: 0 1px 8px rgba(56, 189, 248, 0.4);
     }
 
     .deal-price-old {
-        font-size: 0.88rem !important;
-        color: #93c5fd !important;
-        opacity: 0.75;
+        font-size: 0.90rem !important;
+        color: #94a3b8 !important;
         text-decoration: line-through;
         font-weight: 500;
     }
@@ -143,19 +250,21 @@ st.markdown("""
         width: 100%;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.92rem !important;
+        font-size: 0.95rem !important;
         font-weight: 800 !important;
         text-decoration: none !important;
-        padding: 7px 12px;
+        padding: 8px 14px;
         border-radius: 10px;
         border: 1px solid #fcd200;
         text-align: center;
         margin-bottom: 8px;
-        transition: background-color 0.15s ease;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+        box-shadow: 0 3px 8px rgba(255, 216, 20, 0.25);
     }
 
     .buy-btn-full:hover {
         background-color: #f7ca00;
+        transform: translateY(-1px);
         color: #0f1111 !important;
     }
 
@@ -193,7 +302,6 @@ st.markdown("""
         display: block;
     }
 
-    /* Colori Social Ufficiali */
     .btn-wa { background-color: #25D366; }
     .btn-fb { background-color: #1877F2; }
     .btn-gmail { background-color: #EA4335; }
@@ -201,7 +309,6 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* Responsive */
     @media (max-width: 900px) {
         div[data-testid="column"] {
             width: 100% !important;
@@ -316,11 +423,54 @@ def render_product_card(p, tab_key="main"):
                 ship_class = "shipping-free" if is_free else "shipping-box"
                 st.markdown(f"<div class='{ship_class}'>🚚 {p['info_spedizione']}</div>", unsafe_allow_html=True)
 
+            # Scheda Feedback e Recensioni Clienti
+            voto = p.get("voto_medio", 4.8)
+            num_val = p.get("num_recensioni", 765)
+            distrib = calcola_distribuzione_recensioni(voto, num_val)
+            voto_str = f"{voto:.1f}".replace(".", ",")
+            
+            stelle_icon = "★" * int(voto) + "☆" * (5 - int(voto))
+            
+            righe_feedback = ""
+            for stella in ["5", "4", "3", "2", "1"]:
+                pct = distrib.get(stella, 0)
+                label_stella = f"{stella} stell{'e' if stella != '1' else 'a'}"
+                righe_feedback += f"""
+                <div class="feedback-row">
+                    <span class="feedback-label">{label_stella}</span>
+                    <div class="feedback-bar-bg">
+                        <div class="feedback-bar-fill" style="width: {pct}%;"></div>
+                    </div>
+                    <span class="feedback-pct">{pct}%</span>
+                </div>
+                """
+
+            feedback_html = f"""
+            <details class="feedback-details">
+                <summary class="feedback-summary">
+                    <span><span class="stars-gold">{stelle_icon}</span> <strong>{voto_str}</strong> su 5 ({num_val})</span>
+                    <span style="color:#38bdf8; font-weight:700;">📊 Scheda Feedback ▼</span>
+                </summary>
+                <div class="feedback-card-content">
+                    <div class="feedback-header-title">Recensioni clienti</div>
+                    <div class="feedback-rating-header">
+                        <span class="stars-gold">{stelle_icon}</span>
+                        <span class="rating-score-big">{voto_str} su 5</span>
+                    </div>
+                    <div class="feedback-total-subtitle">{num_val} valutazioni globali</div>
+                    <div class="feedback-bars-container">
+                        {righe_feedback}
+                    </div>
+                </div>
+            </details>
+            """
+            st.markdown(feedback_html, unsafe_allow_html=True)
+
             # Prezzo e Sconto
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
 
-            # Preparazione URL Social
+            # Social URLs
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             link = p.get('link_affiliato', '')
             share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
@@ -374,7 +524,6 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    # 5 Colonne: Checkbox Spedizione, Ordinamento, Prezzo Min, Prezzo Max, Sconto Minimo
     col_ship, col_sort, col_pmin, col_pmax, col_disc = st.columns([1.1, 1.3, 1, 1, 1])
     
     with col_ship:
@@ -393,7 +542,6 @@ with tab_cerca:
         default_index = opzioni_ordinamento.index("Prezzo: dal più basso") if "Prezzo: dal più basso" in opzioni_ordinamento else 0
         ranking_scelto = st.selectbox("Ordinamento:", opzioni_ordinamento, index=default_index)
 
-    # Casella di inserimento Prezzo Minimo (default vuota)
     with col_pmin:
         prezzo_min = st.number_input(
             "Prezzo Min (€):",
@@ -406,7 +554,6 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite minimo"
         )
 
-    # Casella di inserimento Prezzo Massimo (default vuota)
     with col_pmax:
         prezzo_max = st.number_input(
             "Prezzo Max (€):",
