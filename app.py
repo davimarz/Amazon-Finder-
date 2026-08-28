@@ -2,7 +2,7 @@ import streamlit as st
 import time
 import random
 import urllib.parse
-from amazon_api import ottieni_offerte_avanzate, ottieni_offerte_eventi_deals, SORT_MAPPINGS, calcola_distribuzione_recensioni
+from amazon_api import ottieni_offerte_avanzate, ottieni_offerte_eventi_deals, ottieni_offerte_pagina_speciale, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
 st.set_page_config(page_title="Scaladeiturchi | Offerte Amazon AI", layout="wide")
@@ -265,7 +265,6 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti (Stella) */
     div[data-testid="stButton"] button[key^="fav_"],
     div[data-testid="stButton"] button[key^="vetrina_fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
@@ -284,7 +283,6 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    /* Pulsante Acquista Giallo */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -616,13 +614,13 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA CON OFFERTA LAMPO DIRETTAMENTE DAGLI EVENTI DEALS ---
+# --- BLOCCO VETRINA CON OFFERTA LAMPO DALLA PAGINA DEL GIORNO ---
 col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
     @st.cache_data(ttl=15)
     def ottieni_offerta_vetrina():
-        return ottieni_offerte_eventi_deals(item_count=35)
+        return ottieni_offerte_pagina_speciale(item_count=40)
 
     lista_vetrina = ottieni_offerta_vetrina()
     if lista_vetrina:
