@@ -143,7 +143,7 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Checkbox Prime */
+    /* Checkbox Prime Ufficiale */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 12px !important;
@@ -845,7 +845,7 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riga 2: Flag Prime + Prezzo Min e Prezzo Max
+    # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
     col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
 
     with col_prime:
@@ -892,7 +892,7 @@ with tab_cerca:
         on_change=trigger_search
     )
 
-    # Riga 4: Flag Sconto: [Tutti] -> [🔥 Sconto minimo:] -> [da 0 al 20%] -> [dal 20 al 50%] -> [oltre il 50%]
+    # Riga 4: Flag Sconto Minimo
     label_sconto_scelto = st.radio(
         "🔥 Sconto minimo:",
         list(OPZIONI_SCONTO.keys()),
