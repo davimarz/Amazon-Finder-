@@ -76,9 +76,9 @@ def pulisci_titolo_descrizione(titolo_grezzo):
         return "Prodotto Amazon"
     return titolo_grezzo.strip()
 
-def ottieni_offerte_eventi_deals(item_count=30):
-    """Estrae i prodotti direttamente dalla pagina ufficiale amazon.it/events/deals"""
-    url = "https://www.amazon.it/events/deals"
+def ottieni_offerte_pagina_speciale(item_count=40):
+    """Estrae i prodotti direttamente dall'URL specifico delle offerte del giorno"""
+    url = "https://www.amazon.it/offerte-del-giorno/s?k=offerte+del+giorno"
     headers = {
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -96,7 +96,6 @@ def ottieni_offerte_eventi_deals(item_count=30):
         response = session.get(url, headers=headers, timeout=15)
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
-            # Cerca sia i risultati standard che i blocchi griglia delle offerte eventi
             items = soup.find_all("div", {"data-component-type": "s-search-result"})
             if not items:
                 items = soup.find_all("div", attrs={"data-asin": True})
@@ -136,7 +135,7 @@ def ottieni_offerte_eventi_deals(item_count=30):
                     continue
 
                 title_tag = item.find("h2") or item.find("span", {"class": "a-size-base-plus"})
-                titolo_grezzo = title_tag.get_text(strip=True) if title_tag else "Offerta Lampo Amazon"
+                titolo_grezzo = title_tag.get_text(strip=True) if title_tag else "Offerta del Giorno"
                 titolo_completo = pulisci_titolo_descrizione(titolo_grezzo)
 
                 img_tag = item.find("img", {"class": "s-image"})
@@ -159,7 +158,7 @@ def ottieni_offerte_eventi_deals(item_count=30):
                     "link_affiliato": link_affiliato
                 })
     except Exception as e:
-        print(f"Errore recupero deals: {e}")
+        print(f"Errore recupero offerte del giorno: {e}")
 
     return prodotti
 
