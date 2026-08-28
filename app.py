@@ -7,7 +7,7 @@ st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
 
 st.markdown("""
 <style>
-    /* Nasconde header e menu superiore */
+    /* Nasconde header e menu superiore per interfaccia da Web App */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
@@ -60,7 +60,7 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Titolo / Descrizione in Blu Scuro */
+    /* Titolo / Descrizione a 4 righe in Blu */
     .deal-title {
         font-size: 0.95rem !important;
         font-weight: 700 !important;
@@ -103,7 +103,7 @@ st.markdown("""
         width: fit-content;
     }
 
-    /* Contenitore Rigo Prezzo */
+    /* Contenitore Prezzo */
     .price-container-styled {
         display: flex;
         align-items: baseline;
@@ -193,7 +193,7 @@ st.markdown("""
         display: block;
     }
 
-    /* Colori Social */
+    /* Colori Social Ufficiali */
     .btn-wa { background-color: #25D366; }
     .btn-fb { background-color: #1877F2; }
     .btn-gmail { background-color: #EA4335; }
@@ -310,7 +310,7 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
-            # Info Spedizione
+            # Spedizione
             if p.get('info_spedizione'):
                 is_free = "gratuit" in p['info_spedizione'].lower() or p.get('costo_spedizione', 0.0) == 0.0
                 ship_class = "shipping-free" if is_free else "shipping-box"
@@ -393,28 +393,30 @@ with tab_cerca:
         default_index = opzioni_ordinamento.index("Prezzo: dal più basso") if "Prezzo: dal più basso" in opzioni_ordinamento else 0
         ranking_scelto = st.selectbox("Ordinamento:", opzioni_ordinamento, index=default_index)
 
+    # Casella di inserimento Prezzo Minimo (default vuota)
     with col_pmin:
-        prezzo_min = st.slider(
+        prezzo_min = st.number_input(
             "Prezzo Min (€):",
-            min_value=0,
-            max_value=500,
-            value=0,
-            step=5,
-            help="0 = Nessun limite minimo",
-            key="slider_pmin",
-            on_change=trigger_search
+            min_value=0.0,
+            value=None,
+            step=1.0,
+            placeholder="Min...",
+            key="input_pmin",
+            on_change=trigger_search,
+            help="Lascia vuoto per nessun limite minimo"
         )
 
+    # Casella di inserimento Prezzo Massimo (default vuota)
     with col_pmax:
-        prezzo_max = st.slider(
+        prezzo_max = st.number_input(
             "Prezzo Max (€):",
-            min_value=0,
-            max_value=500,
-            value=0,
-            step=5,
-            help="0 = Nessun limite massimo",
-            key="slider_pmax",
-            on_change=trigger_search
+            min_value=0.0,
+            value=None,
+            step=1.0,
+            placeholder="Max...",
+            key="input_pmax",
+            on_change=trigger_search,
+            help="Lascia vuoto per nessun limite massimo"
         )
 
     with col_disc:
@@ -458,8 +460,8 @@ with tab_cerca:
             cat_pulita = "" if usa_testo else cat_scelta.split(" ", 1)[-1]
             subcat_pulita = "" if usa_testo or subcat_scelta == "Tutte" else subcat_scelta
             
-            val_min = float(prezzo_min) if prezzo_min > 0 else None
-            val_max = float(prezzo_max) if prezzo_max > 0 else None
+            val_min = float(prezzo_min) if (prezzo_min is not None and prezzo_min > 0) else None
+            val_max = float(prezzo_max) if (prezzo_max is not None and prezzo_max > 0) else None
             if val_min and val_max and val_min > val_max:
                 val_min, val_max = val_max, val_min
 
