@@ -50,7 +50,7 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
 def estrai_costo_spedizione(item_tag):
-    testo_completo = item_tag.text
+    testo_completo = item_tag.text.lower()
 
     match_consegna_a = re.search(r'consegna\s+a\s*€?\s*(\d+[.,]\d{2})|consegna\s+a\s*(\d+[.,]\d{2})\s*€', testo_completo, re.IGNORECASE)
     if match_consegna_a:
@@ -61,8 +61,8 @@ def estrai_costo_spedizione(item_tag):
         except ValueError:
             pass
 
-    if any(k in testo_completo.lower() for k in ["consegna senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "prime"]):
-        return 0.0, "Consegna senza costi aggiuntivi"
+    if any(k in testo_completo for k in ["consegna senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "gratis", "prime"]):
+        return 0.0, "Spedizione gratuita"
 
     match_generico = re.search(r'(?:€\s*(\d+[.,]\d{2})\s*di\s*spedizione)|(?:(\d+[.,]\d{2})\s*€\s*di\s*spedizione)|(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))', testo_completo, re.IGNORECASE)
     if match_generico:
@@ -73,43 +73,33 @@ def estrai_costo_spedizione(item_tag):
         except ValueError:
             pass
 
-    return 0.0, "Consegna standard"
+    return 0.0, "Spedizione gratuita"
 
-def verifica_se_prime(item_tag, item_text):
-    # 1. Controllo icone e classi CSS Amazon Prime
-    if item_tag.find(["i", "span", "em", "div"], class_=re.compile(r"a-icon-prime|s-prime|s-icon-text-medium|s-prime-label|prime", re.I)):
+def verifica_se_spedizione_gratuita(item_tag, item_text):
+    """
+    Rileva se il prodotto offre la spedizione o consegna gratuita.
+    """
+    parole_chiave_free = [
+        "spedizione gratuita",
+        "consegna gratuita",
+        "consegna senza costi aggiuntivi",
+        "gratis",
+        "prime",
+        "spedizione gratis"
+    ]
+    # Se il testo contiene parole di spedizione gratuita o non menziona costi di spedizione a pagamento
+    if any(k in item_text for k in parole_chiave_free):
         return True
     
-    # 2. Controllo attributi aria-label e data-prime
-    if item_tag.find(attrs={"aria-label": re.compile(r"prime|amazon prime|consegna senza costi aggiuntivi", re.I)}):
-        return True
-    if item_tag.find(attrs={"data-prime": "true"}):
+    # Se non ci sono indicazioni di prezzo di spedizione esplicito a pagamento
+    if " più spedizione" not in item_text and "di spedizione" not in item_text:
         return True
 
-    # 3. Controllo immagini Prime
-    if item_tag.find("img", attrs={"alt": re.compile(r"prime", re.I)}) or item_tag.find("img", attrs={"src": re.compile(r"prime", re.I)}):
-        return True
+    return False
 
-    # 4. Pattern testuali estesi inclusivi per prodotti con logistica/spedizione Prime
-    segnali_prime = [
-        "consegna senza costi aggiuntivi",
-        "spedizione gratuita con prime",
-        "consegna gratuita con prime",
-        "consegna con prime",
-        "ricevilo entro",
-        "consegna più rapida",
-        "consegna domani",
-        "spedito da amazon",
-        "gestito da amazon",
-        "amazon prime",
-        "prime"
-    ]
-    return any(seg in item_text for seg in segnali_prime)
-
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
+def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
     termini = []
     
-    # Se viene incollato un link Amazon, estrae l'ASIN esatto
     clean_keyword = keyword.strip()
     asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.IGNORECASE)
     if asin_url_match:
@@ -179,11 +169,8 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
                     continue
 
-                is_prime = verifica_se_prime(item, item_text)
-                
-                # Se è stata cercata un'offerta specifica o link esatto e non ha il flag testuale nel feed di ricerca,
-                # considera idoneo se è spedito/gestito
-                if solo_prime and not is_prime:
+                is_sped_gratis = verifica_se_spedizione_gratuita(item, item_text)
+                if solo_spedizione_gratuita and not is_sped_gratis:
                     continue
 
                 prezzo_prodotto = 0.0
@@ -276,7 +263,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     "titolo": titolo_completo,
                     "costo_spedizione": costo_spedizione,
                     "info_spedizione": info_spedizione,
-                    "is_prime": is_prime,
+                    "is_sped_gratis": is_sped_gratis,
                     "prezzo_iniziale": prezzo_iniziale,
                     "prezzo_finale": prezzo_prodotto,
                     "sconto": sconto_perc,
