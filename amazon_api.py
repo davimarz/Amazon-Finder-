@@ -75,7 +75,7 @@ def estrai_costo_spedizione(item_tag):
 
     return 0.0, "Consegna non specificata"
 
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", min_price=None, max_price=None, min_discount=0, item_count=10):
+def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, item_count=10):
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
         termini.append(sottocategoria)
@@ -170,11 +170,14 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
                     continue
 
-                costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
-
                 # Rilevamento presenza di Amazon Prime
                 prime_elem = item.find("i", class_=re.compile(r"a-icon-prime", re.I)) or item.find("span", class_=re.compile(r"a-icon-prime", re.I))
                 is_prime = bool(prime_elem or "prime" in item_text or "amazon prime" in item_text)
+
+                if solo_prime and not is_prime:
+                    continue
+
+                costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
                 voto_medio = 4.8
                 num_recensioni = 765
