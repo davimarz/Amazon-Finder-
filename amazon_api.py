@@ -14,7 +14,6 @@ SORT_MAPPINGS = {
 }
 
 def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
-    """Calcola la ripartizione percentuale delle 5 stelle in base al voto medio."""
     v = max(1.0, min(5.0, float(voto_medio))) if voto_medio else 4.5
     
     if v >= 4.8:
@@ -76,7 +75,7 @@ def estrai_costo_spedizione(item_tag):
 
     return 0.0, "Consegna non specificata"
 
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, item_count=10):
+def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", min_price=None, max_price=None, min_discount=0, item_count=10):
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
         termini.append(sottocategoria)
@@ -138,7 +137,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if not asin or asin in asins_visti:
                     continue
 
-                # Prezzo Finale
                 prezzo_prodotto = 0.0
                 price_whole = item.find("span", {"class": "a-price-whole"})
                 price_fraction = item.find("span", {"class": "a-price-fraction"})
@@ -174,12 +172,10 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
 
                 costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
-                if solo_spedizione_gratuita:
-                    is_free = (costo_spedizione == 0.0) or ("gratuit" in info_spedizione.lower()) or ("prime" in item_text)
-                    if not is_free:
-                        continue
+                # Rilevamento presenza di Amazon Prime
+                prime_elem = item.find("i", class_=re.compile(r"a-icon-prime", re.I)) or item.find("span", class_=re.compile(r"a-icon-prime", re.I))
+                is_prime = bool(prime_elem or "prime" in item_text or "amazon prime" in item_text)
 
-                # Estrazione Voto e Numero Recensioni
                 voto_medio = 4.8
                 num_recensioni = 765
                 
@@ -211,7 +207,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
 
-                # Prezzo di Listino
                 prezzo_iniziale = prezzo_prodotto
                 basis_price = item.find("span", {"class": "a-price", "data-a-strike": "true"}) or item.find("span", {"class": "a-text-price"})
 
@@ -240,6 +235,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     "titolo": titolo_completo,
                     "costo_spedizione": costo_spedizione,
                     "info_spedizione": info_spedizione,
+                    "is_prime": is_prime,
                     "prezzo_iniziale": prezzo_iniziale,
                     "prezzo_finale": prezzo_prodotto,
                     "sconto": sconto_perc,
