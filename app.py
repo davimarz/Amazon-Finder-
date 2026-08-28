@@ -98,7 +98,7 @@ st.markdown("""
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         border-radius: 8px !important;
-        min-height: 38px !important;
+        min-height: 36px !important;
     }
 
     div[data-baseweb="input"]:focus-within {
@@ -109,7 +109,8 @@ st.markdown("""
     div[data-baseweb="input"] input {
         color: #f8fafc !important;
         font-weight: 600 !important;
-        font-size: 0.84rem !important;
+        font-size: 0.82rem !important;
+        padding: 4px 8px !important;
     }
 
     div[data-baseweb="select"] > div {
@@ -198,41 +199,59 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Regola per forzare le 3 colonne dei pulsanti Top su smartphone senza andare a capo */
-    .top-buttons-container [data-testid="stHorizontalBlock"] {
+    /* Griglia Prezzo Minimo e Massimo in un'unica riga anche da mobile */
+    .prices-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         gap: 6px !important;
         width: 100% !important;
-        margin-bottom: 6px !important;
     }
 
-    .top-buttons-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+    .prices-single-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
         flex: 1 1 0% !important;
         min-width: 0 !important;
-        width: 33.333% !important;
+        width: 50% !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]) {
+    /* Griglia 6 Pulsanti Top in una sola riga orizzontale anche da mobile */
+    .top-single-row-container [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-top: 4px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .top-single-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: 16.666% !important;
+    }
+
+    .top-single-row-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 6px !important;
         font-weight: 800 !important;
-        font-size: clamp(0.72rem, 2vw, 0.80rem) !important;
-        padding: 4px 2px !important;
-        min-height: 32px !important;
-        height: 32px !important;
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+        font-size: clamp(0.64rem, 1.8vw, 0.78rem) !important;
+        padding: 4px 1px !important;
+        min-height: 30px !important;
+        height: 30px !important;
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
         width: 100% !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
+    .top-single-row-container div[data-testid="stButton"] button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.45) !important;
+        box-shadow: 0 4px 10px rgba(56, 189, 248, 0.45) !important;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -788,6 +807,7 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
+    # Riquadro compatto con Spedizione e Prezzo Min/Max bloccati su un'unica riga
     col_ship, col_prices_row, _ = st.columns([0.55, 0.85, 1.6])
 
     with col_ship:
@@ -800,6 +820,7 @@ with tab_cerca:
         )
 
     with col_prices_row:
+        st.markdown('<div class="prices-single-row-container">', unsafe_allow_html=True)
         col_pmin, col_pmax = st.columns(2)
         with col_pmin:
             prezzo_min = st.number_input(
@@ -824,6 +845,7 @@ with tab_cerca:
                 on_change=trigger_search,
                 help="Lascia vuoto per nessun limite massimo"
             )
+        st.markdown('</div>', unsafe_allow_html=True)
 
     opzioni_ordinamento = list(SORT_MAPPINGS.keys())
     ranking_scelto = st.radio(
@@ -845,29 +867,23 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Griglia 3 pulsanti x 2 righe (bloccata anche da smartphone)
-    col_btn_wrap, _ = st.columns([0.50, 0.50])
+    # Griglia con tutti e 6 i pulsanti Top su un'unica riga orizzontale
+    col_btn_wrap, _ = st.columns([0.70, 0.30])
     with col_btn_wrap:
-        st.markdown('<div class="top-buttons-container">', unsafe_allow_html=True)
-        
-        # Riga 1: Top 10, Top 20, Top 30
-        r1_c1, r1_c2, r1_c3 = st.columns(3)
-        with r1_c1:
-            btn_10 = st.button("🚀 Top 10", use_container_width=True)
-        with r1_c2:
-            btn_20 = st.button("🚀 Top 20", use_container_width=True)
-        with r1_c3:
-            btn_30 = st.button("🚀 Top 30", use_container_width=True)
-        
-        # Riga 2: Top 50, Top 70, Top 100
-        r2_c1, r2_c2, r2_c3 = st.columns(3)
-        with r2_c1:
-            btn_50 = st.button("🚀 Top 50", use_container_width=True)
-        with r2_c2:
-            btn_70 = st.button("🚀 Top 70", use_container_width=True)
-        with r2_c3:
-            btn_100 = st.button("🚀 Top 100", use_container_width=True)
-            
+        st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
+        t1, t2, t3, t4, t5, t6 = st.columns(6)
+        with t1:
+            btn_10 = st.button("Top 10", use_container_width=True)
+        with t2:
+            btn_20 = st.button("Top 20", use_container_width=True)
+        with t3:
+            btn_30 = st.button("Top 30", use_container_width=True)
+        with t4:
+            btn_50 = st.button("Top 50", use_container_width=True)
+        with t5:
+            btn_70 = st.button("Top 70", use_container_width=True)
+        with t6:
+            btn_100 = st.button("Top 100", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     target_items = None
