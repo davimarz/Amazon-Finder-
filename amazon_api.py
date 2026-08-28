@@ -76,9 +76,6 @@ def estrai_costo_spedizione(item_tag):
     return 0.0, "Spedizione gratuita"
 
 def verifica_se_spedizione_gratuita(item_tag, item_text):
-    """
-    Rileva se il prodotto offre la spedizione o consegna gratuita.
-    """
     parole_chiave_free = [
         "spedizione gratuita",
         "consegna gratuita",
@@ -87,17 +84,26 @@ def verifica_se_spedizione_gratuita(item_tag, item_text):
         "prime",
         "spedizione gratis"
     ]
-    # Se il testo contiene parole di spedizione gratuita o non menziona costi di spedizione a pagamento
     if any(k in item_text for k in parole_chiave_free):
         return True
     
-    # Se non ci sono indicazioni di prezzo di spedizione esplicito a pagamento
     if " più spedizione" not in item_text and "di spedizione" not in item_text:
         return True
 
     return False
 
-def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
+def ottieni_offerte_avanzate(
+    categoria="", 
+    sottocategoria="", 
+    keyword="", 
+    sort_type="Prezzo: dal più basso", 
+    solo_spedizione_gratuita=False, 
+    min_price=None, 
+    max_price=None, 
+    min_discount=0, 
+    max_discount=100, 
+    item_count=10
+):
     termini = []
     
     clean_keyword = keyword.strip()
