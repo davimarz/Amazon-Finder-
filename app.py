@@ -208,7 +208,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]) {
+    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -222,9 +222,69 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
+    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]):hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
+    }
+
+    /* Stile Pulsante Immagine / Anteprima */
+    div[data-testid="stButton"] button[key^="img_btn_"] {
+        background: transparent !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: 185px !important;
+        cursor: pointer !important;
+        box-shadow: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        overflow: hidden !important;
+    }
+    
+    div[data-testid="stButton"] button[key^="img_btn_"]:hover {
+        border-color: #38bdf8 !important;
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
+    }
+
+    /* Overlay Fullscreen Lightbox */
+    .lightbox-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.88);
+        z-index: 999999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(8px);
+        padding: 20px;
+    }
+
+    .lightbox-img-container {
+        max-width: 90%;
+        max-height: 90%;
+        text-align: center;
+    }
+
+    .lightbox-img-container img {
+        max-width: 100%;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .lightbox-close-hint {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        margin-top: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -249,8 +309,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 8px;
+        border-radius: 6px;
         overflow: hidden;
         padding: 4px;
     }
@@ -595,6 +654,10 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
+# Stato per il Lightbox Pop-up immagine
+if "lightbox_img" not in st.session_state:
+    st.session_state.lightbox_img = None
+
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
@@ -620,13 +683,23 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
+        # 1. Colonna Sinistra: Immagine interattiva per aprire il Pop-up Lightbox
         with col_left:
             img_url = p.get('immagine_url', '')
+            # Pulsante trasparente con immagine interna per gestire il click in Streamlit
+            if st.button("", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
+                st.session_state.lightbox_img = img_url
+                st.rerun()
+            
+            # Mostra l'immagine sopra il pulsante tramite HTML assoluto
             st.markdown(
-                f"<div class='product-img-wrapper-full'><img src='{img_url}' alt='prodotto'></div>",
+                f"<div style='position: relative; margin-top: -193px; pointer-events: none;' class='product-img-wrapper-full'>"
+                f"<img src='{img_url}' alt='prodotto'>"
+                f"</div>",
                 unsafe_allow_html=True
             )
 
+        # 2. Colonna Centrale: Titolo, Prezzi + Consegna, Stellina + Acquista Dimezzato
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
@@ -730,6 +803,25 @@ def render_product_card(p, tab_key="main"):
                 f"</div>",
                 unsafe_allow_html=True
             )
+
+# Gestione Pop-up Immagine Fullscreen (Lightbox)
+if st.session_state.lightbox_img is not None:
+    # Contenitore overlay interattivo: cliccando ovunque si chiude
+    if st.button("CHIUDI POP-UP (Clicca ovunque)", key="lightbox_dismiss", use_container_width=True):
+        st.session_state.lightbox_img = None
+        st.rerun()
+    
+    st.markdown(
+        f"""
+        <div class="lightbox-overlay" onclick="window.location.reload();">
+            <div class="lightbox-img-container">
+                <img src="{st.session_state.lightbox_img}" alt="Immagine ingrandita">
+                <div class="lightbox-close-hint">👆 Clicca in qualsiasi punto per chiudere</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 with tab_cerca:
     col_r1_wrap, _ = st.columns([0.55, 0.45])
