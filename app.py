@@ -527,8 +527,19 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    # 4 Colonne per Ordinamento, Prezzo Min, Prezzo Max e Sconto Minimo
-    col_sort, col_pmin, col_pmax, col_disc = st.columns([1.3, 1, 1, 1])
+    # Filtri: Flag Prime, Ordinamento, Prezzo Min, Prezzo Max, Sconto Minimo
+    col_prime, col_sort, col_pmin, col_pmax, col_disc = st.columns([0.7, 1.4, 1, 1, 1])
+
+    with col_prime:
+        st.write("")
+        st.write("")
+        solo_prime = st.checkbox(
+            "✔ Prime",
+            value=False,
+            key="check_prime",
+            on_change=trigger_search,
+            help="Mostra solo prodotti idonei ad Amazon Prime"
+        )
 
     with col_sort:
         opzioni_ordinamento = list(SORT_MAPPINGS.keys())
@@ -624,6 +635,7 @@ with tab_cerca:
                 sottocategoria=subcat_pulita,
                 keyword=keyword_libera.strip(),
                 sort_type=ranking_scelto,
+                solo_prime=solo_prime,
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=sconto_minimo,
