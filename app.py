@@ -29,7 +29,7 @@ st.markdown("""
     button[data-baseweb="tab"] {
         color: #94a3b8 !important;
         font-weight: 700 !important;
-        font-size: 1rem !important;
+        font-size: 0.95rem !important;
         background: transparent !important;
         border-radius: 8px 8px 0 0 !important;
         padding: 8px 16px !important;
@@ -43,7 +43,7 @@ st.markdown("""
     /* 1. Header Superiore */
     .hero-header-box {
         text-align: center;
-        padding: 24px 16px 20px 16px;
+        padding: 22px 16px 18px 16px;
         margin-bottom: 16px;
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
         border: 1px solid rgba(255, 255, 255, 0.12);
@@ -53,11 +53,11 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        font-size: clamp(2rem, 4.5vw, 3.2rem);
         font-weight: 900;
         letter-spacing: -1px;
         line-height: 1.1;
-        margin: 0 0 6px 0;
+        margin: 0 0 4px 0;
         background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -68,11 +68,11 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        font-size: clamp(1.1rem, 2.8vw, 1.5rem);
+        font-size: clamp(1rem, 2.5vw, 1.4rem);
         font-weight: 700;
         color: #f1f5f9;
         letter-spacing: 0.2px;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
     }
 
     .ai-badge {
@@ -80,14 +80,14 @@ st.markdown("""
         color: #ffffff;
         font-size: 0.75em;
         font-weight: 800;
-        padding: 2px 8px;
+        padding: 2px 7px;
         border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.25);
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
     }
 
     .hero-author-tag {
-        font-size: clamp(0.85rem, 2vw, 0.98rem);
+        font-size: clamp(0.82rem, 1.8vw, 0.94rem);
         color: #94a3b8;
         font-weight: 500;
         letter-spacing: 0.5px;
@@ -104,15 +104,17 @@ st.markdown("""
     label[data-testid="stWidgetLabel"] p {
         color: #e2e8f0 !important;
         font-weight: 700 !important;
-        font-size: 0.88rem !important;
+        font-size: 0.84rem !important;
         letter-spacing: 0.2px;
+        margin-bottom: 3px !important;
     }
 
-    /* Campi Input */
+    /* Campi Input con altezza standard confortevole */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         border-radius: 8px !important;
+        min-height: 38px !important;
     }
 
     div[data-baseweb="input"]:focus-within {
@@ -123,22 +125,25 @@ st.markdown("""
     div[data-baseweb="input"] input {
         color: #f8fafc !important;
         font-weight: 600 !important;
+        font-size: 0.84rem !important;
     }
 
-    /* Selectbox Menu a Tendina */
+    /* Selectbox con altezza standard confortevole */
     div[data-baseweb="select"] > div {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         border-radius: 8px !important;
+        min-height: 38px !important;
         color: #f8fafc !important;
     }
 
     div[data-baseweb="select"] span {
         color: #f8fafc !important;
         font-weight: 600 !important;
+        font-size: 0.84rem !important;
     }
 
-    /* Checkbox Prime Ufficiale */
+    /* Checkbox Prime */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 12px !important;
@@ -146,6 +151,9 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.14) !important;
         width: fit-content !important;
         margin-top: 18px !important;
+        min-height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
         transition: border-color 0.15s ease, background 0.15s ease !important;
     }
 
@@ -156,7 +164,7 @@ st.markdown("""
 
     div[data-testid="stCheckbox"] label p {
         font-family: "Amazon Ember", Arial, sans-serif !important;
-        font-size: 1.05rem !important;
+        font-size: 1rem !important;
         font-weight: 900 !important;
         color: #00a8e1 !important;
         font-style: italic !important;
@@ -211,16 +219,16 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Pulsanti Top Risultati */
+    /* Pulsanti Top Risultati (Altezza standard completa) */
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         border-radius: 8px !important;
         font-weight: 800 !important;
-        font-size: 0.84rem !important;
-        padding: 5px 8px !important;
-        min-height: auto !important;
+        font-size: 0.85rem !important;
+        padding: 8px 12px !important;
+        min-height: 38px !important;
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
@@ -751,35 +759,37 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria Principale e Sottocategoria
-    col_kw, col_cat, col_subcat = st.columns([1.4, 1.3, 1.3])
+    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria dimezzate in larghezza orizzontale
+    col_r1_wrap, _ = st.columns([0.55, 0.45])
+    with col_r1_wrap:
+        col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
 
-    with col_kw:
-        keyword_libera = st.text_input(
-            "🔍 Ricerca Testuale Diretta:",
-            placeholder="Es. cuffie bluetooth, notebook...",
-            key="keyword_input",
-            on_change=trigger_search
-        )
+        with col_kw:
+            keyword_libera = st.text_input(
+                "🔍 Ricerca Testuale Diretta:",
+                placeholder="Es. cuffie bluetooth, notebook...",
+                key="keyword_input",
+                on_change=trigger_search
+            )
 
-    with col_cat:
-        cat_scelta = st.selectbox(
-            "Categoria Principale:",
-            list(CATEGORIE.keys()),
-            key="select_cat",
-            on_change=trigger_search
-        )
+        with col_cat:
+            cat_scelta = st.selectbox(
+                "Categoria Principale:",
+                list(CATEGORIE.keys()),
+                key="select_cat",
+                on_change=trigger_search
+            )
 
-    with col_subcat:
-        sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
-        if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
-            st.session_state.select_subcat = "Tutte"
-        subcat_scelta = st.selectbox(
-            "Sottocategoria:",
-            sottocategorie_disponibili,
-            key="select_subcat",
-            on_change=trigger_search
-        )
+        with col_subcat:
+            sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
+            if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
+                st.session_state.select_subcat = "Tutte"
+            subcat_scelta = st.selectbox(
+                "Sottocategoria:",
+                sottocategorie_disponibili,
+                key="select_subcat",
+                on_change=trigger_search
+            )
 
     # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
     col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
@@ -839,20 +849,22 @@ with tab_cerca:
     )
     sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Riga 5: 6 Pulsanti Top Risultati (Top 10, 20, 30, 50, 70, 100)
-    b1, b2, b3, b4, b5, b6 = st.columns(6)
-    with b1:
-        btn_10 = st.button("🚀 Top 10", use_container_width=True)
-    with b2:
-        btn_20 = st.button("🚀 Top 20", use_container_width=True)
-    with b3:
-        btn_30 = st.button("🚀 Top 30", use_container_width=True)
-    with b4:
-        btn_50 = st.button("🚀 Top 50", use_container_width=True)
-    with b5:
-        btn_70 = st.button("🚀 Top 70", use_container_width=True)
-    with b6:
-        btn_100 = st.button("🚀 Top 100", use_container_width=True)
+    # Riga 5: 6 Pulsanti Top Risultati Dimezzati in larghezza con altezza standard
+    col_btn_wrap, _ = st.columns([0.50, 0.50])
+    with col_btn_wrap:
+        b1, b2, b3, b4, b5, b6 = st.columns(6)
+        with b1:
+            btn_10 = st.button("🚀 Top 10", use_container_width=True)
+        with b2:
+            btn_20 = st.button("🚀 Top 20", use_container_width=True)
+        with b3:
+            btn_30 = st.button("🚀 Top 30", use_container_width=True)
+        with b4:
+            btn_50 = st.button("🚀 Top 50", use_container_width=True)
+        with b5:
+            btn_70 = st.button("🚀 Top 70", use_container_width=True)
+        with b6:
+            btn_100 = st.button("🚀 Top 100", use_container_width=True)
 
     target_items = None
     if btn_10:
