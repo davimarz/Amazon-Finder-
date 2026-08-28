@@ -3,7 +3,7 @@ import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
-st.set_page_config(page_title="Scaladeiturchi Offerte Amazon", layout="wide")
+st.set_page_config(page_title="Scaladeiturchi | Offerte Amazon AI", layout="wide")
 
 st.markdown("""
 <style>
@@ -11,6 +11,66 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
+
+    /* Hero Banner Header Responsive */
+    .hero-header-box {
+        text-align: center;
+        padding: 24px 16px 20px 16px;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(10px);
+    }
+
+    .hero-title-main {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        font-weight: 900;
+        letter-spacing: -1px;
+        line-height: 1.1;
+        margin: 0 0 6px 0;
+        background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .hero-subtitle-box {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: clamp(1.1rem, 2.8vw, 1.5rem);
+        font-weight: 700;
+        color: #f1f5f9;
+        letter-spacing: 0.2px;
+        margin-bottom: 8px;
+    }
+
+    .ai-badge {
+        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+        color: #ffffff;
+        font-size: 0.75em;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    }
+
+    .hero-author-tag {
+        font-size: clamp(0.85rem, 2vw, 0.98rem);
+        color: #94a3b8;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        margin-top: 2px;
+    }
+
+    .hero-author-tag strong {
+        color: #facc15;
+        font-weight: 700;
+    }
 
     /* Card Container Compatto */
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -416,7 +476,6 @@ OPZIONI_SCONTO = {
     "-70%": 70
 }
 
-# Inizializzazione Session State
 if "preferiti_asin" not in st.session_state:
     salvati = ottieni_tutti_preferiti()
     st.session_state.preferiti_asin = {p["asin"]: p for p in salvati}
@@ -439,7 +498,19 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-st.title("Scaladeiturchi Offerte Amazon")
+# Intestazione Personalizzata Responsive
+st.markdown("""
+<div class="hero-header-box">
+    <div class="hero-title-main">Scaladeiturchi</div>
+    <div class="hero-subtitle-box">
+        <span>Offerte Amazon</span>
+        <span class="ai-badge">AI</span>
+    </div>
+    <div class="hero-author-tag">
+        Realizzato con cura da <strong>Davide Marziano</strong>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
 
@@ -633,7 +704,7 @@ with tab_cerca:
             help="Lascia vuoto per nessun limite massimo"
         )
 
-    # Riga 3: Flag Ordinamento sulla stessa riga
+    # Riga 3: Flag Ordinamento (Tutto su una riga orizzontale)
     opzioni_ordinamento = list(SORT_MAPPINGS.keys())
     ranking_scelto = st.radio(
         "🏷️ Ordinamento:",
@@ -644,7 +715,7 @@ with tab_cerca:
         on_change=trigger_search
     )
 
-    # Riga 4: Flag Sconto Minimo sulla stessa riga
+    # Riga 4: Flag Sconto Minimo (Tutto su una riga orizzontale)
     label_sconto_scelto = st.radio(
         "🔥 Sconto Minimo:",
         list(OPZIONI_SCONTO.keys()),
