@@ -372,7 +372,7 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Foto Ingrandita che riempie lo spazio
+        # 1. Colonna Sinistra: Foto Ingrandita
         with col_left:
             img_url = p.get('immagine_url', '')
             st.markdown(
@@ -403,7 +403,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-            # Sottocolonne per Stellina + Pulsante Acquista posizionati sotto i prezzi
             c_star_sub, c_buy_sub = st.columns([0.24, 0.76])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
@@ -514,7 +513,13 @@ with tab_cerca:
     with col_sort:
         opzioni_ordinamento = list(SORT_MAPPINGS.keys())
         default_index = opzioni_ordinamento.index("Prezzo: dal più basso") if "Prezzo: dal più basso" in opzioni_ordinamento else 0
-        ranking_scelto = st.selectbox("Ordinamento:", opzioni_ordinamento, index=default_index)
+        ranking_scelto = st.selectbox(
+            "Ordinamento:",
+            opzioni_ordinamento,
+            index=default_index,
+            key="select_sort",
+            on_change=trigger_search
+        )
 
     with col_pmin:
         prezzo_min = st.number_input(
@@ -541,7 +546,15 @@ with tab_cerca:
         )
 
     with col_disc:
-        sconto_minimo = st.slider("Sconto Minimo (%):", min_value=0, max_value=80, value=0, step=5)
+        sconto_minimo = st.slider(
+            "Sconto Minimo (%):",
+            min_value=0,
+            max_value=80,
+            value=0,
+            step=5,
+            key="slider_disc",
+            on_change=trigger_search
+        )
 
     b1, b2, b3, b4, b5 = st.columns(5)
     with b1:
