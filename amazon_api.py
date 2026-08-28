@@ -71,6 +71,18 @@ def verifica_se_spedizione_gratuita(item_tag, item_text):
                 return False
     return True
 
+def pulisci_titolo_descrizione(titolo_grezzo):
+    """
+    Rimuove o riduce la parte iniziale della marca/brand per dare risalto alla descrizione reale.
+    """
+    if not titolo_grezzo:
+        return "Prodotto Amazon"
+    # Se il titolo contiene trattoni o separatori tipici della marca all'inizio (es. "MARCA - Descrizione")
+    parti = re.split(r'\s*[-–—]\s*', titolo_grezzo, maxsplit=1)
+    if len(parti) > 1 and len(parti[0]) < 20:
+        return parti[1].strip()
+    return titolo_grezzo.strip()
+
 def ottieni_offerte_avanzate(
     categoria="", 
     sottocategoria="", 
@@ -209,12 +221,14 @@ def ottieni_offerte_avanzate(
                             num_recensioni = int(c_r)
 
                 title_tag = item.find("h2")
-                titolo_completo = ""
+                titolo_grezzo = ""
                 if title_tag:
-                    titolo_completo = title_tag.get_text(strip=True)
-                if not titolo_completo:
+                    titolo_grezzo = title_tag.get_text(strip=True)
+                if not titolo_grezzo:
                     img_search = item.find("img", {"class": "s-image"})
-                    titolo_completo = img_search.get("alt", "").strip() if img_search else "Prodotto Amazon"
+                    titolo_grezzo = img_search.get("alt", "").strip() if img_search else "Prodotto Amazon"
+
+                titolo_completo = pulisci_titolo_descrizione(titolo_grezzo)
 
                 img_tag = item.find("img", {"class": "s-image"})
                 immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
