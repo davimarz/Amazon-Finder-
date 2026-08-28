@@ -208,7 +208,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]) {
+    div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -222,70 +222,9 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="img_btn_"]):hover {
+    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
-    }
-
-    /* Stile Pulsante Immagine / Anteprima Cliccabile */
-    div[data-testid="stButton"] button[key^="img_btn_"] {
-        background: transparent !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        border-radius: 8px !important;
-        padding: 0 !important;
-        width: 100% !important;
-        height: 185px !important;
-        cursor: pointer !important;
-        box-shadow: none !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        overflow: hidden !important;
-    }
-    
-    div[data-testid="stButton"] button[key^="img_btn_"]:hover {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
-    }
-
-    /* Overlay Fullscreen Lightbox */
-    .lightbox-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: rgba(0, 0, 0, 0.90);
-        z-index: 999999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(10px);
-        padding: 20px;
-        cursor: pointer;
-    }
-
-    .lightbox-img-container {
-        max-width: 95%;
-        max-height: 95%;
-        text-align: center;
-    }
-
-    .lightbox-img-container img {
-        max-width: 100%;
-        max-height: 90vh;
-        object-fit: contain;
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .lightbox-close-hint {
-        color: #94a3b8;
-        font-size: 0.95rem;
-        margin-top: 14px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
     }
 
     /* Card Prodotto Uniforme e Perfettamente Allineata */
@@ -315,7 +254,8 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
-        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
         overflow: hidden;
         padding: 4px;
     }
@@ -660,9 +600,6 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-if "lightbox_img" not in st.session_state:
-    st.session_state.lightbox_img = None
-
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
@@ -688,40 +625,13 @@ def render_product_card(p, tab_key="main"):
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
 
-        # 1. Colonna Sinistra: Immagine interattiva nativa (senza pulsante testuale)
+        # 1. Colonna Sinistra: Immagine statica standard pulita e allineata
         with col_left:
             img_url = p.get('immagine_url', '')
-            if st.button("", key=f"img_btn_{tab_key}_{p['asin']}", help="Clicca per ingrandire l'immagine"):
-                st.session_state.lightbox_img = img_url
-                st.rerun()
-            
             st.markdown(
-                f"""
-                <style>
-                div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}'] {{
-                    background: transparent !important;
-                    border: none !important;
-                    padding: 0 !important;
-                    width: 100% !important;
-                    height: 185px !important;
-                    min-height: 185px !important;
-                    position: absolute !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    z-index: 10 !important;
-                    cursor: pointer !important;
-                    box-shadow: none !important;
-                }}
-                div[data-testid='stButton'] button[key='img_btn_{tab_key}_{p['asin']}']:hover {{
-                    transform: none !important;
-                }}
-                </style>
-                <div style="position: relative; width: 100%; height: 185px;">
-                    <div class="product-img-wrapper-full" style="position: absolute; top: 0; left: 0; width: 100%; height: 185px; pointer-events: none;">
-                        <img src="{img_url}" alt="prodotto">
-                    </div>
-                </div>
-                """,
+                f"<div class='product-img-wrapper-full'>"
+                f"<img src='{img_url}' alt='prodotto'>"
+                f"</div>",
                 unsafe_allow_html=True
             )
 
@@ -831,24 +741,6 @@ def render_product_card(p, tab_key="main"):
                 f"</div>",
                 unsafe_allow_html=True
             )
-
-# Lightbox Pop-up Fullscreen (cliccando ovunque si chiude)
-if st.session_state.lightbox_img is not None:
-    st.markdown(
-        f"""
-        <div class="lightbox-overlay" onclick="window.location.reload();">
-            <div class="lightbox-img-container">
-                <img src="{st.session_state.lightbox_img}" alt="Immagine ingrandita">
-                <div class="lightbox-close-hint">👆 Clicca in qualsiasi punto per chiudere</div>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    # Pulsante invisibile o gestito per resettare lo stato al click dell'overlay
-    if st.button("Chiudi", key="close_lightbox_state"):
-        st.session_state.lightbox_img = None
-        st.rerun()
 
 with tab_cerca:
     col_r1_wrap, _ = st.columns([0.55, 0.45])
