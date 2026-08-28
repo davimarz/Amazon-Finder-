@@ -62,7 +62,7 @@ def estrai_costo_spedizione(item_tag):
             pass
 
     if any(k in testo_completo.lower() for k in ["consegna senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "prime"]):
-        return 0.0, "Consegna gratuita"
+        return 0.0, "Consegna senza costi aggiuntivi"
 
     match_generico = re.search(r'(?:€\s*(\d+[.,]\d{2})\s*di\s*spedizione)|(?:(\d+[.,]\d{2})\s*€\s*di\s*spedizione)|(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))', testo_completo, re.IGNORECASE)
     if match_generico:
@@ -73,7 +73,7 @@ def estrai_costo_spedizione(item_tag):
         except ValueError:
             pass
 
-    return 0.0, "Consegna non specificata"
+    return 0.0, "Consegna standard"
 
 def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, item_count=10):
     termini = []
@@ -91,7 +91,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
     
-    # Filtro Prime nativo Amazon se abilitato
+    # Filtro Prime nativo Amazon
     if solo_prime:
         base_url += "&rh=p_76%3A490209031"
 
@@ -141,6 +141,27 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if not asin or asin in asins_visti:
                     continue
 
+                item_text = item.text.lower()
+                if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
+                    continue
+
+                # Rilevamento accurato Prime
+                prime_icon = item.find("i", class_=re.compile(r"a-icon-prime", re.I))
+                prime_aria = item.find(attrs={"aria-label": re.compile(r"prime", re.I)})
+                prime_class = item.find(class_=re.compile(r"s-prime|s-icon-text-medium", re.I))
+                is_prime = bool(
+                    prime_icon or 
+                    prime_aria or 
+                    prime_class or 
+                    "consegna senza costi aggiuntivi" in item_text or 
+                    "spedizione gratuita con prime" in item_text or
+                    "amazon prime" in item_text
+                )
+
+                # Se il filtro Prime è attivo, scarta i non-Prime
+                if solo_prime and not is_prime:
+                    continue
+
                 prezzo_prodotto = 0.0
                 price_whole = item.find("span", {"class": "a-price-whole"})
                 price_fraction = item.find("span", {"class": "a-price-fraction"})
@@ -168,18 +189,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     continue
 
                 if max_price is not None and max_price > 0 and prezzo_prodotto > max_price:
-                    continue
-
-                item_text = item.text.lower()
-                if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
-                    continue
-
-                # Rilevamento accurato Prime
-                prime_icon = item.find("i", class_=re.compile(r"a-icon-prime", re.I))
-                prime_span = item.find(attrs={"aria-label": re.compile(r"Prime", re.I)})
-                is_prime = bool(prime_icon or prime_span or "prime" in item_text or "amazon prime" in item_text)
-
-                if solo_prime and not is_prime:
                     continue
 
                 costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
