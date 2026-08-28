@@ -1,8 +1,7 @@
 import streamlit as st
 import time
-import random
 import urllib.parse
-from amazon_api import ottieni_offerte_avanzate, ottieni_offerte_pagina_speciale, verifica_prezzo_reale_vetrina, SORT_MAPPINGS, calcola_distribuzione_recensioni
+from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
 st.set_page_config(page_title="Scaladeiturchi | Offerte Amazon AI", layout="wide")
@@ -40,42 +39,45 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+        font-size: clamp(2.2rem, 4.5vw, 3.4rem);
         font-weight: 900;
         letter-spacing: -1px;
         line-height: 1.1;
-        margin: 0 0 4px 0;
+        margin: 0 0 6px 0;
         background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
+        text-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
     }
 
     .hero-subtitle-box {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        font-size: clamp(0.9rem, 1.6vw, 1.1rem);
+        gap: 8px;
+        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
         font-weight: 700;
         color: #f1f5f9;
-        margin-bottom: 4px;
+        letter-spacing: 0.2px;
+        margin-bottom: 8px;
     }
 
     .ai-badge {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
         color: #ffffff;
-        font-size: 0.65em;
+        font-size: 0.75em;
         font-weight: 800;
-        padding: 1px 5px;
-        border-radius: 4px;
+        padding: 2px 8px;
+        border-radius: 6px;
         border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
     }
 
     .hero-author-tag {
-        font-size: clamp(0.7rem, 1.3vw, 0.85rem);
+        font-size: clamp(0.85rem, 1.8vw, 0.98rem);
         color: #94a3b8;
         font-weight: 500;
-        margin-top: 2px;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
     }
 
     .hero-author-tag strong {
@@ -196,7 +198,7 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="vetrina_fav_"]) {
+    div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -210,7 +212,7 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    div[data-testid="stButton"] button:not([key^="fav_"]):not([key^="vetrina_fav_"]):hover {
+    div[data-testid="stButton"] button:not([key^="fav_"]):hover {
         transform: translateY(-2px) !important;
         box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
     }
@@ -234,30 +236,6 @@ st.markdown("""
         align-items: center !important;
     }
 
-    /* Immagine stretta e ridimensionata in orizzontale per la vetrina */
-    .product-img-wrapper-vetrina {
-        width: 100%;
-        max-width: 110px;
-        height: 80px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #ffffff;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 6px;
-        overflow: hidden;
-        padding: 2px;
-        margin: 0 auto;
-    }
-
-    .product-img-wrapper-vetrina img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-        display: block;
-        margin: auto;
-    }
-
     .product-img-wrapper-full {
         width: 100%;
         height: 185px;
@@ -279,47 +257,21 @@ st.markdown("""
         margin: auto;
     }
 
-    div[data-testid="stButton"] button[key^="fav_"],
-    div[data-testid="stButton"] button[key^="vetrina_fav_"] {
+    div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         border: 1px solid #3b82f6 !important;
-        border-radius: 6px !important;
+        border-radius: 8px !important;
         padding: 0 !important;
-        font-size: 0.95rem !important;
+        font-size: 1.1rem !important;
         color: #ffffff !important;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.4) !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
+        min-height: 38px !important;
+        height: 38px !important;
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-    }
-
-    .buy-btn-action-vetrina {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #ffd814;
-        color: #0f1111 !important;
-        font-size: 0.75rem !important;
-        font-weight: 700 !important;
-        text-decoration: none !important;
-        padding: 4px 8px;
-        border-radius: 6px;
-        border: 1px solid #fcd200;
-        text-align: center;
-        width: 100% !important;
-        min-height: 32px;
-        box-shadow: 0 2px 4px rgba(213, 175, 0, 0.30);
-        transition: background-color 0.15s ease;
-        white-space: nowrap;
-    }
-
-    .buy-btn-action-vetrina:hover {
-        background-color: #f7ca00;
-        color: #0f1111 !important;
     }
 
     .buy-btn-action {
@@ -347,18 +299,6 @@ st.markdown("""
         color: #0f1111 !important;
     }
 
-    .deal-title-vetrina {
-        font-size: 0.85rem !important;
-        font-weight: 800 !important;
-        line-height: 1.25 !important;
-        color: #38bdf8 !important;
-        margin-bottom: 6px !important;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
     .deal-title {
         font-size: 0.95rem !important;
         font-weight: 800 !important;
@@ -374,11 +314,28 @@ st.markdown("""
     .price-delivery-split-row {
         display: flex !important;
         align-items: center !important;
-        justify-content: flex-start !important;
+        justify-content: space-between !important;
         flex-wrap: wrap !important;
         gap: 8px !important;
         width: 100% !important;
-        margin: 4px 0 6px 0 !important;
+        margin: 8px 0 12px 0 !important;
+    }
+
+    .price-subgroup-left {
+        display: flex !important;
+        align-items: baseline !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .delivery-subgroup-right {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 6px !important;
+        margin-left: auto !important;
+        flex-wrap: wrap !important;
+        text-align: right !important;
     }
 
     .shipping-badge-text {
@@ -387,22 +344,23 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 0.72rem !important;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.82rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
 
     .deal-price-final {
-        font-size: 1.15rem !important;
+        font-size: 1.4rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
+        text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
     }
 
     .deal-price-old {
-        font-size: 0.85rem !important;
+        font-size: 0.9rem !important;
         color: #94a3b8 !important;
         text-decoration: line-through;
         margin-left: 6px;
@@ -631,107 +589,26 @@ if "keyword_input" not in st.session_state:
 if "select_cat" not in st.session_state:
     st.session_state.select_cat = list(CATEGORIE.keys())[0]
 
-st.session_state.vetrina_seed = random.randint(0, 1000000)
-
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# --- DISPOSIZIONE ORIZZONTALE: INTESTAZIONE (1/3) E VETRINA (2/3) ---
-col_title, col_vetrina = st.columns([1.0, 2.0], gap="medium")
-
-with col_title:
-    st.markdown("""
-    <div style="text-align: left; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; height: 100%;">
-        <div class="hero-title-main">Scala dei Turchi</div>
-        <div class="hero-subtitle-box">
-            <span>Offerte Amazon</span>
-            <span class="ai-badge">AI</span>
-        </div>
-        <div class="hero-author-tag">
-            Realizzato da <strong>Davide Marziano</strong>
-        </div>
+# --- HEADER SUPERIORE CENTRATO ---
+st.markdown("""
+<div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
+    <div class="hero-title-main">Scala dei Turchi</div>
+    <div class="hero-subtitle-box" style="justify-content: center;">
+        <span>Offerte Amazon</span>
+        <span class="ai-badge">AI</span>
     </div>
-    """, unsafe_allow_html=True)
+    <div class="hero-author-tag">
+        Realizzato con cura da <strong>Davide Marziano</strong>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-with col_vetrina:
-    @st.cache_data(ttl=5)
-    def ottieni_offerta_vetrina():
-        return ottieni_offerte_pagina_speciale(item_count=40)
-
-    lista_vetrina = ottieni_offerta_vetrina()
-    if lista_vetrina:
-        rnd_idx = (st.session_state.vetrina_seed + int(time.time() * 1000)) % len(lista_vetrina)
-        prod_vetrina = lista_vetrina[rnd_idx]
-        
-        prod_vetrina = verifica_prezzo_reale_vetrina(prod_vetrina)
-
-        # 1. Riga Titolo Offerta Lampo
-        st.markdown(
-            "<div style='font-size: 0.75rem; font-weight: 800; color: #facc15; margin-bottom: 1px;'>"
-            "⚡ OFFERTA LAMPO:"
-            "</div>",
-            unsafe_allow_html=True
-        )
-        
-        # 2. Riga Avviso Prezzo variabile in tempo reale
-        st.markdown(
-            "<div style='font-size: 0.68rem; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;'>"
-            "attenzione che il prezzo di questo oggetto proposto varia in tempo reale."
-            "</div>",
-            unsafe_allow_html=True
-        )
-
-        v_tit = prod_vetrina.get('titolo', '')
-        v_lnk = prod_vetrina.get('link_affiliato', '')
-        st.markdown(f"<div class='deal-title-vetrina'>{v_tit}</div>", unsafe_allow_html=True)
-
-        # Layout interno vetrina
-        vcol_img, vcol_details = st.columns([1.2, 1.8])
-
-        with vcol_img:
-            # 3. Immagine ridimensionata e stretta in orizzontale
-            img_u = prod_vetrina.get('immagine_url', '')
-            st.markdown(f"<div class='product-img-wrapper-vetrina'><img src='{img_u}' alt='vetrina'></div>", unsafe_allow_html=True)
-
-            # 5. Sotto l'immagine: Stella dei preferiti e Pulsante Acquista
-            v_fav = prod_vetrina["asin"] in st.session_state.preferiti_asin
-            v_star = "⭐" if v_fav else "☆"
-            
-            vs1, vs2 = st.columns([0.35, 0.65])
-            with vs1:
-                if st.button(v_star, key=f"vetrina_fav_{prod_vetrina['asin']}"):
-                    if v_fav:
-                        rimuovi_preferito(prod_vetrina["asin"])
-                        st.session_state.preferiti_asin.pop(prod_vetrina["asin"], None)
-                    else:
-                        aggiungi_preferito(prod_vetrina)
-                        st.session_state.preferiti_asin[prod_vetrina["asin"]] = prod_vetrina
-                    st.rerun()
-            with vs2:
-                st.markdown(f"<a href='{v_lnk}' target='_blank' class='buy-btn-action-vetrina'>🛒 Acquista</a>", unsafe_allow_html=True)
-
-        with vcol_details:
-            # 4. Sotto: Prezzo, eventuale sconto, prezzo precedente e scritta spedizione gratuita
-            v_price = f"€{prod_vetrina['prezzo_finale']:.2f}"
-            v_ship = prod_vetrina.get('info_spedizione', 'Spedizione gratuita')
-            
-            badge_html = f"<span class='deal-badge'>{prod_vetrina.get('sconto', '')}</span>" if prod_vetrina.get('sconto') else ""
-            old_price_html = f"<span class='deal-price-old'>€{prod_vetrina['prezzo_iniziale']:.2f}</span>" if prod_vetrina['prezzo_iniziale'] > prod_vetrina['prezzo_finale'] else ""
-
-            st.markdown(
-                f"<div class='price-delivery-split-row'>"
-                f"{badge_html}"
-                f"<span class='deal-price-final'>{v_price}</span>"
-                f"{old_price_html}"
-                f"</div>"
-                f"<div style='margin-top: 4px;'><span class='shipping-badge-text'>🚚 {v_ship}</span></div>",
-                unsafe_allow_html=True
-            )
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# --- BARRA DI SEPARAZIONE E TITOLO "Cerca il tuo prodotto" CON SFONDO VERDE CHIARO ---
 st.divider()
+
+# --- TITOLO "Cerca il tuo prodotto" CON SFONDO VERDE CHIARO ---
 st.markdown("""
 <div style="background-color: #d1fae5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 16px; margin-bottom: 16px;">
     <h3 style="color: #065f46; font-size: 1.35rem; font-weight: 800; margin: 0;">Cerca il tuo prodotto</h3>
@@ -1012,7 +889,7 @@ with tab_cerca:
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=min_disc,
-                max_discount=max_discount,
+                max_discount=max_disc,
                 item_count=target_items
             )
             
