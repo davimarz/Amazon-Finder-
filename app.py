@@ -198,23 +198,26 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
+    /* Pulsanti Top compatti e ridotti */
     div[data-testid="stButton"] button:not([key^="fav_"]) {
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 8px !important;
-        font-weight: 800 !important;
-        font-size: 0.85rem !important;
-        padding: 8px 12px !important;
-        min-height: 38px !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+        border-radius: 6px !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
+        padding: 4px 6px !important;
+        min-height: 30px !important;
+        height: 30px !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
+        width: 100% !important;
     }
 
     div[data-testid="stButton"] button:not([key^="fav_"]):hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.45) !important;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -832,17 +835,25 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Pulsanti Top disposti in 2 colonne
-    col_btn_wrap, _ = st.columns([0.35, 0.65])
+    # Pulsanti Top: 3 colonne x 2 righe
+    col_btn_wrap, _ = st.columns([0.45, 0.55])
     with col_btn_wrap:
-        b_col1, b_col2 = st.columns(2)
-        with b_col1:
+        # Riga 1: Top 10, Top 20, Top 30
+        r1_c1, r1_c2, r1_c3 = st.columns(3)
+        with r1_c1:
             btn_10 = st.button("🚀 Top 10", use_container_width=True)
+        with r1_c2:
             btn_20 = st.button("🚀 Top 20", use_container_width=True)
+        with r1_c3:
             btn_30 = st.button("🚀 Top 30", use_container_width=True)
-        with b_col2:
+        
+        # Riga 2: Top 50, Top 70, Top 100
+        r2_c1, r2_c2, r2_c3 = st.columns(3)
+        with r2_c1:
             btn_50 = st.button("🚀 Top 50", use_container_width=True)
+        with r2_c2:
             btn_70 = st.button("🚀 Top 70", use_container_width=True)
+        with r2_c3:
             btn_100 = st.button("🚀 Top 100", use_container_width=True)
 
     target_items = None
