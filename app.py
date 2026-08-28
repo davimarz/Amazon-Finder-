@@ -223,7 +223,7 @@ st.markdown("""
         border-radius: 12px !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30) !important;
         padding: 12px 10px !important;
-        margin-bottom: 12px !important;
+        margin-bottom: 8px !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     
@@ -257,38 +257,40 @@ st.markdown("""
         margin: auto;
     }
 
+    /* Pulsante Preferiti (Stella) su misura e allineato */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         border: 1px solid #3b82f6 !important;
         border-radius: 8px !important;
         padding: 0 !important;
-        font-size: 1.1rem !important;
+        font-size: 1rem !important;
         color: #ffffff !important;
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
-        min-height: 38px !important;
-        height: 38px !important;
+        min-height: 36px !important;
+        height: 36px !important;
         width: 100% !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
 
+    /* Pulsante Acquista Giallo compatto sulla stessa riga */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.85rem !important;
+        font-size: 0.80rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 6px 12px;
+        padding: 4px 8px;
         border-radius: 8px;
         border: 1px solid #fcd200;
         text-align: center;
         width: 100% !important;
-        min-height: 38px;
+        min-height: 36px;
         box-shadow: 0 2px 6px rgba(213, 175, 0, 0.30);
         transition: background-color 0.15s ease;
         white-space: nowrap;
@@ -498,6 +500,15 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
+    /* Linea divisoria evidente tra i prodotti */
+    .custom-deal-divider {
+        height: 2px;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0.6) 50%, rgba(56, 189, 248, 0.1) 100%);
+        border: none;
+        margin: 16px 0 20px 0;
+        border-radius: 2px;
+    }
+
     @media (max-width: 900px) {
         div[data-testid="stRadio"] {
             flex-direction: column !important;
@@ -660,7 +671,8 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-            c_star_sub, c_buy_sub, _ = st.columns([0.16, 0.44, 0.40])
+            # Pulsante stella e acquista perfettamente allineati sulla stessa riga
+            c_star_sub, c_buy_sub = st.columns([0.25, 0.75])
             with c_star_sub:
                 if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi o rimuovi dai preferiti"):
                     if is_fav:
@@ -912,6 +924,9 @@ with tab_cerca:
             if idx + 1 < len(offerte_da_mostrare):
                 with col_r:
                     render_product_card(offerte_da_mostrare[idx + 1], tab_key=f"search_{idx + 1}")
+            
+            # Linea di separazione orizzontale visibile tra i prodotti
+            st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
@@ -927,3 +942,6 @@ with tab_preferiti:
             if idx + 1 < len(lista_preferiti):
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
+            
+            # Linea di separazione orizzontale visibile tra i preferiti
+            st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
