@@ -2,7 +2,7 @@ import streamlit as st
 import time
 import random
 import urllib.parse
-from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
+from amazon_api import ottieni_offerte_avanzate, ottieni_offerte_eventi_deals, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
 st.set_page_config(page_title="Scaladeiturchi | Offerte Amazon AI", layout="wide")
@@ -492,7 +492,6 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* Adattamento Responsive Specifico per Smartphone */
     @media (max-width: 900px) {
         div[data-testid="stRadio"] {
             flex-direction: column !important;
@@ -504,7 +503,6 @@ st.markdown("""
             gap: 6px;
             margin-top: 6px;
         }
-        /* Ottimizzazione pulsante acquista e stella sulla stessa riga su mobile */
         .buy-btn-action {
             max-width: 100% !important;
             font-size: 0.75rem !important;
@@ -618,20 +616,17 @@ st.markdown("""
 
 st.divider()
 
-# --- BLOCCO VETRINA CON OFFERTA LAMPO (CAMBIA AD OGNI AGGIORNAMENTO PAGINA) ---
+# --- BLOCCO VETRINA CON OFFERTA LAMPO DIRETTAMENTE DAGLI EVENTI DEALS ---
 col_head_left, col_head_right = st.columns([0.2, 1.8])
 
 with col_head_right:
     @st.cache_data(ttl=15)
     def ottieni_offerta_vetrina():
-        offerte_vetrina = ottieni_offerte_avanzate(keyword="offerta lampo", item_count=40)
-        if not offerte_vetrina:
-            offerte_vetrina = ottieni_offerte_avanzate(keyword="sconto", item_count=40)
-        return offerte_vetrina
+        return ottieni_offerte_eventi_deals(item_count=35)
 
     lista_vetrina = ottieni_offerta_vetrina()
     if lista_vetrina:
-        rnd_idx = (st.session_state.vetrina_seed + int(time.time() // 5)) % len(lista_vetrina)
+        rnd_idx = (st.session_state.vetrina_seed + int(time.time())) % len(lista_vetrina)
         prod_vetrina = lista_vetrina[rnd_idx]
 
         st.markdown("<div style='font-size: 0.80rem; font-weight: 800; color: #facc15; margin-bottom: 4px;'>⚡ OFFERTA LAMPO</div>", unsafe_allow_html=True)
