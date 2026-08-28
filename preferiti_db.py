@@ -16,9 +16,18 @@ def init_db():
                 costo_spedizione REAL,
                 immagine_url TEXT,
                 link_affiliato TEXT,
+                voto_medio REAL DEFAULT 4.5,
+                num_recensioni INTEGER DEFAULT 100,
                 data_aggiunta TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Migrazione automatica se la tabella esisteva già con le vecchie colonne
+        cursor.execute("PRAGMA table_info(preferiti)")
+        colonne = [row[1] for row in cursor.fetchall()]
+        if "voto_medio" not in colonne:
+            cursor.execute("ALTER TABLE preferiti ADD COLUMN voto_medio REAL DEFAULT 4.5")
+        if "num_recensioni" not in colonne:
+            cursor.execute("ALTER TABLE preferiti ADD COLUMN num_recensioni INTEGER DEFAULT 100")
         conn.commit()
 
 def ottieni_tutti_preferiti():
@@ -37,12 +46,14 @@ def aggiungi_preferito(p):
         cursor.execute("""
             INSERT OR REPLACE INTO preferiti (
                 asin, titolo, prezzo_finale, prezzo_iniziale, sconto, 
-                info_spedizione, costo_spedizione, immagine_url, link_affiliato
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                info_spedizione, costo_spedizione, immagine_url, link_affiliato,
+                voto_medio, num_recensioni
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             p["asin"], p["titolo"], p.get("prezzo_finale", 0.0), p.get("prezzo_iniziale", 0.0),
             p.get("sconto", ""), p.get("info_spedizione", ""), p.get("costo_spedizione", 0.0),
-            p.get("immagine_url", ""), p.get("link_affiliato", "")
+            p.get("immagine_url", ""), p.get("link_affiliato", ""),
+            p.get("voto_medio", 4.8), p.get("num_recensioni", 765)
         ))
         conn.commit()
 
