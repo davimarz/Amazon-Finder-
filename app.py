@@ -109,7 +109,7 @@ st.markdown("""
         margin-bottom: 3px !important;
     }
 
-    /* Campi Input con altezza standard confortevole */
+    /* Campi Input */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -143,7 +143,7 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Checkbox Prime Ufficiale */
+    /* Checkbox Prime */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 12px !important;
@@ -172,7 +172,7 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Radio Buttons / Flag Orizzontali */
+    /* Radio Buttons / Flag Base */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: row !important;
@@ -217,6 +217,36 @@ st.markdown("""
     div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
         background: rgba(56, 189, 248, 0.20) !important;
         border-color: #38bdf8 !important;
+    }
+
+    /* Riordino Specifica Riga Sconto: [Tutti] -> [🔥 Sconto minimo:] -> [da 0 al 20%] ... */
+    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > div[role="radiogroup"] {
+        display: contents !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > div[role="radiogroup"] > label:first-of-type {
+        order: 1 !important;
+        margin-right: 4px !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > label {
+        order: 2 !important;
+        margin: 0 4px 0 4px !important;
+        color: #38bdf8 !important;
+        font-weight: 800 !important;
+        font-size: 0.86rem !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > div[role="radiogroup"] > label:not(:first-of-type) {
+        order: 3 !important;
     }
 
     /* Pulsanti Top Risultati */
@@ -276,7 +306,7 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti Stellina a Sinistra */
+    /* Pulsante Preferiti Stellina */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: transparent !important;
         border: none !important;
@@ -611,12 +641,10 @@ CATEGORIE = {
 }
 
 OPZIONI_SCONTO = {
-    "Tutti": 0,
-    "-10%": 10,
-    "-20%": 20,
-    "-30%": 30,
-    "-50%": 50,
-    "-70%": 70
+    "Tutti": (0, 100),
+    "da 0 al 20%": (0, 20),
+    "dal 20 al 50%": (20, 50),
+    "oltre il 50%": (50, 100)
 }
 
 if "preferiti_asin" not in st.session_state:
@@ -785,7 +813,7 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria dimezzate in larghezza orizzontale
+    # Riga 1: Ricerca Testuale, Categoria e Sottocategoria
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
         col_kw, col_cat, col_subcat = st.columns([1.3, 1.2, 1.2])
@@ -817,7 +845,7 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Riga 2: Flag Prime all'inizio + Prezzo Min e Prezzo Max dimezzati
+    # Riga 2: Flag Prime + Prezzo Min e Prezzo Max
     col_prime, col_pmin, col_pmax, _ = st.columns([0.65, 0.75, 0.75, 2.2])
 
     with col_prime:
@@ -864,18 +892,18 @@ with tab_cerca:
         on_change=trigger_search
     )
 
-    # Riga 4: Flag Sconto Minimo
+    # Riga 4: Flag Sconto: [Tutti] -> [🔥 Sconto minimo:] -> [da 0 al 20%] -> [dal 20 al 50%] -> [oltre il 50%]
     label_sconto_scelto = st.radio(
-        "🔥 Sconto Minimo:",
+        "🔥 Sconto minimo:",
         list(OPZIONI_SCONTO.keys()),
         index=0,
         horizontal=True,
         key="radio_disc",
         on_change=trigger_search
     )
-    sconto_minimo = OPZIONI_SCONTO[label_sconto_scelto]
+    min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Riga 5: 6 Pulsanti Top Risultati Dimezzati in larghezza con altezza standard
+    # Riga 5: 6 Pulsanti Top Risultati
     col_btn_wrap, _ = st.columns([0.50, 0.50])
     with col_btn_wrap:
         b1, b2, b3, b4, b5, b6 = st.columns(6)
@@ -934,7 +962,8 @@ with tab_cerca:
                 solo_prime=solo_prime,
                 min_price=val_min,
                 max_price=val_max,
-                min_discount=sconto_minimo,
+                min_discount=min_disc,
+                max_discount=max_disc,
                 item_count=target_items
             )
             
