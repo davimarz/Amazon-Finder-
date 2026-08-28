@@ -136,7 +136,6 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Checkbox Spedizione Gratuita */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 12px !important;
@@ -207,35 +206,6 @@ st.markdown("""
     div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
         background: rgba(56, 189, 248, 0.20) !important;
         border-color: #38bdf8 !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > div[role="radiogroup"] {
-        display: contents !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > div[role="radiogroup"] > label:first-of-type {
-        order: 1 !important;
-        margin-right: 4px !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > label {
-        order: 2 !important;
-        margin: 0 4px 0 4px !important;
-        color: #38bdf8 !important;
-        font-weight: 800 !important;
-        font-size: 0.86rem !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[value="da 0 al 20%"]) > div[role="radiogroup"] > label:not(:first-of-type) {
-        order: 3 !important;
     }
 
     div[data-testid="stButton"] button:not([key^="fav_"]) {
