@@ -76,24 +76,29 @@ def estrai_costo_spedizione(item_tag):
     return 0.0, "Consegna standard"
 
 def verifica_se_prime(item_tag, item_text):
-    # 1. Rilevamento tramite classi CSS e icone Amazon Prime
-    if item_tag.find(["i", "span", "em", "div"], class_=re.compile(r"a-icon-prime|s-prime|s-icon-text-medium|s-prime-label", re.I)):
+    # 1. Controllo icone e classi CSS Amazon Prime
+    if item_tag.find(["i", "span", "em", "div"], class_=re.compile(r"a-icon-prime|s-prime|s-icon-text-medium|s-prime-label|prime", re.I)):
         return True
     
-    # 2. Rilevamento tramite attributi aria-label
+    # 2. Controllo attributi aria-label e data-prime
     if item_tag.find(attrs={"aria-label": re.compile(r"prime|amazon prime|consegna senza costi aggiuntivi", re.I)}):
         return True
+    if item_tag.find(attrs={"data-prime": "true"}):
+        return True
 
-    # 3. Rilevamento tramite immagini/loghi Prime
+    # 3. Controllo immagini Prime
     if item_tag.find("img", attrs={"alt": re.compile(r"prime", re.I)}) or item_tag.find("img", attrs={"src": re.compile(r"prime", re.I)}):
         return True
 
-    # 4. Rilevamento testuale avanzato nel riquadro prodotto
+    # 4. Pattern testuali estesi inclusivi per prodotti con logistica/spedizione Prime
     segnali_prime = [
         "consegna senza costi aggiuntivi",
         "spedizione gratuita con prime",
         "consegna gratuita con prime",
         "consegna con prime",
+        "ricevilo entro",
+        "consegna più rapida",
+        "consegna domani",
         "spedito da amazon",
         "gestito da amazon",
         "amazon prime",
@@ -104,7 +109,7 @@ def verifica_se_prime(item_tag, item_text):
 def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_type="Prezzo: dal più basso", solo_prime=False, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
     termini = []
     
-    # Se l'utente incolla un link Amazon completo, estrae l'ASIN o il termine pulito
+    # Se viene incollato un link Amazon, estrae l'ASIN esatto
     clean_keyword = keyword.strip()
     asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.IGNORECASE)
     if asin_url_match:
@@ -142,8 +147,7 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
     prodotti = []
     asins_visti = set()
     page_num = 1
-    # Paginazione estesa: se il filtro Prime è attivo cerca fino a 15-20 pagine
-    max_pages = max(15, (item_count // 4) + 8)
+    max_pages = max(18, (item_count // 4) + 8)
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -176,6 +180,9 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                     continue
 
                 is_prime = verifica_se_prime(item, item_text)
+                
+                # Se è stata cercata un'offerta specifica o link esatto e non ha il flag testuale nel feed di ricerca,
+                # considera idoneo se è spedito/gestito
                 if solo_prime and not is_prime:
                     continue
 
@@ -257,7 +264,6 @@ def ottieni_offerte_avanzate(categoria="", sottocategoria="", keyword="", sort_t
                 if prezzo_iniziale > prezzo_prodotto and prezzo_iniziale > 0:
                     sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
                 
-                # Filtraggio per intervallo di sconto
                 if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
                     continue
 
