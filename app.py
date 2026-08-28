@@ -12,23 +12,24 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* Card Container Principale */
+    /* Contenitore Scheda Prodotto Più Ristretto e Centrato */
     [data-testid="stVerticalBlockBorderWrapper"] {
+        max-width: 1050px !important;
+        margin: 0 auto 14px auto !important;
         background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 14px !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06) !important;
-        padding: 12px !important;
-        margin-bottom: 12px !important;
-        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        border: 1px solid #dcdfe4 !important;
+        border-radius: 12px !important;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+        padding: 14px !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
     
     [data-testid="stVerticalBlockBorderWrapper"]:hover {
         border-color: #0284c7 !important;
-        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.15) !important;
+        box-shadow: 0 6px 18px rgba(2, 132, 199, 0.12) !important;
     }
 
-    /* Pulsante Stellina Preferiti */
+    /* Pulsante Preferiti Stellina */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: transparent !important;
         border: none !important;
@@ -45,15 +46,15 @@ st.markdown("""
     /* Immagine Prodotto */
     .product-img-wrapper {
         width: 100%;
-        height: 165px;
+        height: 155px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #f8fafc;
-        border: 1px solid #f1f5f9;
-        border-radius: 10px;
+        background-color: #ffffff;
+        border: 1px solid #edf2f7;
+        border-radius: 8px;
         overflow: hidden;
-        padding: 6px;
+        padding: 4px;
     }
 
     .product-img-wrapper img {
@@ -62,43 +63,37 @@ st.markdown("""
         object-fit: contain;
         display: block;
         margin: auto;
-        transition: transform 0.2s ease;
     }
 
-    .product-img-wrapper:hover img {
-        transform: scale(1.05);
-    }
-
-    /* Pulsante Acquista Sotto la Foto */
+    /* Pulsante Acquista su Amazon Sotto la Foto */
     .buy-btn-under-img {
         display: block;
         width: 100%;
         background-color: #ffd814;
         color: #0f1111 !important;
         font-size: 0.88rem !important;
-        font-weight: 800 !important;
+        font-weight: 700 !important;
         text-decoration: none !important;
-        padding: 8px 6px;
-        border-radius: 8px;
+        padding: 7px 4px;
+        border-radius: 20px;
         border: 1px solid #fcd200;
         text-align: center;
         margin-top: 8px;
-        transition: background-color 0.15s ease, transform 0.1s ease;
-        box-shadow: 0 2px 6px rgba(255, 216, 20, 0.3);
+        box-shadow: 0 2px 5px rgba(213, 175, 0, 0.3);
+        transition: background-color 0.15s ease;
     }
 
     .buy-btn-under-img:hover {
         background-color: #f7ca00;
-        transform: translateY(-1px);
         color: #0f1111 !important;
     }
 
     /* Titolo / Descrizione in Blu Scuro */
     .deal-title {
-        font-size: 1.02rem !important;
+        font-size: 0.98rem !important;
         font-weight: 800 !important;
-        line-height: 1.4 !important;
-        color: #0f2b5c !important; /* Blu Scuro */
+        line-height: 1.35 !important;
+        color: #0d2c54 !important; /* Blu Scuro */
         margin-bottom: 8px !important;
         display: -webkit-box;
         -webkit-line-clamp: 4;
@@ -107,18 +102,18 @@ st.markdown("""
         min-height: 4.2em;
     }
 
-    /* Badge Spedizione */
+    /* Badge Consegna e Spedizione */
     .shipping-box {
         display: inline-flex;
         align-items: center;
         background: rgba(249, 115, 22, 0.12) !important;
         color: #ea580c !important;
         border: 1px solid rgba(234, 88, 12, 0.3) !important;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-size: 0.80rem !important;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.78rem !important;
         font-weight: 700;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
         width: fit-content;
     }
 
@@ -128,11 +123,11 @@ st.markdown("""
         background: rgba(34, 197, 94, 0.12) !important;
         color: #16a34a !important;
         border: 1px solid rgba(22, 163, 74, 0.3) !important;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-size: 0.80rem !important;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.78rem !important;
         font-weight: 700;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
         width: fit-content;
     }
 
@@ -140,7 +135,7 @@ st.markdown("""
     .price-container-styled {
         display: flex;
         align-items: baseline;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
         margin-top: 4px !important;
     }
@@ -148,129 +143,126 @@ st.markdown("""
     .deal-badge {
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         color: #ffffff;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 1px 5px;
+        border-radius: 3px;
         font-weight: 800;
-        font-size: 0.84rem !important;
+        font-size: 0.82rem !important;
     }
 
     .deal-price-final {
-        font-size: 1.55rem !important;
+        font-size: 1.50rem !important;
         font-weight: 900 !important;
         color: #0284c7 !important;
         letter-spacing: -0.5px;
     }
 
     .deal-price-old {
-        font-size: 0.90rem !important;
+        font-size: 0.88rem !important;
         color: #64748b !important;
         text-decoration: line-through;
         font-weight: 500;
     }
 
-    /* Scheda Feedback Aperta */
-    .feedback-card-open {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 10px 12px;
-        height: 100%;
+    /* Scheda Feedback Ufficiale (Fedele a feedback.png) */
+    .feedback-container {
+        font-family: "Amazon Ember", Arial, sans-serif;
+        padding: 2px 6px;
     }
 
-    .feedback-header-title {
-        font-size: 1.05rem;
-        font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 2px;
-    }
-
-    .feedback-rating-header {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        margin-bottom: 2px;
-    }
-
-    .stars-gold {
-        color: #de7921;
-        font-size: 1.15rem;
-        letter-spacing: 1px;
-    }
-
-    .rating-score-big {
-        font-size: 0.98rem;
+    .feedback-title {
+        font-size: 1.25rem;
         font-weight: 700;
-        color: #0f172a;
+        color: #0f1111;
+        line-height: 1.2;
+        margin-bottom: 2px;
     }
 
-    .feedback-total-subtitle {
-        font-size: 0.80rem;
-        color: #64748b;
-        margin-bottom: 8px;
-    }
-
-    .feedback-row {
+    .feedback-stars-row {
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-bottom: 4px;
-        font-size: 0.80rem;
+        margin-bottom: 1px;
     }
 
-    .feedback-label {
-        width: 55px;
-        color: #0284c7;
+    .feedback-stars {
+        color: #ff6e00;
+        font-size: 1.28rem;
+        letter-spacing: 1px;
+        line-height: 1;
+    }
+
+    .feedback-score-text {
+        font-size: 1.02rem;
         font-weight: 600;
-        white-space: nowrap;
-        font-size: 0.78rem;
+        color: #0f1111;
     }
 
-    .feedback-bar-bg {
+    .feedback-subcount {
+        font-size: 0.88rem;
+        color: #565959;
+        margin-bottom: 10px;
+    }
+
+    .fb-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 5px;
+    }
+
+    .fb-label {
+        width: 58px;
+        color: #007185;
+        font-size: 0.88rem;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .fb-bar-bg {
         flex: 1;
-        height: 13px;
+        height: 16px;
         background-color: #ffffff;
-        border: 1px solid #cbd5e1;
-        border-radius: 3px;
+        border: 1px solid #767676;
+        border-radius: 4px;
         overflow: hidden;
         position: relative;
     }
 
-    .feedback-bar-fill {
+    .fb-bar-fill {
         height: 100%;
-        background: linear-gradient(to right, #ff9900, #de7921);
-        border-radius: 2px 0 0 2px;
+        background-color: #ff6e00;
+        border-radius: 3px 0 0 3px;
     }
 
-    .feedback-pct {
-        width: 30px;
+    .fb-pct {
+        width: 38px;
         text-align: right;
-        color: #0284c7;
-        font-weight: 700;
-        font-size: 0.78rem;
+        color: #007185;
+        font-size: 0.88rem;
+        font-weight: 500;
     }
 
-    /* Colonna Pulsanti Social in Verticale */
+    /* Colonna Pulsanti Social in Verticale a Destra */
     .social-share-col {
         display: flex;
         flex-direction: column;
-        gap: 7px;
+        gap: 6px;
         align-items: center;
         justify-content: center;
-        height: 100%;
     }
 
     .share-icon-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 35px;
-        height: 35px;
+        width: 32px;
+        height: 32px;
         border-radius: 8px;
         text-decoration: none !important;
         cursor: pointer;
         border: none;
         transition: transform 0.15s ease, opacity 0.15s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.12);
     }
 
     .share-icon-btn:hover {
@@ -279,8 +271,8 @@ st.markdown("""
     }
 
     .share-icon-btn svg {
-        width: 19px;
-        height: 19px;
+        width: 18px;
+        height: 18px;
         display: block;
     }
 
@@ -291,18 +283,18 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* Responsive per Smartphone */
+    /* Responsive */
     @media (max-width: 900px) {
         div[data-testid="column"] {
             width: 100% !important;
             flex: 1 1 100% !important;
             min-width: 100% !important;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .social-share-col {
             flex-direction: row !important;
             justify-content: center !important;
-            gap: 10px;
+            gap: 8px;
         }
     }
 </style>
@@ -380,7 +372,7 @@ tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(
 
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
-        col_left, col_center, col_fb, col_social = st.columns([1.3, 2.3, 1.8, 0.45])
+        col_left, col_center, col_fb, col_social = st.columns([1.3, 2.3, 2.1, 0.45])
         
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
@@ -426,7 +418,7 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        # 3. Colonna Destra-Centro: Scheda Feedback Aperta
+        # 3. Colonna Destra-Centro: Scheda Feedback Ufficiale
         with col_fb:
             voto = p.get("voto_medio", 4.8)
             num_val = p.get("num_recensioni", 765)
@@ -434,36 +426,34 @@ def render_product_card(p, tab_key="main"):
             voto_str = f"{voto:.1f}".replace(".", ",")
             stelle_icon = "★" * int(voto) + "☆" * (5 - int(voto))
             
-            righe_feedback = ""
-            for stella in ["5", "4", "3", "2", "1"]:
-                pct = distrib.get(stella, 0)
-                label_stella = f"{stella} stell{'e' if stella != '1' else 'a'}"
-                righe_feedback += f"""
-                <div class="feedback-row">
-                    <span class="feedback-label">{label_stella}</span>
-                    <div class="feedback-bar-bg">
-                        <div class="feedback-bar-fill" style="width: {pct}%;"></div>
-                    </div>
-                    <span class="feedback-pct">{pct}%</span>
-                </div>
-                """
+            # Generazione riga senza indentazione markdown
+            bar_rows = []
+            for s in ["5", "4", "3", "2", "1"]:
+                pct = distrib.get(s, 0)
+                lbl = f"{s} stell{'e' if s != '1' else 'a'}"
+                row_html = (
+                    f"<div class='fb-row'>"
+                    f"<span class='fb-label'>{lbl}</span>"
+                    f"<div class='fb-bar-bg'><div class='fb-bar-fill' style='width: {pct}%;'></div></div>"
+                    f"<span class='fb-pct'>{pct}%</span>"
+                    f"</div>"
+                )
+                bar_rows.append(row_html)
 
-            feedback_html = f"""
-            <div class="feedback-card-open">
-                <div class="feedback-header-title">Recensioni clienti</div>
-                <div class="feedback-rating-header">
-                    <span class="stars-gold">{stelle_icon}</span>
-                    <span class="rating-score-big">{voto_str} su 5</span>
-                </div>
-                <div class="feedback-total-subtitle">{num_val} valutazioni globali</div>
-                <div class="feedback-bars-container">
-                    {righe_feedback}
-                </div>
-            </div>
-            """
-            st.markdown(feedback_html, unsafe_allow_html=True)
+            feedback_full_html = (
+                f"<div class='feedback-container'>"
+                f"<div class='feedback-title'>Recensioni clienti</div>"
+                f"<div class='feedback-stars-row'>"
+                f"<span class='feedback-stars'>{stelle_icon}</span>"
+                f"<span class='feedback-score-text'>{voto_str} su 5</span>"
+                f"</div>"
+                f"<div class='feedback-subcount'>{num_val} valutazioni globali</div>"
+                f"{''.join(bar_rows)}"
+                f"</div>"
+            )
+            st.markdown(feedback_full_html, unsafe_allow_html=True)
 
-        # 4. Colonna Destra Estrema: Pulsanti di Condivisione in Verticale
+        # 4. Colonna Destra Estrema: Pulsanti Social Verticali
         with col_social:
             safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
             share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
@@ -510,7 +500,6 @@ with tab_cerca:
         sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
         subcat_scelta = st.selectbox("Sottocategoria:", sottocategorie_disponibili)
 
-    # 5 Colonne Filtri
     col_ship, col_sort, col_pmin, col_pmax, col_disc = st.columns([1.1, 1.3, 1, 1, 1])
     
     with col_ship:
