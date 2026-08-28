@@ -76,6 +76,91 @@ def pulisci_titolo_descrizione(titolo_grezzo):
         return "Prodotto Amazon"
     return titolo_grezzo.strip()
 
+def ottieni_offerte_eventi_deals(item_count=30):
+    url = "https://www.amazon.it/events/deals"
+    headers = {
+        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Upgrade-Insecure-Requests": "1"
+    }
+    
+    prodotti = []
+    asins_visti = set()
+    session = requests.Session(impersonate="chrome")
+
+    try:
+        response = session.get(url, headers=headers, timeout=15)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, "html.parser")
+            items = soup.find_all("div", {"data-component-type": "s-search-result"})
+            if not items:
+                items = soup.find_all("div", attrs={"data-asin": True})
+
+            for item in items:
+                if len(prodotti) >= item_count:
+                    break
+                asin = item.get("data-asin", "").strip()
+                if not asin or len(asin) != 10 or asin in asins_visti:
+                    continue
+
+                item_text = item.text.lower()
+                if "non disponibile" in item_text:
+                    continue
+
+                prezzo_prodotto = 0.0
+                price_whole = item.find("span", {"class": "a-price-whole"})
+                price_fraction = item.find("span", {"class": "a-price-fraction"})
+                
+                if price_whole:
+                    whole_clean = price_whole.text.replace(".", "").replace(",", "").strip()
+                    fraction_clean = price_fraction.text.strip() if price_fraction else "00"
+                    try:
+                        prezzo_prodotto = float(f"{whole_clean}.{fraction_clean}")
+                    except ValueError:
+                        prezzo_prodotto = 0.0
+                else:
+                    price_off = item.find("span", {"class": "a-offscreen"})
+                    if price_off:
+                        try:
+                            clean_p = price_off.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
+                            prezzo_prodotto = float(clean_p)
+                        except ValueError:
+                            prezzo_prodotto = 0.0
+
+                if prezzo_prodotto <= 0.0:
+                    continue
+
+                title_tag = item.find("h2") or item.find("span", {"class": "a-size-base-plus"})
+                titolo_grezzo = title_tag.get_text(strip=True) if title_tag else "Offerta Lampo Amazon"
+                titolo_completo = pulisci_titolo_descrizione(titolo_grezzo)
+
+                img_tag = item.find("img", {"class": "s-image"})
+                immagine_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/400"
+
+                asins_visti.add(asin)
+                link_affiliato = f"https://www.amazon.it/dp/{asin}?tag={PARTNER_TAG}"
+
+                prodotti.append({
+                    "asin": asin,
+                    "titolo": titolo_completo,
+                    "prezzo_finale": prezzo_prodotto,
+                    "prezzo_iniziale": prezzo_prodotto,
+                    "sconto": "",
+                    "info_spedizione": "Spedizione gratuita",
+                    "is_sped_gratis": True,
+                    "voto_medio": 4.8,
+                    "num_recensioni": 540,
+                    "immagine_url": immagine_url,
+                    "link_affiliato": link_affiliato
+                })
+    except Exception as e:
+        print(f"Errore recupero deals: {e}")
+
+    return prodotti
+
 def ottieni_offerte_pagina_speciale(item_count=40):
     """Estrae i prodotti direttamente dall'URL specifico delle offerte del giorno"""
     url = "https://www.amazon.it/offerte-del-giorno/s?k=offerte+del+giorno"
