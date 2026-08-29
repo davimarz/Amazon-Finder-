@@ -187,11 +187,9 @@ def ottieni_offerte_avanzate(
     if clean_keyword:
         termini.append(clean_keyword)
     elif sottocategoria and sottocategoria != "Tutte":
-        # Pulisce eventuali spiegazioni tra parentesi nella sottocategoria
         clean_sub = re.sub(r'\(.*?\)', '', sottocategoria).strip()
         termini.append(clean_sub)
     elif categoria:
-        # Pulisce emoji, parentesi e punteggiatura ridondante
         clean_cat = re.sub(r'[^\w\s]', ' ', categoria).strip()
         termini.append(clean_cat)
 
