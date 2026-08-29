@@ -23,14 +23,6 @@ _TOKEN_CACHE = {
     "expires_at": 0
 }
 
-_SESSION = None
-
-def get_session():
-    global _SESSION
-    if _SESSION is None:
-        _SESSION = c_requests.Session(impersonate="chrome")
-    return _SESSION
-
 def get_creators_access_token():
     now = time.time()
     if _TOKEN_CACHE["access_token"] and now < _TOKEN_CACHE["expires_at"] - 60:
@@ -84,7 +76,7 @@ def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
     testo_completo = item_tag.get_text(" ", strip=True).lower()
 
-    is_prime = ("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_completo)
+    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_completo)
     
     frasi_gratuite = (
         "consegna senza costi aggiuntivi",
@@ -115,6 +107,42 @@ def analizza_spedizione_html(item_tag):
 
     return 0.0, "Standard", False, False
 
+def estrai_prezzo_tag(it):
+    price_whole = it.find("span", {"class": "a-price-whole"})
+    if price_whole:
+        price_fraction = it.find("span", {"class": "a-price-fraction"})
+        whole_clean = price_whole.text.replace(".", "").replace(",", "").strip()
+        fraction_clean = price_fraction.text.strip() if price_fraction else "00"
+        try:
+            val = float(f"{whole_clean}.{fraction_clean}")
+            if val > 0:
+                return val
+        except ValueError:
+            pass
+
+    for off_tag in it.find_all("span", {"class": "a-offscreen"}):
+        t = off_tag.get_text(strip=True)
+        if "€" in t or re.search(r'\d+[.,]\d{2}', t):
+            clean_t = t.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
+            try:
+                val = float(clean_t)
+                if val > 0:
+                    return val
+            except ValueError:
+                continue
+
+    text_match = re.search(r'(\d+[\.,]\d{2})\s*€|€\s*(\d+[\.,]\d{2})', it.get_text(" ", strip=True))
+    if text_match:
+        val_str = text_match.group(1) or text_match.group(2)
+        try:
+            val = float(val_str.replace(".", "").replace(",", ".").strip())
+            if val > 0:
+                return val
+        except ValueError:
+            pass
+
+    return 0.0
+
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     if sort_type == "Prezzo minimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
@@ -124,7 +152,6 @@ def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
         prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
     return prodotti[:item_count]
 
-@st.cache_data(ttl=300, show_spinner=False)
 def ottieni_offerte_avanzate(
     categoria="", 
     sottocategoria="", 
@@ -147,6 +174,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
+    # 1. API Ufficiale Creators PA-API5
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -214,7 +242,9 @@ def ottieni_offerte_avanzate(
                     if old_price_val > price_val > 0:
                         sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
 
-                    if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
+                    if min_discount > 0 and sconto_val < min_discount:
+                        continue
+                    if max_discount < 100 and sconto_val > max_discount:
                         continue
 
                     prodotti.append({
@@ -237,6 +267,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
+    # 2. Fallback Scraper ad alta resilienza
     return _ottieni_offerte_fallback(
         query_str=query_str,
         sort_type=sort_type,
@@ -251,36 +282,31 @@ def ottieni_offerte_avanzate(
 
 def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount, item_count, partner_tag):
     query_encoded = urllib.parse.quote_plus(query_str)
-    sort_code = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
-    base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
-
-    if min_price and min_price > 0:
-        base_url += f"&low-price={int(min_price)}"
-    if max_price and max_price > 0:
-        base_url += f"&high-price={int(max_price)}"
+    urls_to_try = [
+        f"https://www.amazon.it/s?k={query_encoded}",
+        f"https://www.amazon.it/s?k={query_encoded}&s={SORT_FALLBACK_MAP.get(sort_type, 'price-asc-rank')}"
+    ]
 
     headers = {
-        "Accept-Language": "it-IT,it;q=0.9",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
     }
 
     prodotti = []
     asins_visti = set()
-    page_num = 1
-    session = get_session()
+    session = c_requests.Session(impersonate="chrome120")
 
-    try:
-        while len(prodotti) < item_count and page_num <= 4:
-            resp = session.get(f"{base_url}&page={page_num}", headers=headers, timeout=6)
-            if resp.status_code != 200:
-                break
+    for base_url in urls_to_try:
+        try:
+            resp = session.get(base_url, headers=headers, timeout=8)
+            if resp.status_code != 200 or not resp.text:
+                continue
 
             soup = BeautifulSoup(resp.text, "html.parser")
             items = soup.find_all("div", {"data-component-type": "s-search-result"})
             if not items:
-                items = [div for div in soup.find_all("div", attrs={"data-asin": True}) if div.get("data-asin", "").strip()]
-            if not items:
-                break
+                items = [div for div in soup.find_all("div", attrs={"data-asin": True}) if len(div.get("data-asin", "").strip()) == 10]
 
             for it in items:
                 if len(prodotti) >= item_count:
@@ -298,36 +324,24 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 if solo_spedizione_gratuita and not is_free_ship:
                     continue
 
-                price_whole = it.find("span", {"class": "a-price-whole"})
-                prezzo_prodotto = 0.0
-                if price_whole:
-                    price_fraction = it.find("span", {"class": "a-price-fraction"})
-                    whole_clean = price_whole.text.replace(".", "").replace(",", "").strip()
-                    fraction_clean = price_fraction.text.strip() if price_fraction else "00"
-                    try:
-                        prezzo_prodotto = float(f"{whole_clean}.{fraction_clean}")
-                    except ValueError:
-                        prezzo_prodotto = 0.0
-
+                prezzo_prodotto = estrai_prezzo_tag(it)
                 if prezzo_prodotto <= 0.0:
                     continue
 
-                basis_price = it.find("span", {"class": "a-price", "data-a-strike": "true"}) or it.find("span", {"class": "a-text-price"})
+                basis_price_tag = it.find("span", {"class": "a-price", "data-a-strike": "true"}) or it.find("span", {"class": "a-text-price"})
                 prezzo_iniziale = prezzo_prodotto
-                if basis_price:
-                    basis_offscreen = basis_price.find("span", {"class": "a-offscreen"})
-                    if basis_offscreen:
-                        try:
-                            clean_t = basis_offscreen.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
-                            prezzo_iniziale = float(clean_t)
-                        except ValueError:
-                            prezzo_iniziale = prezzo_prodotto
+                if basis_price_tag:
+                    p_init = estrai_prezzo_tag(basis_price_tag)
+                    if p_init > prezzo_prodotto:
+                        prezzo_iniziale = p_init
 
                 sconto_val = 0
                 if prezzo_iniziale > prezzo_prodotto and prezzo_iniziale > 0:
                     sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
 
-                if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
+                if min_discount > 0 and sconto_val < min_discount:
+                    continue
+                if max_discount < 100 and sconto_val > max_discount:
                     continue
 
                 title_tag = it.find("h2")
@@ -352,8 +366,9 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                     "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
                 })
 
-            page_num += 1
-    except Exception:
-        pass
+            if prodotti:
+                break
+        except Exception:
+            continue
 
     return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
