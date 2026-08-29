@@ -8,13 +8,13 @@ from bs4 import BeautifulSoup
 
 SORT_MAPPINGS = {
     "Prezzo minimo": "Price:LowToHigh",
-    "Prezzo massimo": "Price:HighToLow",
+    "Numero di vendite": "SalesRank",
     "Recensioni": "AvgCustomerReviews"
 }
 
 SORT_FALLBACK_MAP = {
     "Prezzo minimo": "price-asc-rank",
-    "Prezzo massimo": "price-desc-rank",
+    "Numero di vendite": "exact-aware-popularity-rank",
     "Recensioni": "review-rank"
 }
 
@@ -58,10 +58,6 @@ def get_creators_access_token():
     return None
 
 def calcola_distribuzione_recensioni(voto_medio, num_recensioni=100):
-    """
-    Calcola la curva di distribuzione percentuale basata
-    sul voto medio e volume reali del prodotto.
-    """
     v = max(1.0, min(5.0, float(voto_medio))) if voto_medio else 4.2
     
     if v >= 4.7:
@@ -94,14 +90,9 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=100):
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
 def analizza_recensioni_html(item_tag):
-    """
-    Estrapola il rating (voto su 5) e il numero effettivo di voti/recensioni
-    direttamente dalla card HTML del prodotto.
-    """
     voto_medio = 4.2
     num_recensioni = 0
 
-    # 1. Estrazione del voto medio
     star_elem = item_tag.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")})
     if star_elem:
         text_star = star_elem.get_text(" ", strip=True)
@@ -121,7 +112,6 @@ def analizza_recensioni_html(item_tag):
                 except ValueError:
                     pass
 
-    # 2. Estrazione del numero totale di recensioni
     review_elem = item_tag.find("span", {"class": "s-underline-text"}) or \
                   item_tag.find("span", {"aria-label": re.compile(r"\d+")}) or \
                   item_tag.find("a", {"href": re.compile(r"#customerReviews")})
@@ -135,7 +125,6 @@ def analizza_recensioni_html(item_tag):
             except ValueError:
                 num_recensioni = 0
 
-    # Fallback su scansione regex generale nel blocco recensioni
     if num_recensioni == 0:
         match_reviews = re.search(r"(?:(\d{1,3}(?:\.\d{3})+|\d+))\s*(?:valutazion|recension|vot)", item_tag.get_text(" ", strip=True), re.IGNORECASE)
         if match_reviews:
@@ -146,6 +135,22 @@ def analizza_recensioni_html(item_tag):
                 num_recensioni = 0
 
     return round(voto_medio, 1), num_recensioni
+
+def estrai_vendite_recenti(item_tag):
+    text_full = item_tag.get_text(" ", strip=True).lower()
+    match = re.search(r'(\d+k?|\d+[\.,]\d+k?)\+?\s*acquistati\s+nel\s+mese', text_full)
+    if match:
+        val_str = match.group(1).replace(",", ".")
+        if "k" in val_str:
+            try:
+                return int(float(val_str.replace("k", "")) * 1000)
+            except ValueError:
+                return 1000
+        try:
+            return int(val_str)
+        except ValueError:
+            return 0
+    return 0
 
 def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
@@ -221,8 +226,8 @@ def estrai_prezzo_tag(it):
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     if sort_type == "Prezzo minimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
-    elif sort_type == "Prezzo massimo":
-        prodotti.sort(key=lambda x: x["prezzo_finale"], reverse=True)
+    elif sort_type == "Numero di vendite":
+        prodotti.sort(key=lambda x: (x.get("vendite_mensili", 0), x.get("num_recensioni", 0)), reverse=True)
     elif sort_type == "Recensioni":
         prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
     return prodotti[:item_count]
@@ -249,7 +254,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
-    # 1. Chiamata PA-API5 Ufficiale
+    # 1. PA-API5 Ufficiale
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -338,6 +343,7 @@ def ottieni_offerte_avanzate(
                         "costo_spedizione": costo_sped,
                         "voto_medio": voto_reale,
                         "num_recensioni": recensioni_reali,
+                        "vendite_mensili": recensioni_reali,
                         "link_affiliato": link
                     })
                 if prodotti:
@@ -345,7 +351,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 2. Fallback Scraper con estrazione reale di Voti e Recensioni
+    # 2. Fallback Scraper
     return _ottieni_offerte_fallback(
         query_str=query_str,
         sort_type=sort_type,
@@ -360,9 +366,10 @@ def ottieni_offerte_avanzate(
 
 def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount, item_count, partner_tag):
     query_encoded = urllib.parse.quote_plus(query_str)
+    sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     urls_to_try = [
-        f"https://www.amazon.it/s?k={query_encoded}",
-        f"https://www.amazon.it/s?k={query_encoded}&s={SORT_FALLBACK_MAP.get(sort_type, 'price-asc-rank')}"
+        f"https://www.amazon.it/s?k={query_encoded}&s={sort_param}",
+        f"https://www.amazon.it/s?k={query_encoded}"
     ]
 
     headers = {
@@ -427,8 +434,10 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 img_tag = it.find("img", {"class": "s-image"})
                 img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
 
-                # Estrazione reale di voto e numero di recensioni
                 voto_estratto, recensioni_estratte = analizza_recensioni_html(it)
+                vendite_estratte = estrai_vendite_recenti(it)
+                if vendite_estratte == 0:
+                    vendite_estratte = recensioni_estratte
 
                 asins_visti.add(asin)
                 prodotti.append({
@@ -444,6 +453,7 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                     "costo_spedizione": costo_sped,
                     "voto_medio": voto_estratto,
                     "num_recensioni": recensioni_estratte,
+                    "vendite_mensili": vendite_estratte,
                     "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
                 })
 
