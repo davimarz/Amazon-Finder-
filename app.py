@@ -131,11 +131,6 @@ st.markdown("""
         padding: 6px 10px !important;
     }
 
-    .search-bar-row [data-testid="stHorizontalBlock"] {
-        align-items: flex-end !important;
-        gap: 8px !important;
-    }
-
     .search-btn-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
@@ -158,6 +153,54 @@ st.markdown("""
         background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
         box-shadow: 0 4px 14px rgba(56, 189, 248, 0.6) !important;
         transform: translateY(-1px) !important;
+    }
+
+    .top-buttons-box [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 2px !important;
+        width: 100% !important;
+        margin-top: 4px !important;
+    }
+
+    .top-buttons-box [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: 16.666% !important;
+        padding: 0 !important;
+    }
+
+    .top-buttons-box div[data-testid="stButton"] button {
+        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 4px !important;
+        font-weight: 800 !important;
+        font-size: 0.68rem !important;
+        padding: 1px 0 !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.35) !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+        white-space: nowrap !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .top-buttons-box div[data-testid="stButton"] button p {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        font-size: inherit !important;
+        line-height: 1 !important;
+    }
+
+    .top-buttons-box div[data-testid="stButton"] button:hover {
+        transform: translateY(-1px) !important;
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
+        box-shadow: 0 2px 8px rgba(56, 189, 248, 0.5) !important;
     }
 
     div[data-testid="stCheckbox"] {
@@ -246,55 +289,6 @@ st.markdown("""
         flex: 1 1 0% !important;
         min-width: 0 !important;
         width: 50% !important;
-    }
-
-    .top-single-row-container [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 4px !important;
-        width: 100% !important;
-        margin-top: 4px !important;
-        margin-bottom: 6px !important;
-    }
-
-    .top-single-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        width: 16.666% !important;
-    }
-
-    .top-single-row-container div[data-testid="stButton"] button {
-        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #38bdf8 !important;
-        border-radius: 6px !important;
-        font-weight: 900 !important;
-        font-size: clamp(0.72rem, 2vw, 0.84rem) !important;
-        letter-spacing: 0.2px !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
-        padding: 2px 0 !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4) !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
-        white-space: nowrap !important;
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .top-single-row-container div[data-testid="stButton"] button p {
-        color: #ffffff !important;
-        font-weight: 900 !important;
-        font-size: inherit !important;
-    }
-
-    .top-single-row-container div[data-testid="stButton"] button:hover {
-        transform: translateY(-1px) !important;
-        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
-        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.5) !important;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -796,8 +790,8 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    st.markdown('<div class="search-bar-row">', unsafe_allow_html=True)
-    col_input, col_submit = st.columns([0.80, 0.20])
+    col_input, col_action = st.columns([0.75, 0.25])
+    
     with col_input:
         keyword_val = st.text_input(
             "🔍 Scrivi cosa ti serve:",
@@ -805,11 +799,28 @@ with tab_cerca:
             key="cerca_keyword_input",
             on_change=reset_elenco_prodotti
         )
-    with col_submit:
+
+    with col_action:
+        st.markdown("<div style='height: 22px;'></div>", unsafe_allow_html=True)
         st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('<div class="top-buttons-box">', unsafe_allow_html=True)
+        t1, t2, t3, t4, t5, t6 = st.columns(6)
+        with t1:
+            btn_10 = st.button("Top 10", key="cerca_btn10", use_container_width=True)
+        with t2:
+            btn_20 = st.button("Top 20", key="cerca_btn20", use_container_width=True)
+        with t3:
+            btn_30 = st.button("Top 30", key="cerca_btn30", use_container_width=True)
+        with t4:
+            btn_50 = st.button("Top 50", key="cerca_btn50", use_container_width=True)
+        with t5:
+            btn_70 = st.button("Top 70", key="cerca_btn70", use_container_width=True)
+        with t6:
+            btn_100 = st.button("Top 100", key="cerca_btn100", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
@@ -855,24 +866,6 @@ with tab_cerca:
         on_change=reset_elenco_prodotti
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_disc_val]
-
-    col_btn_wrap, _ = st.columns([0.65, 0.35])
-    with col_btn_wrap:
-        st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
-        t1, t2, t3, t4, t5, t6 = st.columns(6)
-        with t1:
-            btn_10 = st.button("Top 10", key="cerca_btn10", use_container_width=True)
-        with t2:
-            btn_20 = st.button("Top 20", key="cerca_btn20", use_container_width=True)
-        with t3:
-            btn_30 = st.button("Top 30", key="cerca_btn30", use_container_width=True)
-        with t4:
-            btn_50 = st.button("Top 50", key="cerca_btn50", use_container_width=True)
-        with t5:
-            btn_70 = st.button("Top 70", key="cerca_btn70", use_container_width=True)
-        with t6:
-            btn_100 = st.button("Top 100", key="cerca_btn100", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
 
     solo_gratis = st.checkbox(
         "🚚 Spedizione gratuita",
