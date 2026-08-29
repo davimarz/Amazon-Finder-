@@ -10,7 +10,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS Mobile-First ad alta densità informativa
 st.markdown("""
 <style>
     #MainMenu, header, footer { visibility: hidden !important; height: 0 !important; }
@@ -248,6 +247,53 @@ st.markdown("""
         object-fit: contain;
     }
 
+    /* Riga Titolo + Stellina Preferiti */
+    .title-star-row [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-bottom: 2px !important;
+    }
+
+    .title-star-row [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {
+        flex: 1 1 82% !important;
+        min-width: 0 !important;
+    }
+
+    .title-star-row [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {
+        flex: 0 0 18% !important;
+        min-width: 0 !important;
+    }
+
+    .deal-title {
+        font-size: 0.78rem !important;
+        font-weight: 800 !important;
+        line-height: 1.15 !important;
+        color: #38bdf8 !important;
+        margin: 0 !important;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    div[data-testid="stButton"] button[key^="fav_"] {
+        background: #1d4ed8 !important;
+        border: 1px solid #3b82f6 !important;
+        border-radius: 5px !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        width: 100% !important;
+        padding: 0 !important;
+        font-size: 0.82rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -263,28 +309,7 @@ st.markdown("""
         width: 100% !important;
         min-height: 28px;
         height: 28px;
-    }
-
-    div[data-testid="stButton"] button[key^="fav_"] {
-        background: #1d4ed8 !important;
-        border: 1px solid #3b82f6 !important;
-        border-radius: 6px !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        padding: 0 !important;
-        font-size: 0.85rem !important;
-    }
-
-    .deal-title {
-        font-size: 0.78rem !important;
-        font-weight: 800 !important;
-        line-height: 1.15 !important;
-        color: #38bdf8 !important;
-        margin-bottom: 3px !important;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        margin-top: 3px;
     }
 
     .price-delivery-split-row {
@@ -458,7 +483,22 @@ def render_product_card(p, tab_key="main"):
         with col_center:
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
-            st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
+
+            # Titolo e Stellina affiancati sulla stessa riga
+            st.markdown('<div class="title-star-row">', unsafe_allow_html=True)
+            c_titolo, c_star = st.columns([0.82, 0.18])
+            with c_titolo:
+                st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
+            with c_star:
+                if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi/Rimuovi dai Preferiti"):
+                    if is_fav:
+                        rimuovi_preferito(p["asin"])
+                        st.session_state.preferiti_asin.pop(p["asin"], None)
+                    else:
+                        aggiungi_preferito(p)
+                        st.session_state.preferiti_asin[p["asin"]] = p
+                    st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
             
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
@@ -474,19 +514,7 @@ def render_product_card(p, tab_key="main"):
                 ship_html = "<span class='shipping-badge-free'>🚚 Standard</span>"
 
             st.markdown(f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>", unsafe_allow_html=True)
-
-            c_star_sub, c_buy_sub = st.columns([0.28, 0.72])
-            with c_star_sub:
-                if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}"):
-                    if is_fav:
-                        rimuovi_preferito(p["asin"])
-                        st.session_state.preferiti_asin.pop(p["asin"], None)
-                    else:
-                        aggiungi_preferito(p)
-                        st.session_state.preferiti_asin[p["asin"]] = p
-                    st.rerun()
-            with c_buy_sub:
-                st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
+            st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
 
         with col_fb:
             voto = p.get("voto_medio", 4.8)
