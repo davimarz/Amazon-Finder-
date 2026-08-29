@@ -253,18 +253,18 @@ st.markdown("""
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: flex-start !important;
-        gap: 4px !important;
+        gap: 3px !important;
         width: 100% !important;
         margin-bottom: 2px !important;
     }
 
     .title-star-row [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {
-        flex: 1 1 82% !important;
+        flex: 1 1 87% !important;
         min-width: 0 !important;
     }
 
     .title-star-row [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {
-        flex: 0 0 18% !important;
+        flex: 0 0 13% !important;
         min-width: 0 !important;
     }
 
@@ -280,18 +280,26 @@ st.markdown("""
         overflow: hidden;
     }
 
+    /* Stellina Preferiti: Verde, Compatta e Ridotta */
     div[data-testid="stButton"] button[key^="fav_"] {
-        background: #1d4ed8 !important;
-        border: 1px solid #3b82f6 !important;
-        border-radius: 5px !important;
-        min-height: 24px !important;
-        height: 24px !important;
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+        border: 1px solid #4ade80 !important;
+        border-radius: 4px !important;
+        min-height: 20px !important;
+        height: 20px !important;
         width: 100% !important;
+        max-width: 22px !important;
         padding: 0 !important;
-        font-size: 0.82rem !important;
+        font-size: 0.72rem !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
+        box-shadow: 0 1px 4px rgba(22, 163, 74, 0.4) !important;
+    }
+
+    div[data-testid="stButton"] button[key^="fav_"]:hover {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+        border-color: #86efac !important;
     }
 
     .buy-btn-action {
@@ -484,9 +492,9 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
 
-            # Titolo e Stellina affiancati sulla stessa riga
+            # Titolo e Stellina compatta verde affiancati
             st.markdown('<div class="title-star-row">', unsafe_allow_html=True)
-            c_titolo, c_star = st.columns([0.82, 0.18])
+            c_titolo, c_star = st.columns([0.87, 0.13])
             with c_titolo:
                 st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             with c_star:
