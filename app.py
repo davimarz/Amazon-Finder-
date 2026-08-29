@@ -3,13 +3,21 @@ import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
-st.set_page_config(page_title="Scaladeiturchi | Offerte Amazon AI", layout="wide")
+st.set_page_config(
+    page_title="Scaladeiturchi | Offerte Amazon AI",
+    page_icon="🛍️",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
+# CSS Mobile-First ad alta densità informativa
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
+    #MainMenu, header, footer { visibility: hidden !important; height: 0 !important; }
+
+    *, *:before, *:after {
+        box-sizing: border-box !important;
+    }
 
     .stApp {
         background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
@@ -19,13 +27,13 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.30rem 0.35rem 0.80rem 0.35rem !important;
+        padding: 0.35rem 0.45rem 1rem 0.45rem !important;
         max-width: 100% !important;
     }
 
-    /* Tabs compatti */
+    /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
-        background: rgba(15, 23, 42, 0.7) !important;
+        background: rgba(15, 23, 42, 0.75) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
@@ -44,8 +52,8 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
-        min-height: 26px !important;
-        height: 26px !important;
+        min-height: 28px !important;
+        height: 28px !important;
         text-align: center !important;
         justify-content: center !important;
     }
@@ -58,9 +66,9 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header compatto */
+    /* Header Compatto */
     .hero-title-main {
-        font-size: clamp(1.3rem, 4.2vw, 1.8rem);
+        font-size: clamp(1.3rem, 4.5vw, 1.8rem);
         font-weight: 900;
         line-height: 1.05;
         margin: 0;
@@ -73,7 +81,7 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-size: clamp(0.75rem, 2.4vw, 0.90rem);
+        font-size: clamp(0.75rem, 2.6vw, 0.90rem);
         font-weight: 700;
         color: #f1f5f9;
         margin: 0;
@@ -108,10 +116,30 @@ st.markdown("""
         font-weight: 700 !important;
         font-size: 0.72rem !important;
         margin: 0 !important;
-        line-height: 1 !important;
+        line-height: 1.1 !important;
     }
 
-    /* Stile Input generico */
+    /* Barra di Ricerca */
+    .search-row-mobile [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 4px !important;
+        width: 100% !important;
+        margin-bottom: 3px !important;
+    }
+
+    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {
+        flex: 1 1 76% !important;
+        min-width: 0 !important;
+    }
+
+    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {
+        flex: 1 1 24% !important;
+        min-width: 0 !important;
+    }
+
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -128,29 +156,6 @@ st.markdown("""
         padding: 2px 6px !important;
     }
 
-    /* Riga Ricerca: Campo Testo + Tasto Cerca */
-    .search-row-mobile [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 5px !important;
-        width: 100% !important;
-        margin-bottom: 3px !important;
-    }
-
-    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {
-        flex: 1 1 76% !important;
-        min-width: 0 !important;
-        width: 76% !important;
-    }
-
-    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {
-        flex: 1 1 24% !important;
-        min-width: 0 !important;
-        width: 24% !important;
-    }
-
     .search-btn-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
@@ -164,7 +169,7 @@ st.markdown("""
         padding: 0 !important;
     }
 
-    /* Radio buttons compressi */
+    /* Radio filtri inline */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
@@ -199,7 +204,7 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    /* Checkbox Spedizione */
+    /* Checkbox */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 3px 8px !important;
@@ -226,7 +231,7 @@ st.markdown("""
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 140px;
+        height: 135px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -522,7 +527,6 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Riga Input Ricerca + Pulsante Cerca
     st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
     col_input, col_submit = st.columns([0.76, 0.24])
     with col_input:
