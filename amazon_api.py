@@ -3,6 +3,8 @@ import requests
 import urllib.parse
 import re
 import time
+from curl_cffi import requests as c_requests
+from bs4 import BeautifulSoup
 
 SORT_MAPPINGS = {
     "Prezzo: dal più basso": "Price:LowToHigh",
@@ -12,15 +14,20 @@ SORT_MAPPINGS = {
     "Ultime Novità": "NewestArrivals"
 }
 
+SORT_FALLBACK_MAP = {
+    "Prezzo: dal più basso": "price-asc-rank",
+    "Più Venduti / Rilevanza": "exact-aware-popularity-rank",
+    "Prezzo: dal più alto": "price-desc-rank",
+    "Media recensioni clienti": "review-rank",
+    "Ultime Novità": "date-desc-rank"
+}
+
 _TOKEN_CACHE = {
     "access_token": None,
     "expires_at": 0
 }
 
 def get_creators_access_token():
-    """
-    Richiede o rinnova il token OAuth2 per le Amazon Creators API v3.2.
-    """
     now = time.time()
     if _TOKEN_CACHE["access_token"] and now < _TOKEN_CACHE["expires_at"] - 60:
         return _TOKEN_CACHE["access_token"]
@@ -60,8 +67,7 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
     if v >= 4.8:
         p5 = min(92, max(82, int(86 + (v - 4.8) * 30)))
         p4 = min(14, max(6, int(10 + (4.8 - v) * 20)))
-        p3 = 1
-        p2 = 1
+        p3, p2 = 1, 1
         p1 = max(1, 100 - (p5 + p4 + p3 + p2))
     elif v >= 4.5:
         p5 = int(68 + (v - 4.5) * 45)
@@ -83,12 +89,67 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
         p1 = max(3, 100 - (p5 + p4 + p3 + p2))
     else:
         p5 = int(15 + v * 5)
-        p4 = 15
-        p3 = 20
-        p2 = 25
+        p4, p3, p2 = 15, 20, 25
         p1 = max(5, 100 - (p5 + p4 + p3 + p2))
         
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
+
+def analizza_spedizione_html(item_tag):
+    is_prime = bool(
+        item_tag.find("i", class_=re.compile(r"a-icon-prime|s-prime", re.I)) or
+        item_tag.find("span", {"aria-label": re.compile(r"prime", re.I)}) or
+        item_tag.find(lambda tag: tag.name in ["span", "i", "div"] and "prime" in (tag.get("class") or []))
+    )
+
+    blocchi_consegna = item_tag.find_all(
+        ["div", "span", "p"], 
+        attrs={"data-cy": re.compile(r"delivery|receipt|shipping", re.I)}
+    )
+    if not blocchi_consegna:
+        blocchi_consegna = item_tag.find_all(["div", "span"], class_=re.compile(r"a-row|s-align-children", re.I))
+
+    testo_consegna = " ".join([b.get_text(" ", strip=True).lower() for b in blocchi_consegna])
+    testo_completo = item_tag.get_text(" ", strip=True).lower()
+    testo_target = testo_consegna if len(testo_consegna) > 5 else testo_completo
+
+    frasi_gratis = [
+        "consegna senza costi aggiuntivi",
+        "consegna gratuita",
+        "spedizione gratuita",
+        "senza costi aggiuntivi",
+        "consegna gratis",
+        "spedizione gratis",
+        "gratis con prime",
+        "consegna standard gratuita"
+    ]
+    ha_dicitura_gratis = any(f in testo_target for f in frasi_gratis) or ("prime" in testo_target)
+
+    match_costo = re.search(
+        r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
+        r'(?:consegna\s+a\s*(\d+[.,]\d{2})\s*€)|'
+        r'(?:€\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
+        r'(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|'
+        r'(?:\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
+        r'(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))',
+        testo_target,
+        re.I
+    )
+
+    if match_costo:
+        val_str = next(v for v in match_costo.groups() if v is not None)
+        try:
+            costo = float(val_str.replace(",", "."))
+            if costo > 0 and not (is_prime or "senza costi aggiuntivi" in testo_target):
+                return costo, f"Consegna a €{costo:.2f}", False, False
+        except ValueError:
+            pass
+
+    if is_prime:
+        return 0.0, "Prime (Spedizione gratuita)", True, True
+    if ha_dicitura_gratis:
+        return 0.0, "Spedizione gratuita", False, True
+
+    return 0.0, "Spedizione standard", False, False
 
 def ottieni_offerte_avanzate(
     categoria="", 
@@ -106,9 +167,9 @@ def ottieni_offerte_avanzate(
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     
     clean_keyword = keyword.strip()
-    asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.I)
-    if asin_url_match:
-        clean_keyword = asin_url_match.group(1)
+    asin_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.I)
+    if asin_match:
+        clean_keyword = asin_match.group(1)
 
     termini = []
     if sottocategoria and sottocategoria != "Tutte":
@@ -120,7 +181,6 @@ def ottieni_offerte_avanzate(
 
     query_str = " ".join(termini) if termini else "offerte"
 
-    # Chiamata alle API ufficiali se il token è disponibile
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -138,10 +198,12 @@ def ottieni_offerte_avanzate(
             "SortBy": SORT_MAPPINGS.get(sort_type, "Relevance"),
             "Resources": [
                 "ItemInfo.Title",
+                "ItemInfo.Features",
                 "Offers.Listings.Price",
                 "Offers.Listings.SavingBasis",
                 "Offers.Listings.DeliveryInfo.IsPrimeEligible",
                 "Offers.Listings.DeliveryInfo.IsFreeShippingEligible",
+                "Offers.Listings.DeliveryInfo.ShippingCharges",
                 "Images.Primary.Large",
                 "CustomerReviews.Count",
                 "CustomerReviews.StarRating"
@@ -171,14 +233,19 @@ def ottieni_offerte_avanzate(
                     old_price_val = 0.0
                     is_prime = False
                     is_free_ship = False
+                    costo_sped = 0.0
 
                     if listings:
-                        first_list = listings[0]
-                        price_val = float(first_list.get("Price", {}).get("Amount", 0.0))
-                        old_price_val = float(first_list.get("SavingBasis", {}).get("Amount", price_val))
-                        delivery_info = first_list.get("DeliveryInfo", {})
-                        is_prime = delivery_info.get("IsPrimeEligible", False)
-                        is_free_ship = delivery_info.get("IsFreeShippingEligible", False) or is_prime
+                        first = listings[0]
+                        price_val = float(first.get("Price", {}).get("Amount", 0.0))
+                        old_price_val = float(first.get("SavingBasis", {}).get("Amount", price_val))
+                        delivery = first.get("DeliveryInfo", {})
+                        is_prime = delivery.get("IsPrimeEligible", False)
+                        is_free_ship = delivery.get("IsFreeShippingEligible", False) or is_prime
+                        
+                        charges = delivery.get("ShippingCharges", [])
+                        if charges:
+                            costo_sped = float(charges[0].get("Amount", 0.0))
 
                     if solo_spedizione_gratuita and not is_free_ship:
                         continue
@@ -190,20 +257,30 @@ def ottieni_offerte_avanzate(
                     if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
                         continue
 
+                    if is_prime:
+                        info_sped = "Prime (Spedizione gratuita)"
+                    elif is_free_ship:
+                        info_sped = "Spedizione gratuita"
+                    elif costo_sped > 0:
+                        info_sped = f"Consegna a €{costo_sped:.2f}"
+                    else:
+                        info_sped = "Spedizione standard"
+
                     prodotti.append({
                         "asin": asin,
                         "titolo": title,
-                        "costo_spedizione": 0.0,
-                        "info_spedizione": "Spedizione gratuita" if is_free_ship else "Spedizione standard",
-                        "is_sped_gratis": is_free_ship,
+                        "descrizione": title,
+                        "immagine_url": img,
                         "prezzo_iniziale": old_price_val,
                         "prezzo_finale": price_val,
                         "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
                         "sconto_val": sconto_val,
+                        "is_prime": is_prime,
+                        "is_sped_gratis": is_free_ship,
+                        "info_spedizione": info_sped,
+                        "costo_spedizione": costo_sped,
                         "voto_medio": float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.8)),
                         "num_recensioni": int(it.get("CustomerReviews", {}).get("Count", 765)),
-                        "descrizione": title,
-                        "immagine_url": img,
                         "link_affiliato": link
                     })
 
@@ -212,7 +289,6 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # Fallback integrato in caso di propagazione API ancora in corso
     return _ottieni_offerte_fallback(
         query_str=query_str,
         sort_type=sort_type,
@@ -226,19 +302,8 @@ def ottieni_offerte_avanzate(
     )
 
 def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount, item_count, partner_tag):
-    from curl_cffi import requests as c_requests
-    from bs4 import BeautifulSoup
-
-    fallback_sort = {
-        "Prezzo: dal più basso": "price-asc-rank",
-        "Più Venduti / Rilevanza": "exact-aware-popularity-rank",
-        "Prezzo: dal più alto": "price-desc-rank",
-        "Media recensioni clienti": "review-rank",
-        "Ultime Novità": "date-desc-rank"
-    }
-    
     query_encoded = urllib.parse.quote_plus(query_str)
-    sort_code = fallback_sort.get(sort_type, "price-asc-rank")
+    sort_code = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
 
     if min_price is not None and min_price > 0:
@@ -283,8 +348,7 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 if "non disponibile" in text_full:
                     continue
 
-                is_prime = bool(it.find("i", class_=re.compile(r"a-icon-prime|s-prime", re.I)) or "prime" in text_full)
-                is_free_ship = is_prime or "consegna senza costi aggiuntivi" in text_full or "consegna gratuita" in text_full or "spedizione gratuita" in text_full
+                costo_sped, info_sped, is_prime, is_free_ship = analizza_spedizione_html(it)
 
                 if solo_spedizione_gratuita and not is_free_ship:
                     continue
@@ -300,6 +364,14 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                         prezzo_prodotto = float(f"{whole_clean}.{fraction_clean}")
                     except ValueError:
                         prezzo_prodotto = 0.0
+                else:
+                    price_off = it.find("span", {"class": "a-offscreen"})
+                    if price_off:
+                        try:
+                            clean_t = price_off.text.replace("€", "").replace("\xa0", "").replace(".", "").replace(",", ".").strip()
+                            prezzo_prodotto = float(clean_t)
+                        except ValueError:
+                            prezzo_prodotto = 0.0
 
                 if prezzo_prodotto <= 0.0:
                     continue
@@ -331,17 +403,18 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 prodotti.append({
                     "asin": asin,
                     "titolo": titolo,
-                    "costo_spedizione": 0.0,
-                    "info_spedizione": "Spedizione gratuita" if is_free_ship else "Spedizione standard",
-                    "is_sped_gratis": is_free_ship,
+                    "descrizione": titolo,
+                    "immagine_url": img_url,
                     "prezzo_iniziale": prezzo_iniziale,
                     "prezzo_finale": prezzo_prodotto,
                     "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
                     "sconto_val": sconto_val,
+                    "is_prime": is_prime,
+                    "is_sped_gratis": is_free_ship,
+                    "info_spedizione": info_sped,
+                    "costo_spedizione": costo_sped,
                     "voto_medio": 4.8,
                     "num_recensioni": 765,
-                    "descrizione": titolo,
-                    "immagine_url": img_url,
                     "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
                 })
 
