@@ -67,11 +67,11 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header */
+    /* Header con dimensioni raddoppiate */
     .hero-title-main {
-        font-size: clamp(1.3rem, 4.5vw, 1.8rem);
+        font-size: clamp(2.6rem, 9.0vw, 3.6rem);
         font-weight: 900;
-        line-height: 1.05;
+        line-height: 1.08;
         margin: 0;
         background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
         -webkit-background-clip: text;
@@ -81,27 +81,27 @@ st.markdown("""
     .hero-subtitle-box {
         display: inline-flex;
         align-items: center;
-        gap: 4px;
-        font-size: clamp(0.75rem, 2.6vw, 0.90rem);
-        font-weight: 700;
+        gap: 8px;
+        font-size: clamp(1.5rem, 5.2vw, 1.8rem);
+        font-weight: 800;
         color: #0f172a;
-        margin: 0;
+        margin: 4px 0 2px 0;
     }
 
     .ai-badge {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.68em;
-        font-weight: 800;
-        padding: 1px 4px;
-        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: 900;
+        padding: 2px 8px;
+        border-radius: 6px;
     }
 
     .hero-author-tag {
-        font-size: 0.70rem;
+        font-size: 1.40rem;
         color: #334155;
-        font-weight: 500;
-        margin: 0 0 4px 0;
+        font-weight: 600;
+        margin: 2px 0 8px 0;
     }
 
     .hero-author-tag strong { color: #0369a1; }
@@ -227,7 +227,7 @@ st.markdown("""
         color: #059669 !important;
     }
 
-    /* SFONDO VERDE CHIARO PER OGNI RIQUADRO SCHEDA PRODOTTO */
+    /* Riquadro Scheda Prodotto */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
