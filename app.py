@@ -678,17 +678,8 @@ if "offerte" not in st.session_state:
 if "last_target_items" not in st.session_state:
     st.session_state.last_target_items = 10
 
-if "auto_search_triggered" not in st.session_state:
-    st.session_state.auto_search_triggered = False
-
-if "keyword_input" not in st.session_state:
-    st.session_state.keyword_input = ""
-
-if "select_cat" not in st.session_state:
-    st.session_state.select_cat = list(CATEGORIE.keys())[0]
-
-def trigger_search():
-    st.session_state.auto_search_triggered = True
+def reset_elenco_prodotti():
+    st.session_state.offerte = []
 
 st.markdown("""
 <div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
@@ -846,7 +837,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
             "🔍 Scrivi cosa ti serve:",
             placeholder="Es. cuffie bluetooth, notebook...",
             key=f"{tab_prefix}_keyword_input",
-            on_change=trigger_search
+            on_change=reset_elenco_prodotti
         )
     else:
         keyword_val = ""
@@ -858,7 +849,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 "Categoria Principale:",
                 list(CATEGORIE.keys()),
                 key=f"{tab_prefix}_select_cat",
-                on_change=trigger_search
+                on_change=reset_elenco_prodotti
             )
         with col_subcat:
             sottocategorie = ["Tutte"] + CATEGORIE[cat_val]
@@ -866,7 +857,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 "Sottocategoria:",
                 sottocategorie,
                 key=f"{tab_prefix}_select_subcat",
-                on_change=trigger_search
+                on_change=reset_elenco_prodotti
             )
     else:
         cat_val = ""
@@ -884,7 +875,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 step=1.0,
                 placeholder="Min...",
                 key=f"{tab_prefix}_input_pmin",
-                on_change=trigger_search
+                on_change=reset_elenco_prodotti
             )
         with col_pmax:
             p_max = st.number_input(
@@ -894,7 +885,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 step=1.0,
                 placeholder="Max...",
                 key=f"{tab_prefix}_input_pmax",
-                on_change=trigger_search
+                on_change=reset_elenco_prodotti
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -904,7 +895,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         index=0,
         horizontal=True,
         key=f"{tab_prefix}_radio_sort",
-        on_change=trigger_search
+        on_change=reset_elenco_prodotti
     )
 
     label_disc_val = st.radio(
@@ -913,7 +904,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         index=0,
         horizontal=True,
         key=f"{tab_prefix}_radio_disc",
-        on_change=trigger_search
+        on_change=reset_elenco_prodotti
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_disc_val]
 
@@ -939,7 +930,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         "🚚 Spedizione gratuita",
         value=False,
         key=f"{tab_prefix}_check_sped_gratis",
-        on_change=trigger_search,
+        on_change=reset_elenco_prodotti,
         help="Mostra solo prodotti con spedizione gratuita o Prime"
     )
 
@@ -956,9 +947,6 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         target_items = 70
     elif btn_100:
         target_items = 100
-    elif st.session_state.auto_search_triggered:
-        target_items = st.session_state.last_target_items
-        st.session_state.auto_search_triggered = False
 
     if target_items is not None:
         st.session_state.last_target_items = target_items
