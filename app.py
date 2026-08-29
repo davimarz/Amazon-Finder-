@@ -115,7 +115,8 @@ st.markdown("""
         background-color: rgba(15, 23, 42, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         border-radius: 8px !important;
-        min-height: 36px !important;
+        min-height: 38px !important;
+        height: 38px !important;
     }
 
     div[data-baseweb="input"]:focus-within {
@@ -126,8 +127,37 @@ st.markdown("""
     div[data-baseweb="input"] input {
         color: #f8fafc !important;
         font-weight: 600 !important;
-        font-size: 0.82rem !important;
-        padding: 4px 8px !important;
+        font-size: 0.85rem !important;
+        padding: 6px 10px !important;
+    }
+
+    .search-bar-row [data-testid="stHorizontalBlock"] {
+        align-items: flex-end !important;
+        gap: 8px !important;
+    }
+
+    .search-btn-container div[data-testid="stButton"] button {
+        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 8px !important;
+        font-weight: 900 !important;
+        font-size: 0.92rem !important;
+        min-height: 38px !important;
+        height: 38px !important;
+        width: 100% !important;
+        padding: 0 12px !important;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.45) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+    }
+
+    .search-btn-container div[data-testid="stButton"] button:hover {
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
+        box-shadow: 0 4px 14px rgba(56, 189, 248, 0.6) !important;
+        transform: translateY(-1px) !important;
     }
 
     div[data-testid="stCheckbox"] {
@@ -766,12 +796,20 @@ def render_product_card(p, tab_key="main"):
             )
 
 with tab_cerca:
-    keyword_val = st.text_input(
-        "🔍 Scrivi cosa ti serve:",
-        placeholder="Es. cuffie bluetooth, notebook...",
-        key="cerca_keyword_input",
-        on_change=reset_elenco_prodotti
-    )
+    st.markdown('<div class="search-bar-row">', unsafe_allow_html=True)
+    col_input, col_submit = st.columns([0.80, 0.20])
+    with col_input:
+        keyword_val = st.text_input(
+            "🔍 Scrivi cosa ti serve:",
+            placeholder="Es. cuffie bluetooth, notebook...",
+            key="cerca_keyword_input",
+            on_change=reset_elenco_prodotti
+        )
+    with col_submit:
+        st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
+        btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
@@ -845,7 +883,9 @@ with tab_cerca:
     )
 
     target_items = None
-    if btn_10:
+    if btn_cerca_submit:
+        target_items = st.session_state.last_target_items if st.session_state.last_target_items else 10
+    elif btn_10:
         target_items = 10
     elif btn_20:
         target_items = 20
