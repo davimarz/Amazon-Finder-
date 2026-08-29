@@ -57,20 +57,95 @@ def get_creators_access_token():
         pass
     return None
 
-def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
-    v = max(1.0, min(5.0, float(voto_medio))) if voto_medio else 4.5
-    if v >= 4.8:
-        p5, p4, p3, p2 = 88, 9, 1, 1
-    elif v >= 4.5:
-        p5, p4, p3, p2 = 72, 18, 5, 3
-    elif v >= 4.0:
-        p5, p4, p3, p2 = 55, 25, 12, 5
+def calcola_distribuzione_recensioni(voto_medio, num_recensioni=100):
+    """
+    Calcola la curva di distribuzione percentuale basata
+    sul voto medio e volume reali del prodotto.
+    """
+    v = max(1.0, min(5.0, float(voto_medio))) if voto_medio else 4.2
+    
+    if v >= 4.7:
+        p5 = int(75 + (v - 4.7) * 50)
+        p4 = int(15 - (v - 4.7) * 20)
+        p3 = 5
+        p2 = 3
+    elif v >= 4.3:
+        p5 = int(60 + (v - 4.3) * 35)
+        p4 = int(22 - (v - 4.3) * 15)
+        p3 = 9
+        p2 = 5
+    elif v >= 3.8:
+        p5 = int(45 + (v - 3.8) * 30)
+        p4 = int(26 - (v - 3.8) * 8)
+        p3 = 16
+        p2 = 8
     elif v >= 3.0:
-        p5, p4, p3, p2 = 35, 25, 20, 12
+        p5 = int(30 + (v - 3.0) * 18)
+        p4 = 25
+        p3 = 22
+        p2 = 13
     else:
-        p5, p4, p3, p2 = 20, 15, 20, 25
+        p5 = 15
+        p4 = 18
+        p3 = 22
+        p2 = 25
+
     p1 = max(1, 100 - (p5 + p4 + p3 + p2))
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
+
+def analizza_recensioni_html(item_tag):
+    """
+    Estrapola il rating (voto su 5) e il numero effettivo di voti/recensioni
+    direttamente dalla card HTML del prodotto.
+    """
+    voto_medio = 4.2
+    num_recensioni = 0
+
+    # 1. Estrazione del voto medio
+    star_elem = item_tag.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")})
+    if star_elem:
+        text_star = star_elem.get_text(" ", strip=True)
+        match_star = re.search(r"(\d+[.,]\d+)\s*(?:su|out of|di)\s*5", text_star, re.IGNORECASE)
+        if match_star:
+            try:
+                voto_medio = float(match_star.group(1).replace(",", "."))
+            except ValueError:
+                pass
+    else:
+        star_alt = item_tag.find("span", {"class": "a-icon-alt"})
+        if star_alt:
+            match_star = re.search(r"(\d+[.,]\d+)\s*(?:su|out of|di)\s*5", star_alt.get_text(strip=True), re.IGNORECASE)
+            if match_star:
+                try:
+                    voto_medio = float(match_star.group(1).replace(",", "."))
+                except ValueError:
+                    pass
+
+    # 2. Estrazione del numero totale di recensioni
+    review_elem = item_tag.find("span", {"class": "s-underline-text"}) or \
+                  item_tag.find("span", {"aria-label": re.compile(r"\d+")}) or \
+                  item_tag.find("a", {"href": re.compile(r"#customerReviews")})
+
+    if review_elem:
+        review_text = review_elem.get_text(strip=True)
+        cleaned_num = re.sub(r"[^\d]", "", review_text)
+        if cleaned_num:
+            try:
+                num_recensioni = int(cleaned_num)
+            except ValueError:
+                num_recensioni = 0
+
+    # Fallback su scansione regex generale nel blocco recensioni
+    if num_recensioni == 0:
+        match_reviews = re.search(r"(?:(\d{1,3}(?:\.\d{3})+|\d+))\s*(?:valutazion|recension|vot)", item_tag.get_text(" ", strip=True), re.IGNORECASE)
+        if match_reviews:
+            raw_val = match_reviews.group(1).replace(".", "")
+            try:
+                num_recensioni = int(raw_val)
+            except ValueError:
+                num_recensioni = 0
+
+    return round(voto_medio, 1), num_recensioni
 
 def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
@@ -174,7 +249,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
-    # 1. API Ufficiale Creators PA-API5
+    # 1. Chiamata PA-API5 Ufficiale
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -247,6 +322,9 @@ def ottieni_offerte_avanzate(
                     if max_discount < 100 and sconto_val > max_discount:
                         continue
 
+                    voto_reale = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.2))
+                    recensioni_reali = int(it.get("CustomerReviews", {}).get("Count", 0))
+
                     prodotti.append({
                         "asin": asin,
                         "titolo": title,
@@ -258,8 +336,8 @@ def ottieni_offerte_avanzate(
                         "is_prime": is_prime,
                         "is_sped_gratis": is_free_ship,
                         "costo_spedizione": costo_sped,
-                        "voto_medio": float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.8)),
-                        "num_recensioni": int(it.get("CustomerReviews", {}).get("Count", 765)),
+                        "voto_medio": voto_reale,
+                        "num_recensioni": recensioni_reali,
                         "link_affiliato": link
                     })
                 if prodotti:
@@ -267,7 +345,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 2. Fallback Scraper ad alta resilienza
+    # 2. Fallback Scraper con estrazione reale di Voti e Recensioni
     return _ottieni_offerte_fallback(
         query_str=query_str,
         sort_type=sort_type,
@@ -349,6 +427,9 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 img_tag = it.find("img", {"class": "s-image"})
                 img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
 
+                # Estrazione reale di voto e numero di recensioni
+                voto_estratto, recensioni_estratte = analizza_recensioni_html(it)
+
                 asins_visti.add(asin)
                 prodotti.append({
                     "asin": asin,
@@ -361,8 +442,8 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                     "is_prime": is_prime,
                     "is_sped_gratis": is_free_ship,
                     "costo_spedizione": costo_sped,
-                    "voto_medio": 4.8,
-                    "num_recensioni": 765,
+                    "voto_medio": voto_estratto,
+                    "num_recensioni": recensioni_estratte,
                     "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
                 })
 
