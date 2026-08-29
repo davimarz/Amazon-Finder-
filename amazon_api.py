@@ -51,40 +51,41 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
 
 def analizza_spedizione_prodotto(item_tag):
     """
-    Analizza in profondità il blocco HTML del risultato di ricerca Amazon
-    per stabilire con precisione se la spedizione è gratuita/Prime o a pagamento.
+    Riconosce con precisione se un prodotto è Prime, ha consegna senza costi aggiuntivi
+    oppure ha un costo di spedizione specifico a pagamento.
     """
-    # 1. Ricerca badge Prime (Icone, aria-label, svg o classi CSS)
-    is_prime = bool(
+    # 1. Controllo Badge Prime (icone, tag aria-label, svg)
+    has_prime_badge = bool(
         item_tag.find("i", class_=re.compile(r"a-icon-prime|s-prime", re.I)) or
         item_tag.find("span", {"aria-label": re.compile(r"prime", re.I)}) or
-        item_tag.find(lambda tag: tag.name in ["span", "i", "div"] and "prime" in tag.get("class", []) if tag.get("class") else False)
+        item_tag.find(lambda tag: tag.name in ["span", "i", "div"] and "prime" in (tag.get("class") or []))
     )
 
-    # 2. Estrazione delle sezioni specifiche dedicate alla consegna
+    # 2. Estrazione testo di consegna
     blocchi_consegna = item_tag.find_all(
-        ["div", "span"], 
-        attrs={"data-cy": re.compile(r"delivery-receipt|delivery-info", re.I)}
+        ["div", "span", "p"], 
+        attrs={"data-cy": re.compile(r"delivery|receipt|shipping", re.I)}
     )
+    if not blocchi_consegna:
+        blocchi_consegna = item_tag.find_all(["div", "span"], class_=re.compile(r"a-row|s-align-children", re.I))
+
     testo_consegna = " ".join([b.get_text(" ", strip=True).lower() for b in blocchi_consegna])
     testo_completo = item_tag.get_text(" ", strip=True).lower()
 
-    if not testo_consegna:
-        testo_consegna = testo_completo
-
-    # 3. Pattern espliciti di spedizione gratuita
-    pattern_gratis = [
+    # 3. Riconoscimento diciture di gratuità / senza costi
+    frasi_gratuite = [
         "consegna senza costi aggiuntivi",
         "consegna gratuita",
         "spedizione gratuita",
         "senza costi aggiuntivi",
         "consegna gratis",
         "spedizione gratis",
-        "prime"
+        "gratis con prime",
+        "consegna standard gratuita"
     ]
-    ha_dicitura_gratis = any(p in testo_consegna for p in pattern_gratis) or is_prime
+    ha_dicitura_gratis = any(f in testo_completo for f in frasi_gratuite) or ("prime" in testo_completo)
 
-    # 4. Pattern di costo di spedizione a pagamento (es. "consegna a 7,40 €", "+ 5,99 € di spedizione")
+    # 4. Riconoscimento costi di spedizione a pagamento esclusivi
     match_costo = re.search(
         r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
         r'(?:consegna\s+a\s*(\d+[.,]\d{2})\s*€)|'
@@ -92,7 +93,7 @@ def analizza_spedizione_prodotto(item_tag):
         r'(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|'
         r'(?:\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
         r'(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))',
-        testo_consegna,
+        testo_consegna if len(testo_consegna) > 5 else testo_completo,
         re.I
     )
 
@@ -100,12 +101,13 @@ def analizza_spedizione_prodotto(item_tag):
         val_str = next(v for v in match_costo.groups() if v is not None)
         try:
             costo = float(val_str.replace(",", "."))
-            if costo > 0:
+            # Se ha Prime o dicitura gratuita esplicita prevale la gratuità
+            if costo > 0 and not (has_prime_badge or "senza costi aggiuntivi" in testo_completo):
                 return costo, f"Consegna a €{costo:.2f}", False
         except ValueError:
             pass
 
-    if ha_dicitura_gratis:
+    if has_prime_badge or ha_dicitura_gratis:
         return 0.0, "Spedizione gratuita", True
 
     return 0.0, "Spedizione standard", False
@@ -165,7 +167,7 @@ def ottieni_offerte_avanzate(
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = max(15, (item_count // 4) + 8)
+    max_pages = max(15, (item_count // 3) + 8)
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -199,7 +201,7 @@ def ottieni_offerte_avanzate(
 
                 costo_spedizione, info_spedizione, is_sped_gratis = analizza_spedizione_prodotto(item)
                 
-                # Se l'utente richiede spedizione gratuita, filtra rigorosamente
+                # Se l'utente ha impostato il filtro, scarta i prodotti a pagamento
                 if solo_spedizione_gratuita and not is_sped_gratis:
                     continue
 
