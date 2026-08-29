@@ -496,7 +496,7 @@ if "offerte" not in st.session_state:
 if "has_searched" not in st.session_state:
     st.session_state.has_searched = False
 
-def esegui_ricerca():
+def trigger_ricerca():
     st.session_state.has_searched = True
     kw = st.session_state.get("cerca_keyword_input", "").strip()
     sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
@@ -624,12 +624,12 @@ with tab_cerca:
     st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
     col_input, col_submit = st.columns([0.76, 0.24])
     with col_input:
-        keyword_val = st.text_input(
+        st.text_input(
             "Cerca:",
             placeholder="Cosa cerchi?...",
             key="cerca_keyword_input",
             label_visibility="collapsed",
-            on_change=esegui_ricerca
+            on_change=trigger_ricerca
         )
     with col_submit:
         st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
@@ -637,34 +637,34 @@ with tab_cerca:
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    ranking_val = st.radio(
+    st.radio(
         "🏷️ Ordinamento:",
         list(SORT_MAPPINGS.keys()),
         index=0,
         horizontal=True,
         key="cerca_radio_sort",
-        on_change=esegui_ricerca
+        on_change=trigger_ricerca
     )
 
-    label_disc_val = st.radio(
+    st.radio(
         "🔥 Sconto:",
         list(OPZIONI_SCONTO.keys()),
         index=0,
         horizontal=True,
         key="cerca_radio_disc",
-        on_change=esegui_ricerca
+        on_change=trigger_ricerca
     )
 
-    solo_gratis = st.checkbox(
+    st.checkbox(
         "🚚 Spedizione gratuita / Prime",
         value=False,
         key="cerca_check_sped_gratis",
-        on_change=esegui_ricerca
+        on_change=trigger_ricerca
     )
 
     if btn_cerca_submit:
         with st.spinner("Ricerca rapida in corso..."):
-            esegui_ricerca()
+            trigger_ricerca()
 
     if st.session_state.offerte:
         st.write("")
