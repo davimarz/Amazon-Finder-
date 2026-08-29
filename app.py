@@ -23,7 +23,6 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* Tabs ultra-compatti */
     div[data-baseweb="tab-list"] {
         background: rgba(15, 23, 42, 0.7) !important;
         padding: 2px 4px !important;
@@ -58,7 +57,6 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header compatto */
     .hero-title-main {
         font-size: clamp(1.4rem, 4.5vw, 1.9rem);
         font-weight: 900;
@@ -97,7 +95,6 @@ st.markdown("""
 
     .hero-author-tag strong { color: #facc15; }
 
-    /* Riduzione globale gap Streamlit */
     div[data-testid="stVerticalBlock"] > div {
         gap: 3px !important;
     }
@@ -111,7 +108,6 @@ st.markdown("""
         line-height: 1.1 !important;
     }
 
-    /* Input text compresso */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
@@ -127,7 +123,6 @@ st.markdown("""
         padding: 2px 6px !important;
     }
 
-    /* Pulsante cerca */
     .search-row-mobile [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -157,7 +152,6 @@ st.markdown("""
         padding: 0 !important;
     }
 
-    /* Prezzi strict */
     .prices-row-strict [data-testid="stHorizontalBlock"] {
         display: flex !important;
         gap: 4px !important;
@@ -168,7 +162,6 @@ st.markdown("""
         flex: 1 1 50% !important;
     }
 
-    /* Radio buttons compressi inline */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
@@ -203,7 +196,6 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    /* Checkbox */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 3px 8px !important;
@@ -219,7 +211,6 @@ st.markdown("""
         color: #4ade80 !important;
     }
 
-    /* Card Prodotto Super Compatta */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.10) !important;
