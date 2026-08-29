@@ -251,6 +251,12 @@ st.markdown("""
         justify-content: center !important;
     }
 
+    .top-single-row-container div[data-testid="stButton"] button p {
+        color: #ffffff !important;
+        font-weight: 900 !important;
+        font-size: inherit !important;
+    }
+
     .top-single-row-container div[data-testid="stButton"] button:hover {
         transform: translateY(-1px) !important;
         background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
