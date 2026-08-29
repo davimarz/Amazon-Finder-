@@ -130,20 +130,6 @@ st.markdown("""
         padding: 4px 8px !important;
     }
 
-    div[data-baseweb="select"] > div {
-        background-color: rgba(15, 23, 42, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.18) !important;
-        border-radius: 8px !important;
-        min-height: 38px !important;
-        color: #f8fafc !important;
-    }
-
-    div[data-baseweb="select"] span {
-        color: #f8fafc !important;
-        font-weight: 600 !important;
-        font-size: 0.84rem !important;
-    }
-
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 14px !important;
@@ -611,56 +597,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-CATEGORIE = {
-    "🛍️ Abbigliamento, Scarpe e Accessori (Moda)": [
-        "Abbigliamento (Uomo, Donna, Bambini, Neonati)",
-        "Scarpe e borse",
-        "Orologi",
-        "Gioielli",
-        "Valigeria e accessori da viaggio"
-    ],
-    "🔌 Elettronica e Informatica": [
-        "Informatica (PC, Laptop, Componenti, Monitor)",
-        "Elettronica (TV, Home Cinema, Audio, Fotocamere)",
-        "Telefonia (Smartphone, Smartwatch, Accessori)",
-        "Accessori per l'elettronica",
-        "Grandi elettrodomestici (Frigoriferi, Lavatrici, Forni)"
-    ],
-    "🏡 Casa, Arredamento e Fai da Te": [
-        "Casa e cucina (Arredamento, Tessili, Utensili, Stoviglie)",
-        "Fai da te (Utensileria, Ferramenta, Materiale elettrico)",
-        "Giardino e giardinaggio (Arredo giardino, Piante, Tagliaerba)",
-        "Illuminazione (Lampadine, Lampade da interno ed esterno)"
-    ],
-    "🧸 Giochi, Prima Infanzia e Animali": [
-        "Giochi e giocattoli",
-        "Prima infanzia (Passeggini, Seggiolini, Cura del neonato)",
-        "Prodotti per animali domestici (Cibo e accessori per cani, gatti, ecc.)"
-    ],
-    "🧴 Bellezza, Salute e Spesa": [
-        "Alimentari e cura della casa (Cibo, Bevande, Prodotti per la pulizia)",
-        "Bellezza (Make-up, Cura della pelle, Profumi, Cura dei capelli)",
-        "Salute e cura della persona (Integratori, Benessere, Rasatura)"
-    ],
-    "⚽ Sport, Tempo Libero e Motori": [
-        "Sport e tempo libero (Abbigliamento sportivo, Attrezzatura fitness, Camping)",
-        "Auto e Moto (Pezzi di ricambio, Accessori, Liquidi e olii)"
-    ],
-    "📚 Libri, Media e Intrattenimento": [
-        "Libri (Cartacei)",
-        "Kindle Store (eBook eReader)",
-        "CD e Vinili",
-        "Videogiochi (Console, Giochi PC, PlayStation, Xbox, Nintendo)",
-        "Film e TV (DVD e Blu-Ray)"
-    ],
-    "🏭 Categorie Speciali e Business": [
-        "Commercio, Industria e Scienza (Forniture mediche, Stampa 3D)",
-        "Strumenti musicali (Chitarre, Tastiere, Attrezzatura da registrazione)",
-        "Handmade (Prodotti fatti a mano da artigiani)",
-        "Strumenti e prodotti per ufficio / Cancelleria"
-    ]
-}
-
 OPZIONI_SCONTO = {
     "Tutti": (0, 100),
     "da 0 al 20%": (0, 20),
@@ -678,16 +614,8 @@ if "offerte" not in st.session_state:
 if "last_target_items" not in st.session_state:
     st.session_state.last_target_items = 10
 
-if "auto_search_count" not in st.session_state:
-    st.session_state.auto_search_count = None
-
 def reset_elenco_prodotti():
     st.session_state.offerte = []
-    st.session_state.auto_search_count = None
-
-def trigger_category_auto_search():
-    st.session_state.offerte = []
-    st.session_state.auto_search_count = 10
 
 st.markdown("""
 <div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
@@ -704,9 +632,9 @@ st.markdown("""
 
 st.divider()
 
-tab_cerca, tab_categorie, tab_preferiti = st.tabs([
+# Schede
+tab_cerca, tab_preferiti = st.tabs([
     "🔍 Cerca Prodotto", 
-    "📂 Sfoglia le Categorie", 
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"
 ])
 
@@ -837,38 +765,13 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-# --- FUNZIONE CONDIVISA DI RICERCA ED ESTRAZIONE ---
-def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False):
-    if use_keyword:
-        keyword_val = st.text_input(
-            "🔍 Scrivi cosa ti serve:",
-            placeholder="Es. cuffie bluetooth, notebook...",
-            key=f"{tab_prefix}_keyword_input",
-            on_change=reset_elenco_prodotti
-        )
-    else:
-        keyword_val = ""
-
-    if use_categories:
-        col_cat, col_subcat = st.columns([1.0, 1.0])
-        with col_cat:
-            cat_val = st.selectbox(
-                "Categoria Principale:",
-                list(CATEGORIE.keys()),
-                key=f"{tab_prefix}_select_cat",
-                on_change=trigger_category_auto_search
-            )
-        with col_subcat:
-            sottocategorie = ["Tutte"] + CATEGORIE[cat_val]
-            subcat_val = st.selectbox(
-                "Sottocategoria:",
-                sottocategorie,
-                key=f"{tab_prefix}_select_subcat",
-                on_change=trigger_category_auto_search
-            )
-    else:
-        cat_val = ""
-        subcat_val = ""
+with tab_cerca:
+    keyword_val = st.text_input(
+        "🔍 Scrivi cosa ti serve:",
+        placeholder="Es. cuffie bluetooth, notebook...",
+        key="cerca_keyword_input",
+        on_change=reset_elenco_prodotti
+    )
 
     col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
@@ -881,7 +784,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 value=None,
                 step=1.0,
                 placeholder="Min...",
-                key=f"{tab_prefix}_input_pmin",
+                key="cerca_input_pmin",
                 on_change=reset_elenco_prodotti
             )
         with col_pmax:
@@ -891,7 +794,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 value=None,
                 step=1.0,
                 placeholder="Max...",
-                key=f"{tab_prefix}_input_pmax",
+                key="cerca_input_pmax",
                 on_change=reset_elenco_prodotti
             )
         st.markdown('</div>', unsafe_allow_html=True)
@@ -901,7 +804,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         list(SORT_MAPPINGS.keys()),
         index=0,
         horizontal=True,
-        key=f"{tab_prefix}_radio_sort",
+        key="cerca_radio_sort",
         on_change=reset_elenco_prodotti
     )
 
@@ -910,7 +813,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         list(OPZIONI_SCONTO.keys()),
         index=0,
         horizontal=True,
-        key=f"{tab_prefix}_radio_disc",
+        key="cerca_radio_disc",
         on_change=reset_elenco_prodotti
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_disc_val]
@@ -920,23 +823,23 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
         t1, t2, t3, t4, t5, t6 = st.columns(6)
         with t1:
-            btn_10 = st.button("Top 10", key=f"{tab_prefix}_btn10", use_container_width=True)
+            btn_10 = st.button("Top 10", key="cerca_btn10", use_container_width=True)
         with t2:
-            btn_20 = st.button("Top 20", key=f"{tab_prefix}_btn20", use_container_width=True)
+            btn_20 = st.button("Top 20", key="cerca_btn20", use_container_width=True)
         with t3:
-            btn_30 = st.button("Top 30", key=f"{tab_prefix}_btn30", use_container_width=True)
+            btn_30 = st.button("Top 30", key="cerca_btn30", use_container_width=True)
         with t4:
-            btn_50 = st.button("Top 50", key=f"{tab_prefix}_btn50", use_container_width=True)
+            btn_50 = st.button("Top 50", key="cerca_btn50", use_container_width=True)
         with t5:
-            btn_70 = st.button("Top 70", key=f"{tab_prefix}_btn70", use_container_width=True)
+            btn_70 = st.button("Top 70", key="cerca_btn70", use_container_width=True)
         with t6:
-            btn_100 = st.button("Top 100", key=f"{tab_prefix}_btn100", use_container_width=True)
+            btn_100 = st.button("Top 100", key="cerca_btn100", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     solo_gratis = st.checkbox(
         "🚚 Spedizione gratuita",
         value=False,
-        key=f"{tab_prefix}_check_sped_gratis",
+        key="cerca_check_sped_gratis",
         on_change=reset_elenco_prodotti,
         help="Mostra solo prodotti con spedizione gratuita o Prime"
     )
@@ -954,9 +857,6 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         target_items = 70
     elif btn_100:
         target_items = 100
-    elif use_categories and st.session_state.auto_search_count is not None:
-        target_items = st.session_state.auto_search_count
-        st.session_state.auto_search_count = None
 
     if target_items is not None:
         st.session_state.last_target_items = target_items
@@ -967,8 +867,8 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 val_min, val_max = val_max, val_min
 
             risultati = ottieni_offerte_avanzate(
-                categoria=cat_val,
-                sottocategoria=subcat_val,
+                categoria="",
+                sottocategoria="",
                 keyword=keyword_val.strip(),
                 sort_type=ranking_val,
                 solo_spedizione_gratuita=solo_gratis,
@@ -987,21 +887,12 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         for idx in range(0, len(st.session_state.offerte), 2):
             col_l, col_r = st.columns(2)
             with col_l:
-                render_product_card(st.session_state.offerte[idx], tab_key=f"{tab_prefix}_{idx}")
+                render_product_card(st.session_state.offerte[idx], tab_key=f"cerca_{idx}")
             if idx + 1 < len(st.session_state.offerte):
                 with col_r:
-                    render_product_card(st.session_state.offerte[idx + 1], tab_key=f"{tab_prefix}_{idx + 1}")
+                    render_product_card(st.session_state.offerte[idx + 1], tab_key=f"cerca_{idx + 1}")
             st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
 
-# 1. Scheda Cerca Prodotto
-with tab_cerca:
-    esegui_interfaccia_filtri(tab_prefix="cerca", use_keyword=True, use_categories=False)
-
-# 2. Scheda Sfoglia Categorie
-with tab_categorie:
-    esegui_interfaccia_filtri(tab_prefix="cat", use_keyword=False, use_categories=True)
-
-# 3. Scheda Preferiti
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
     if not lista_preferiti:
