@@ -1,12 +1,13 @@
 import sqlite3
 import os
+import tempfile
 
-DB_FILE = "preferiti.db"
+# Usa la directory temporanea scrivibile del container
+DB_DIR = tempfile.gettempdir()
+DB_FILE = os.path.join(DB_DIR, "preferiti_app.db")
 
 def _get_connection():
     conn = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=15)
-    conn.execute("PRAGMA journal_mode=DELETE;")
-    conn.execute("PRAGMA synchronous=NORMAL;")
     return conn
 
 def init_db():
@@ -32,7 +33,7 @@ def init_db():
         """)
     conn.close()
 
-# Inizializzazione sicura all'import
+# Inizializzazione sicura
 init_db()
 
 def aggiungi_preferito(p):
