@@ -550,7 +550,6 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
 
-            # Titolo e Stellina micro affiancati
             st.markdown('<div class="title-star-row">', unsafe_allow_html=True)
             c_titolo, c_star = st.columns([0.92, 0.08])
             with c_titolo:
