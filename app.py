@@ -18,37 +18,44 @@ st.markdown("""
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
     }
 
+    .block-container {
+        padding-top: 1rem !important;
+        padding-bottom: 2rem !important;
+        padding-left: 0.6rem !important;
+        padding-right: 0.6rem !important;
+        max-width: 100% !important;
+    }
+
     div[data-baseweb="tab-list"] {
         background: rgba(15, 23, 42, 0.6) !important;
-        padding: 6px 8px !important;
-        border-radius: 12px !important;
+        padding: 4px 6px !important;
+        border-radius: 10px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        gap: 8px !important;
-        margin-bottom: 16px !important;
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+        display: flex !important;
+        width: 100% !important;
     }
 
     button[data-baseweb="tab"] {
+        flex: 1 1 0% !important;
         color: #94a3b8 !important;
         font-weight: 800 !important;
-        font-size: 0.95rem !important;
+        font-size: clamp(0.80rem, 3.2vw, 0.92rem) !important;
         background: rgba(30, 41, 59, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 8px !important;
-        padding: 10px 20px !important;
+        border-radius: 6px !important;
+        padding: 8px 10px !important;
+        text-align: center !important;
+        justify-content: center !important;
         transition: all 0.2s ease !important;
-    }
-
-    button[data-baseweb="tab"]:hover {
-        background: rgba(56, 189, 248, 0.15) !important;
-        color: #f8fafc !important;
-        border-color: rgba(56, 189, 248, 0.4) !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         border-color: #38bdf8 !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
+        box-shadow: 0 3px 10px rgba(37, 99, 235, 0.4) !important;
     }
 
     div[data-baseweb="tab-highlight"] {
@@ -56,26 +63,26 @@ st.markdown("""
     }
 
     .hero-title-main {
-        font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+        font-size: clamp(1.8rem, 6vw, 2.6rem);
         font-weight: 900;
-        letter-spacing: -1px;
+        letter-spacing: -0.5px;
         line-height: 1.1;
-        margin: 0 0 6px 0;
+        margin: 0 0 4px 0;
         background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 4px 20px rgba(56, 189, 248, 0.25);
+        text-shadow: 0 3px 14px rgba(56, 189, 248, 0.25);
     }
 
     .hero-subtitle-box {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+        gap: 6px;
+        font-size: clamp(0.95rem, 3.5vw, 1.25rem);
         font-weight: 700;
         color: #f1f5f9;
         letter-spacing: 0.2px;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
     }
 
     .ai-badge {
@@ -83,18 +90,18 @@ st.markdown("""
         color: #ffffff;
         font-size: 0.75em;
         font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 6px;
+        padding: 2px 7px;
+        border-radius: 5px;
         border: 1px solid rgba(255, 255, 255, 0.25);
-        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
     }
 
     .hero-author-tag {
-        font-size: clamp(0.85rem, 1.8vw, 0.98rem);
+        font-size: clamp(0.78rem, 2.5vw, 0.88rem);
         color: #94a3b8;
         font-weight: 500;
-        letter-spacing: 0.5px;
-        margin-top: 4px;
+        letter-spacing: 0.4px;
+        margin-top: 2px;
     }
 
     .hero-author-tag strong {
@@ -106,9 +113,9 @@ st.markdown("""
     label[data-testid="stWidgetLabel"] p {
         color: #e2e8f0 !important;
         font-weight: 700 !important;
-        font-size: 0.84rem !important;
+        font-size: 0.82rem !important;
         letter-spacing: 0.2px;
-        margin-bottom: 3px !important;
+        margin-bottom: 2px !important;
     }
 
     div[data-baseweb="input"] {
@@ -127,8 +134,27 @@ st.markdown("""
     div[data-baseweb="input"] input {
         color: #f8fafc !important;
         font-weight: 600 !important;
-        font-size: 0.85rem !important;
-        padding: 6px 10px !important;
+        font-size: 0.84rem !important;
+        padding: 6px 8px !important;
+    }
+
+    .search-row-mobile [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-end !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:first-child {
+        flex: 1 1 72% !important;
+        min-width: 0 !important;
+    }
+
+    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:last-child {
+        flex: 1 1 28% !important;
+        min-width: 0 !important;
     }
 
     .search-btn-container div[data-testid="stButton"] button {
@@ -137,52 +163,46 @@ st.markdown("""
         border: 1px solid #38bdf8 !important;
         border-radius: 8px !important;
         font-weight: 900 !important;
-        font-size: 0.92rem !important;
+        font-size: 0.88rem !important;
         min-height: 38px !important;
         height: 38px !important;
         width: 100% !important;
-        padding: 0 12px !important;
+        padding: 0 !important;
         box-shadow: 0 2px 8px rgba(2, 132, 199, 0.45) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
     }
 
-    .search-btn-container div[data-testid="stButton"] button:hover {
-        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
-        box-shadow: 0 4px 14px rgba(56, 189, 248, 0.6) !important;
-        transform: translateY(-1px) !important;
-    }
-
-    .top-buttons-box [data-testid="stHorizontalBlock"] {
+    .top-buttons-row-strict [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 2px !important;
+        align-items: center !important;
+        gap: 3px !important;
         width: 100% !important;
-        margin-top: 4px !important;
+        margin-top: 6px !important;
+        margin-bottom: 6px !important;
     }
 
-    .top-buttons-box [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+    .top-buttons-row-strict [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
         flex: 1 1 0% !important;
         min-width: 0 !important;
         width: 16.666% !important;
         padding: 0 !important;
     }
 
-    .top-buttons-box div[data-testid="stButton"] button {
+    .top-buttons-row-strict div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border: 1px solid #38bdf8 !important;
-        border-radius: 4px !important;
+        border-radius: 6px !important;
         font-weight: 800 !important;
-        font-size: 0.68rem !important;
-        padding: 1px 0 !important;
-        min-height: 24px !important;
-        height: 24px !important;
+        font-size: clamp(0.62rem, 2.5vw, 0.74rem) !important;
+        padding: 0 !important;
+        min-height: 28px !important;
+        height: 28px !important;
         box-shadow: 0 1px 4px rgba(2, 132, 199, 0.35) !important;
-        transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
         width: 100% !important;
         display: flex !important;
@@ -190,41 +210,43 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    .top-buttons-box div[data-testid="stButton"] button p {
+    .top-buttons-row-strict div[data-testid="stButton"] button p {
         color: #ffffff !important;
         font-weight: 800 !important;
         font-size: inherit !important;
         line-height: 1 !important;
     }
 
-    .top-buttons-box div[data-testid="stButton"] button:hover {
-        transform: translateY(-1px) !important;
-        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
-        box-shadow: 0 2px 8px rgba(56, 189, 248, 0.5) !important;
+    .prices-row-strict [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+
+    .prices-row-strict [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        width: 50% !important;
     }
 
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 6px 14px !important;
+        padding: 6px 12px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.14) !important;
         width: fit-content !important;
-        min-height: 36px !important;
+        min-height: 34px !important;
         display: flex !important;
         align-items: center !important;
-        margin-top: 8px !important;
+        margin-top: 6px !important;
         margin-bottom: 6px !important;
-        transition: border-color 0.15s ease, background 0.15s ease !important;
-    }
-
-    div[data-testid="stCheckbox"]:hover {
-        border-color: #4ade80 !important;
-        background: rgba(34, 197, 94, 0.10) !important;
     }
 
     div[data-testid="stCheckbox"] label p {
         font-family: Arial, sans-serif !important;
-        font-size: 0.86rem !important;
+        font-size: 0.84rem !important;
         font-weight: 800 !important;
         color: #4ade80 !important;
         margin: 0 !important;
@@ -233,9 +255,9 @@ st.markdown("""
 
     div[data-testid="stRadio"] {
         display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 12px !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 4px !important;
         margin-top: 4px !important;
         margin-bottom: 4px !important;
     }
@@ -244,51 +266,34 @@ st.markdown("""
         margin-bottom: 0px !important;
         font-weight: 800 !important;
         color: #38bdf8 !important;
-        white-space: nowrap !important;
-        font-size: 0.86rem !important;
+        font-size: 0.82rem !important;
     }
 
     div[data-testid="stRadio"] > div {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: wrap !important;
-        gap: 6px !important;
+        gap: 4px !important;
         align-items: center !important;
+        width: 100% !important;
     }
     
     div[data-testid="stRadio"] label[data-baseweb="radio"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 4px 10px !important;
-        border-radius: 8px !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
         border: 1px solid rgba(255, 255, 255, 0.14) !important;
         cursor: pointer !important;
         margin: 0 !important;
-        transition: all 0.15s ease !important;
+        flex: 1 1 auto !important;
+        text-align: center !important;
+        justify-content: center !important;
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] div {
         color: #f1f5f9 !important;
-        font-size: 0.80rem !important;
+        font-size: 0.74rem !important;
         font-weight: 600 !important;
-    }
-
-    div[data-testid="stRadio"] label[data-baseweb="radio"]:hover {
-        background: rgba(56, 189, 248, 0.20) !important;
-        border-color: #38bdf8 !important;
-    }
-
-    .prices-single-row-container [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 6px !important;
-        width: 100% !important;
-    }
-
-    .prices-single-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        width: 50% !important;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -296,23 +301,13 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         border-radius: 12px !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.30) !important;
-        padding: 12px 10px !important;
-        margin-bottom: 8px !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
-    }
-    
-    [data-testid="stVerticalBlockBorderWrapper"]:hover {
-        border-color: #38bdf8 !important;
-        box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25) !important;
-    }
-
-    [data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
-        align-items: center !important;
+        padding: 10px 8px !important;
+        margin-bottom: 10px !important;
     }
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 185px;
+        height: 180px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -321,6 +316,7 @@ st.markdown("""
         border-radius: 8px;
         overflow: hidden;
         padding: 4px;
+        margin-bottom: 8px;
     }
 
     .product-img-wrapper-full img {
@@ -354,7 +350,7 @@ st.markdown("""
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.80rem !important;
+        font-size: 0.84rem !important;
         font-weight: 700 !important;
         text-decoration: none !important;
         padding: 4px 8px;
@@ -364,21 +360,15 @@ st.markdown("""
         width: 100% !important;
         min-height: 36px;
         box-shadow: 0 2px 6px rgba(213, 175, 0, 0.30);
-        transition: background-color 0.15s ease;
         white-space: nowrap;
     }
 
-    .buy-btn-action:hover {
-        background-color: #f7ca00;
-        color: #0f1111 !important;
-    }
-
     .deal-title {
-        font-size: 0.95rem !important;
+        font-size: 0.90rem !important;
         font-weight: 800 !important;
-        line-height: 1.35 !important;
+        line-height: 1.30 !important;
         color: #38bdf8 !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
         display: -webkit-box;
         -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
@@ -390,15 +380,15 @@ st.markdown("""
         align-items: center !important;
         justify-content: space-between !important;
         flex-wrap: wrap !important;
-        gap: 8px !important;
+        gap: 6px !important;
         width: 100% !important;
-        margin: 8px 0 12px 0 !important;
+        margin: 6px 0 10px 0 !important;
     }
 
     .price-subgroup-left {
         display: flex !important;
         align-items: baseline !important;
-        gap: 6px !important;
+        gap: 4px !important;
         flex-wrap: wrap !important;
     }
 
@@ -406,7 +396,7 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: flex-end !important;
-        gap: 6px !important;
+        gap: 4px !important;
         margin-left: auto !important;
         flex-wrap: wrap !important;
         text-align: right !important;
@@ -417,10 +407,10 @@ st.markdown("""
         align-items: center;
         background: #00a8e8 !important;
         color: #ffffff !important;
-        font-size: 0.76rem !important;
+        font-size: 0.72rem !important;
         font-weight: 900;
-        padding: 3px 8px;
-        border-radius: 5px;
+        padding: 2px 6px;
+        border-radius: 4px;
         letter-spacing: 0.3px;
         white-space: nowrap;
     }
@@ -431,9 +421,9 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        padding: 3px 8px;
-        border-radius: 5px;
-        font-size: 0.76rem !important;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.72rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
@@ -444,34 +434,33 @@ st.markdown("""
         background: rgba(30, 41, 59, 0.9) !important;
         color: #f59e0b !important;
         border: 1px solid rgba(245, 158, 11, 0.4) !important;
-        padding: 3px 8px;
-        border-radius: 5px;
-        font-size: 0.76rem !important;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.72rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
 
     .deal-price-final {
-        font-size: 1.4rem !important;
+        font-size: 1.3rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
         letter-spacing: -0.5px;
-        text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
     }
 
     .deal-price-old {
-        font-size: 0.9rem !important;
+        font-size: 0.85rem !important;
         color: #94a3b8 !important;
         text-decoration: line-through;
-        margin-left: 6px;
+        margin-left: 4px;
     }
 
     .deal-badge {
         background-color: #ef4444;
         color: white;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 800;
-        padding: 1px 5px;
+        padding: 1px 4px;
         border-radius: 4px;
         margin-right: 4px;
     }
@@ -483,10 +472,11 @@ st.markdown("""
         padding: 8px;
         color: #0f1111;
         border: 1px solid #cbd5e1;
+        margin-top: 6px;
     }
 
     .feedback-title {
-        font-size: 1.02rem;
+        font-size: 0.95rem;
         font-weight: 700;
         color: #0f1111;
         line-height: 1.15;
@@ -496,47 +486,47 @@ st.markdown("""
     .feedback-stars-row {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 4px;
         margin-bottom: 1px;
     }
 
     .feedback-stars {
         color: #ff6e00;
-        font-size: 1.05rem;
+        font-size: 0.95rem;
         letter-spacing: 0.5px;
         line-height: 1;
     }
 
     .feedback-score-text {
-        font-size: 0.88rem;
+        font-size: 0.82rem;
         font-weight: 600;
         color: #0f1111;
     }
 
     .feedback-subcount {
-        font-size: 0.78rem;
+        font-size: 0.74rem;
         color: #565959;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
     }
 
     .fb-row {
         display: flex;
         align-items: center;
-        gap: 6px;
-        margin-bottom: 3px;
+        gap: 4px;
+        margin-bottom: 2px;
     }
 
     .fb-label {
-        width: 48px;
+        width: 44px;
         color: #007185;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         font-weight: 500;
         white-space: nowrap;
     }
 
     .fb-bar-bg {
         flex: 1;
-        height: 12px;
+        height: 10px;
         background-color: #ffffff;
         border: 1px solid #767676;
         border-radius: 3px;
@@ -551,43 +541,39 @@ st.markdown("""
     }
 
     .fb-pct {
-        width: 28px;
+        width: 24px;
         text-align: right;
         color: #007185;
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         font-weight: 500;
     }
 
-    .social-share-col {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        align-items: center;
-        justify-content: center;
+    .social-share-row-mobile {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        margin-top: 8px !important;
+        width: 100% !important;
     }
 
     .share-icon-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 27px;
-        height: 27px;
+        width: 28px;
+        height: 28px;
         border-radius: 6px;
         text-decoration: none !important;
         cursor: pointer;
         border: none;
-        transition: transform 0.15s ease, opacity 0.15s ease;
         box-shadow: 0 1px 3px rgba(0,0,0,0.30);
     }
 
-    .share-icon-btn:hover {
-        transform: scale(1.10);
-        opacity: 0.95;
-    }
-
     .share-icon-btn svg {
-        width: 15px;
-        height: 15px;
+        width: 16px;
+        height: 16px;
         display: block;
     }
 
@@ -602,30 +588,17 @@ st.markdown("""
         height: 2px;
         background: linear-gradient(90deg, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0.6) 50%, rgba(56, 189, 248, 0.1) 100%);
         border: none;
-        margin: 16px 0 20px 0;
+        margin: 14px 0 16px 0;
         border-radius: 2px;
-    }
-
-    @media (max-width: 900px) {
-        div[data-testid="stRadio"] {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-        }
-        .social-share-col {
-            flex-direction: row !important;
-            justify-content: center !important;
-            gap: 6px;
-            margin-top: 6px;
-        }
     }
 </style>
 """, unsafe_allow_html=True)
 
 OPZIONI_SCONTO = {
     "Tutti": (0, 100),
-    "da 0 al 20%": (0, 20),
-    "dal 20 al 50%": (20, 50),
-    "oltre il 50%": (50, 100)
+    "0-20%": (0, 20),
+    "20-50%": (20, 50),
+    ">50%": (50, 100)
 }
 
 if "preferiti_asin" not in st.session_state:
@@ -642,7 +615,7 @@ def reset_elenco_prodotti():
     st.session_state.offerte = []
 
 st.markdown("""
-<div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
+<div style="text-align: center; padding-top: 4px; margin-bottom: 8px;">
     <div class="hero-title-main">Scala dei Turchi</div>
     <div class="hero-subtitle-box" style="justify-content: center;">
         <span>Offerte Amazon</span>
@@ -656,7 +629,6 @@ st.markdown("""
 
 st.divider()
 
-# Schede
 tab_cerca, tab_preferiti = st.tabs([
     "🔍 Cerca Prodotto", 
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"
@@ -664,7 +636,7 @@ tab_cerca, tab_preferiti = st.tabs([
 
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
-        col_left, col_center, col_fb, col_social = st.columns([1.2, 1.5, 1.35, 0.3])
+        col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
         
         is_fav = p["asin"] in st.session_state.preferiti_asin
         star_icon = "⭐" if is_fav else "☆"
@@ -696,7 +668,7 @@ def render_product_card(p, tab_key="main"):
             if p.get("is_prime"):
                 ship_html = "<span class='shipping-badge-prime'>prime</span>"
             elif p.get("is_sped_gratis"):
-                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione gratuita</span>"
+                ship_html = "<span class='shipping-badge-free'>🚚 Sped. gratis</span>"
             elif p.get("costo_spedizione", 0.0) > 0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{p['costo_spedizione']:.2f} sped.</span>"
             else:
@@ -735,7 +707,7 @@ def render_product_card(p, tab_key="main"):
             bar_rows = []
             for s in ["5", "4", "3", "2", "1"]:
                 pct = distrib.get(s, 0)
-                lbl = f"{s} stell{'e' if s != '1' else 'a'}"
+                lbl = f"{s}★"
                 row_html = (
                     f"<div class='fb-row'>"
                     f"<span class='fb-label'>{lbl}</span>"
@@ -752,101 +724,97 @@ def render_product_card(p, tab_key="main"):
                 f"<span class='feedback-stars'>{stelle_icon}</span>"
                 f"<span class='feedback-score-text'>{voto_str} su 5</span>"
                 f"</div>"
-                f"<div class='feedback-subcount'>{num_val} valutazioni globali</div>"
+                f"<div class='feedback-subcount'>{num_val} voti</div>"
                 f"{''.join(bar_rows)}"
                 f"</div>"
             )
             st.markdown(feedback_full_html, unsafe_allow_html=True)
 
-        with col_social:
-            safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
-            share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
+        safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
+        share_msg = f"🔥 Offerta Amazon: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 Acquista qui: {link}"
 
-            wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
-            fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
-            gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su={urllib.parse.quote('Offerta Amazon: ' + safe_title)}&body={urllib.parse.quote(share_msg)}"
-            ig_url = "https://www.instagram.com/"
-            tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(f'🔥 {safe_title} a €{p['prezzo_finale']:.2f}!')}"
+        wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
+        fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
+        gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su={urllib.parse.quote('Offerta Amazon: ' + safe_title)}&body={urllib.parse.quote(share_msg)}"
+        ig_url = "https://www.instagram.com/"
+        tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(f'🔥 {safe_title} a €{p['prezzo_finale']:.2f}!')}"
 
-            svg_wa = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
-            svg_fb = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
-            svg_gmail = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
-            svg_ig = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>'
-            svg_tg = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
-            svg_copy = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
+        svg_wa = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
+        svg_fb = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
+        svg_gmail = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
+        svg_ig = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>'
+        svg_tg = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
+        svg_copy = '<svg viewBox="0 0 24 24"><path fill="#ffffff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
 
-            copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato negli appunti!');}});"
+        copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato negli appunti!');}});"
 
-            st.markdown(
-                f"<div class='social-share-col'>"
-                f"<a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='WhatsApp'>{svg_wa}</a>"
-                f"<a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Facebook'>{svg_fb}</a>"
-                f"<a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail' title='Gmail'>{svg_gmail}</a>"
-                f"<a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig' title='Instagram'>{svg_ig}</a>"
-                f"<a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Telegram'>{svg_tg}</a>"
-                f"<button onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{svg_copy}</button>"
-                f"</div>",
-                unsafe_allow_html=True
-            )
+        st.markdown(
+            f"<div class='social-share-row-mobile'>"
+            f"<a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='WhatsApp'>{svg_wa}</a>"
+            f"<a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Facebook'>{svg_fb}</a>"
+            f"<a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail' title='Gmail'>{svg_gmail}</a>"
+            f"<a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig' title='Instagram'>{svg_ig}</a>"
+            f"<a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Telegram'>{svg_tg}</a>"
+            f"<button onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{svg_copy}</button>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
 
 with tab_cerca:
-    col_input, col_action = st.columns([0.75, 0.25])
-    
+    st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
+    col_input, col_submit = st.columns([0.72, 0.28])
     with col_input:
         keyword_val = st.text_input(
             "🔍 Scrivi cosa ti serve:",
-            placeholder="Es. cuffie bluetooth, notebook...",
+            placeholder="Es. cuffie bluetooth...",
             key="cerca_keyword_input",
             on_change=reset_elenco_prodotti
         )
-
-    with col_action:
-        st.markdown("<div style='height: 22px;'></div>", unsafe_allow_html=True)
+    with col_submit:
         st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown('<div class="top-buttons-box">', unsafe_allow_html=True)
-        t1, t2, t3, t4, t5, t6 = st.columns(6)
-        with t1:
-            btn_10 = st.button("Top 10", key="cerca_btn10", use_container_width=True)
-        with t2:
-            btn_20 = st.button("Top 20", key="cerca_btn20", use_container_width=True)
-        with t3:
-            btn_30 = st.button("Top 30", key="cerca_btn30", use_container_width=True)
-        with t4:
-            btn_50 = st.button("Top 50", key="cerca_btn50", use_container_width=True)
-        with t5:
-            btn_70 = st.button("Top 70", key="cerca_btn70", use_container_width=True)
-        with t6:
-            btn_100 = st.button("Top 100", key="cerca_btn100", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    col_prices_row, _ = st.columns([0.55, 0.45])
-    with col_prices_row:
-        st.markdown('<div class="prices-single-row-container">', unsafe_allow_html=True)
-        col_pmin, col_pmax = st.columns(2)
-        with col_pmin:
-            p_min = st.number_input(
-                "Prezzo Min (€):",
-                min_value=0.0,
-                value=None,
-                step=1.0,
-                placeholder="Min...",
-                key="cerca_input_pmin",
-                on_change=reset_elenco_prodotti
-            )
-        with col_pmax:
-            p_max = st.number_input(
-                "Prezzo Max (€):",
-                min_value=0.0,
-                value=None,
-                step=1.0,
-                placeholder="Max...",
-                key="cerca_input_pmax",
-                on_change=reset_elenco_prodotti
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('<div class="top-buttons-row-strict">', unsafe_allow_html=True)
+    t1, t2, t3, t4, t5, t6 = st.columns(6)
+    with t1:
+        btn_10 = st.button("Top 10", key="cerca_btn10", use_container_width=True)
+    with t2:
+        btn_20 = st.button("Top 20", key="cerca_btn20", use_container_width=True)
+    with t3:
+        btn_30 = st.button("Top 30", key="cerca_btn30", use_container_width=True)
+    with t4:
+        btn_50 = st.button("Top 50", key="cerca_btn50", use_container_width=True)
+    with t5:
+        btn_70 = st.button("Top 70", key="cerca_btn70", use_container_width=True)
+    with t6:
+        btn_100 = st.button("Top 100", key="cerca_btn100", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="prices-row-strict">', unsafe_allow_html=True)
+    col_pmin, col_pmax = st.columns(2)
+    with col_pmin:
+        p_min = st.number_input(
+            "Prezzo Min (€):",
+            min_value=0.0,
+            value=None,
+            step=1.0,
+            placeholder="Min...",
+            key="cerca_input_pmin",
+            on_change=reset_elenco_prodotti
+        )
+    with col_pmax:
+        p_max = st.number_input(
+            "Prezzo Max (€):",
+            min_value=0.0,
+            value=None,
+            step=1.0,
+            placeholder="Max...",
+            key="cerca_input_pmax",
+            on_change=reset_elenco_prodotti
+        )
+    st.markdown('</div>', unsafe_allow_html=True)
 
     ranking_val = st.radio(
         "🏷️ Ordinamento:",
