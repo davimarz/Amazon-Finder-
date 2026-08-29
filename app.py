@@ -18,7 +18,7 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
-    /* Sfondo Celeste Chiaro */
+    /* Sfondo Celeste Chiaro App */
     .stApp {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
@@ -106,7 +106,7 @@ st.markdown("""
 
     .hero-author-tag strong { color: #0369a1; }
 
-    /* Spaziature verticali ridotte */
+    /* Spaziature verticali */
     div[data-testid="stVerticalBlock"] > div {
         gap: 2px !important;
     }
@@ -227,14 +227,15 @@ st.markdown("""
         color: #059669 !important;
     }
 
-    /* Riquadro Scheda Prodotto: Sfondo Verde Chiaro e Bordo Verde */
+    /* SFONDO VERDE CHIARO PER OGNI RIQUADRO SCHEDA PRODOTTO */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%) !important;
-        border: 2px solid #22c55e !important;
+        background-color: #dcfce7 !important;
+        background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
+        border: 2px solid #34d399 !important;
         border-radius: 12px !important;
         padding: 10px !important;
         margin-bottom: 12px !important;
-        box-shadow: 0 4px 14px rgba(22, 101, 52, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
     }
 
     .product-img-wrapper-full {
@@ -244,7 +245,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
-        border: 1px solid #bbf7d0;
+        border: 1px solid #86efac;
         border-radius: 6px;
         overflow: hidden;
         padding: 2px;
@@ -284,7 +285,7 @@ st.markdown("""
         font-size: 0.78rem !important;
         font-weight: 800 !important;
         line-height: 1.15 !important;
-        color: #0f172a !important;
+        color: #064e3b !important;
         margin: 0 !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -294,8 +295,8 @@ st.markdown("""
 
     /* Stellina Preferiti */
     div[data-testid="stButton"] button[key^="fav_"] {
-        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
-        border: 1px solid #15803d !important;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border: 1px solid #047857 !important;
         border-radius: 3px !important;
         min-height: 12px !important;
         height: 12px !important;
@@ -308,7 +309,7 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 1px 2px rgba(22, 163, 74, 0.3) !important;
+        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.3) !important;
         margin-left: auto !important;
     }
 
@@ -320,8 +321,8 @@ st.markdown("""
     }
 
     div[data-testid="stButton"] button[key^="fav_"]:hover {
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
-        border-color: #166534 !important;
+        background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+        border-color: #065f46 !important;
     }
 
     .buy-btn-action {
@@ -362,13 +363,13 @@ st.markdown("""
     .deal-price-final {
         font-size: 2.10rem !important;
         font-weight: 900 !important;
-        color: #047857 !important;
+        color: #065f46 !important;
         line-height: 1 !important;
     }
 
     .deal-price-old {
         font-size: 1.40rem !important;
-        color: #64748b !important;
+        color: #4b5563 !important;
         text-decoration: line-through;
         margin-left: 4px;
         line-height: 1 !important;
@@ -395,9 +396,9 @@ st.markdown("""
     }
 
     .shipping-badge-free {
-        background: rgba(255, 255, 255, 0.9);
-        color: #15803d;
-        border: 1px solid #86efac;
+        background: rgba(255, 255, 255, 0.95);
+        color: #065f46;
+        border: 1px solid #6ee7b7;
         padding: 1px 4px;
         border-radius: 3px;
         font-size: 0.65rem;
@@ -405,8 +406,8 @@ st.markdown("""
     }
 
     .shipping-badge-paid {
-        background: rgba(255, 255, 255, 0.9);
-        color: #b45309;
+        background: rgba(255, 255, 255, 0.95);
+        color: #92400e;
         border: 1px solid #fde68a;
         padding: 1px 4px;
         border-radius: 3px;
@@ -420,7 +421,7 @@ st.markdown("""
         padding: 4px 6px;
         color: #0f1111;
         margin-top: 3px;
-        border: 1px solid #dcfce7;
+        border: 1px solid #a7f3d0;
     }
 
     .feedback-title {
