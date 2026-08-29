@@ -347,30 +347,42 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 4px !important;
-        margin: 2px 0 4px 0 !important;
+        gap: 6px !important;
+        margin: 4px 0 6px 0 !important;
     }
 
+    .price-subgroup-left {
+        display: flex !important;
+        align-items: baseline !important;
+        gap: 4px !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* Raddoppiate dimensioni Prezzi e Sconti */
     .deal-price-final {
-        font-size: 1.05rem !important;
+        font-size: 2.10rem !important;
         font-weight: 900 !important;
         color: #047857 !important;
+        line-height: 1 !important;
     }
 
     .deal-price-old {
-        font-size: 0.70rem !important;
+        font-size: 1.40rem !important;
         color: #64748b !important;
         text-decoration: line-through;
-        margin-left: 2px;
+        margin-left: 4px;
+        line-height: 1 !important;
     }
 
     .deal-badge {
         background-color: #ef4444;
         color: white;
-        font-size: 0.65rem;
-        font-weight: 800;
-        padding: 1px 3px;
-        border-radius: 3px;
+        font-size: 1.30rem !important;
+        font-weight: 800 !important;
+        padding: 2px 6px !important;
+        border-radius: 4px;
+        line-height: 1 !important;
+        display: inline-block !important;
     }
 
     .shipping-badge-prime {
