@@ -127,17 +127,18 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
+    /* Flag Spedizione Gratuita */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 4px 10px !important;
+        padding: 6px 14px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.14) !important;
-        width: 100% !important;
-        margin-top: 22px !important;
+        width: fit-content !important;
         min-height: 36px !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: center !important;
+        margin-top: 8px !important;
+        margin-bottom: 6px !important;
         transition: border-color 0.15s ease, background 0.15s ease !important;
     }
 
@@ -148,7 +149,7 @@ st.markdown("""
 
     div[data-testid="stCheckbox"] label p {
         font-family: Arial, sans-serif !important;
-        font-size: 0.82rem !important;
+        font-size: 0.86rem !important;
         font-weight: 800 !important;
         color: #4ade80 !important;
         margin: 0 !important;
@@ -201,26 +202,6 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Griglia Ricerca e Spedizione Gratuita in un'unica riga */
-    .search-ship-row-container [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 8px !important;
-        width: 100% !important;
-        align-items: flex-end !important;
-    }
-
-    .search-ship-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:first-child {
-        flex: 1 1 70% !important;
-        min-width: 0 !important;
-    }
-
-    .search-ship-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:last-child {
-        flex: 0 0 30% !important;
-        min-width: 0 !important;
-    }
-
     /* Griglia Prezzo Minimo e Massimo in un'unica riga */
     .prices-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
@@ -236,15 +217,15 @@ st.markdown("""
         width: 50% !important;
     }
 
-    /* Griglia 6 Pulsanti Top compatti e nitidi in un'unica riga */
+    /* Griglia 6 Pulsanti Top con testo ultra leggibile */
     .top-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 3px !important;
+        gap: 4px !important;
         width: 100% !important;
         margin-top: 4px !important;
-        margin-bottom: 8px !important;
+        margin-bottom: 6px !important;
     }
 
     .top-single-row-container [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
@@ -254,18 +235,18 @@ st.markdown("""
     }
 
     .top-single-row-container div[data-testid="stButton"] button {
-        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        border-radius: 5px !important;
-        font-weight: 800 !important;
-        font-size: clamp(0.68rem, 1.9vw, 0.76rem) !important;
-        letter-spacing: -0.2px !important;
-        padding: 0 !important;
-        min-height: 26px !important;
-        height: 26px !important;
-        line-height: 26px !important;
-        box-shadow: 0 1px 4px rgba(37, 99, 235, 0.3) !important;
+        border: 1px solid #38bdf8 !important;
+        border-radius: 6px !important;
+        font-weight: 900 !important;
+        font-size: clamp(0.72rem, 2vw, 0.84rem) !important;
+        letter-spacing: 0.2px !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+        padding: 2px 0 !important;
+        min-height: 28px !important;
+        height: 28px !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4) !important;
         transition: transform 0.15s ease, box-shadow 0.15s ease !important;
         white-space: nowrap !important;
         width: 100% !important;
@@ -274,9 +255,16 @@ st.markdown("""
         justify-content: center !important;
     }
 
+    .top-single-row-container div[data-testid="stButton"] button p {
+        color: #ffffff !important;
+        font-weight: 900 !important;
+        font-size: inherit !important;
+    }
+
     .top-single-row-container div[data-testid="stButton"] button:hover {
         transform: translateY(-1px) !important;
-        box-shadow: 0 3px 8px rgba(56, 189, 248, 0.45) !important;
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.5) !important;
     }
 
     [data-testid="stVerticalBlockBorderWrapper"] {
@@ -319,7 +307,6 @@ st.markdown("""
         margin: auto;
     }
 
-    /* Pulsante Preferiti (Stella) su misura e allineato */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%) !important;
         border: 1px solid #3b82f6 !important;
@@ -337,7 +324,6 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    /* Pulsante Acquista Giallo compatto sulla stessa riga */
     .buy-btn-action {
         display: inline-flex;
         align-items: center;
@@ -805,31 +791,16 @@ def render_product_card(p, tab_key="main"):
 with tab_cerca:
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
-        # Riga 1: Ricerca Testuale Diretta e Spedizione Gratuita affiancati
-        st.markdown('<div class="search-ship-row-container">', unsafe_allow_html=True)
-        col_kw, col_ship = st.columns([0.72, 0.28])
+        # 1. Ricerca diretta
+        keyword_libera = st.text_input(
+            "🔍 Scrivi cosa ti serve:",
+            placeholder="Es. cuffie bluetooth, notebook...",
+            key="keyword_input",
+            on_change=trigger_search
+        )
 
-        with col_kw:
-            keyword_libera = st.text_input(
-                "🔍 Scrivi cosa ti serve:",
-                placeholder="Es. cuffie bluetooth, notebook...",
-                key="keyword_input",
-                on_change=trigger_search
-            )
-
-        with col_ship:
-            solo_sped_gratis = st.checkbox(
-                "🚚 Sped. gratuita",
-                value=False,
-                key="check_sped_gratis",
-                on_change=trigger_search,
-                help="Mostra solo prodotti con spedizione o consegna gratuita"
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Riga 2: Categoria Principale e Sottocategoria
+        # 2. Categorie
         col_cat, col_subcat = st.columns([1.0, 1.0])
-
         with col_cat:
             cat_scelta = st.selectbox(
                 "Categoria Principale:",
@@ -849,7 +820,7 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # Prezzo Min e Max su una sola riga
+    # 3. Prezzo Min e Max su una sola riga
     col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
         st.markdown('<div class="prices-single-row-container">', unsafe_allow_html=True)
@@ -899,7 +870,7 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # Griglia con pulsanti Top compatti e nitidi su un'unica riga orizzontale
+    # 4. Griglia Pulsanti Top nitidi su un'unica riga
     col_btn_wrap, _ = st.columns([0.65, 0.35])
     with col_btn_wrap:
         st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
@@ -917,6 +888,15 @@ with tab_cerca:
         with t6:
             btn_100 = st.button("Top 100", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # 5. Flag Spedizione Gratuita collocato dopo i pulsanti Top
+    solo_sped_gratis = st.checkbox(
+        "🚚 Spedizione gratuita",
+        value=False,
+        key="check_sped_gratis",
+        on_change=trigger_search,
+        help="Mostra solo prodotti con spedizione o consegna senza costi aggiuntivi / Prime"
+    )
 
     target_items = None
     if btn_10:
