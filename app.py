@@ -219,13 +219,24 @@ st.markdown("""
         color: #4ade80 !important;
     }
 
-    /* Card Prodotto */
+    /* Card Prodotto con Bordo e Ombra Distintiva */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
-        border-radius: 8px !important;
-        padding: 6px !important;
-        margin-bottom: 6px !important;
+        background: linear-gradient(145deg, rgba(17, 24, 39, 0.96) 0%, rgba(30, 41, 59, 0.94) 100%) !important;
+        border: 1px solid rgba(56, 189, 248, 0.25) !important;
+        border-radius: 10px !important;
+        padding: 8px !important;
+        margin-bottom: 4px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
+    }
+
+    /* Divisore Grafico Neon tra le Card */
+    .custom-card-divider {
+        height: 2px;
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, rgba(56, 189, 248, 0.7) 50%, rgba(56, 189, 248, 0.05) 100%);
+        border: none;
+        margin: 8px 0 10px 0;
+        border-radius: 2px;
+        width: 100%;
     }
 
     .product-img-wrapper-full {
@@ -282,7 +293,7 @@ st.markdown("""
         overflow: hidden;
     }
 
-    /* Stellina Preferiti: Riquadro Dimezzato */
+    /* Stellina Preferiti */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
         border: 1px solid #4ade80 !important;
@@ -644,6 +655,7 @@ with tab_cerca:
             if idx + 1 < len(st.session_state.offerte):
                 with col_r:
                     render_product_card(st.session_state.offerte[idx + 1], tab_key=f"cerca_{idx + 1}")
+            st.markdown('<hr class="custom-card-divider">', unsafe_allow_html=True)
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
@@ -658,3 +670,4 @@ with tab_preferiti:
             if idx + 1 < len(lista_preferiti):
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
+            st.markdown('<hr class="custom-card-divider">', unsafe_allow_html=True)
