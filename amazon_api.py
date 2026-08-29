@@ -95,24 +95,26 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
 def analizza_spedizione_html(item_tag):
-    is_prime = bool(
-        item_tag.find("i", class_=re.compile(r"a-icon-prime|s-prime", re.I)) or
-        item_tag.find("span", {"aria-label": re.compile(r"prime", re.I)}) or
-        item_tag.find(lambda tag: tag.name in ["span", "i", "div"] and "prime" in (tag.get("class") or []))
-    )
-
-    blocchi_consegna = item_tag.find_all(
-        ["div", "span", "p"], 
-        attrs={"data-cy": re.compile(r"delivery|receipt|shipping", re.I)}
-    )
-    if not blocchi_consegna:
-        blocchi_consegna = item_tag.find_all(["div", "span"], class_=re.compile(r"a-row|s-align-children", re.I))
-
-    testo_consegna = " ".join([b.get_text(" ", strip=True).lower() for b in blocchi_consegna])
+    """
+    Riconoscimento euristico a prova di errore per:
+    1. Prodotti Prime
+    2. Consegna senza costi aggiuntivi / Spedizione gratuita
+    3. Consegna a pagamento (identificazione del prezzo esatto di spedizione)
+    """
+    html_str = str(item_tag).lower()
     testo_completo = item_tag.get_text(" ", strip=True).lower()
-    testo_target = testo_consegna if len(testo_consegna) > 5 else testo_completo
 
-    frasi_gratis = [
+    # Controllo Prime approfondito (tag i, span, aria-label o svg icon)
+    is_prime = bool(
+        "a-icon-prime" in html_str or
+        "s-prime" in html_str or
+        item_tag.find("i", class_=re.compile(r"prime", re.I)) or
+        item_tag.find("span", {"aria-label": re.compile(r"prime", re.I)}) or
+        "prime" in testo_completo
+    )
+
+    # Controllo diciture di gratuità
+    frasi_gratuite = [
         "consegna senza costi aggiuntivi",
         "consegna gratuita",
         "spedizione gratuita",
@@ -120,10 +122,13 @@ def analizza_spedizione_html(item_tag):
         "consegna gratis",
         "spedizione gratis",
         "gratis con prime",
-        "consegna standard gratuita"
+        "consegna standard gratuita",
+        "idoneo alla spedizione gratuita"
     ]
-    ha_dicitura_gratis = any(f in testo_target for f in frasi_gratis) or ("prime" in testo_target)
+    ha_dicitura_gratis = any(f in testo_completo for f in frasi_gratuite) or is_prime
 
+    # Controllo costi di spedizione a pagamento
+    costo_sped = 0.0
     match_costo = re.search(
         r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
         r'(?:consegna\s+a\s*(\d+[.,]\d{2})\s*€)|'
@@ -131,25 +136,30 @@ def analizza_spedizione_html(item_tag):
         r'(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|'
         r'(?:\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
         r'(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))',
-        testo_target,
+        testo_completo,
         re.I
     )
 
     if match_costo:
         val_str = next(v for v in match_costo.groups() if v is not None)
         try:
-            costo = float(val_str.replace(",", "."))
-            if costo > 0 and not (is_prime or "senza costi aggiuntivi" in testo_target):
-                return costo, f"Consegna a €{costo:.2f}", False, False
+            val_num = float(val_str.replace(",", "."))
+            if val_num > 0:
+                costo_sped = val_num
         except ValueError:
             pass
 
+    # Se ha costo e NON ha diciture di gratuità / prime, è a pagamento
+    if costo_sped > 0 and not (is_prime or "senza costi aggiuntivi" in testo_completo or "consegna gratuita" in testo_completo):
+        return costo_sped, f"Consegna a €{costo_sped:.2f}", False, False
+
+    # Altrimenti è gratuita / Prime
     if is_prime:
         return 0.0, "Prime (Spedizione gratuita)", True, True
-    if ha_dicitura_gratis:
+    if ha_dicitura_gratis or costo_sped == 0.0:
         return 0.0, "Spedizione gratuita", False, True
 
-    return 0.0, "Spedizione standard", False, False
+    return 0.0, "Spedizione standard", False, True
 
 def ottieni_offerte_avanzate(
     categoria="", 
@@ -181,6 +191,7 @@ def ottieni_offerte_avanzate(
 
     query_str = " ".join(termini) if termini else "offerte"
 
+    # 1. Chiamata API Ufficiale Creators
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -198,7 +209,6 @@ def ottieni_offerte_avanzate(
             "SortBy": SORT_MAPPINGS.get(sort_type, "Relevance"),
             "Resources": [
                 "ItemInfo.Title",
-                "ItemInfo.Features",
                 "Offers.Listings.Price",
                 "Offers.Listings.SavingBasis",
                 "Offers.Listings.DeliveryInfo.IsPrimeEligible",
@@ -232,7 +242,7 @@ def ottieni_offerte_avanzate(
                     price_val = 0.0
                     old_price_val = 0.0
                     is_prime = False
-                    is_free_ship = False
+                    is_free_ship = True
                     costo_sped = 0.0
 
                     if listings:
@@ -246,6 +256,8 @@ def ottieni_offerte_avanzate(
                         charges = delivery.get("ShippingCharges", [])
                         if charges:
                             costo_sped = float(charges[0].get("Amount", 0.0))
+                            if costo_sped > 0 and not is_prime:
+                                is_free_ship = False
 
                     if solo_spedizione_gratuita and not is_free_ship:
                         continue
@@ -289,6 +301,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
+    # 2. Motore Fallback Potenziato
     return _ottieni_offerte_fallback(
         query_str=query_str,
         sort_type=sort_type,
@@ -323,7 +336,7 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
     session = c_requests.Session(impersonate="chrome")
 
     try:
-        while len(prodotti) < item_count and page_num <= 10:
+        while len(prodotti) < item_count and page_num <= 12:
             resp = session.get(f"{base_url}&page={page_num}", headers=headers, timeout=12)
             if resp.status_code != 200:
                 break
@@ -345,11 +358,12 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                     continue
 
                 text_full = it.get_text(" ", strip=True).lower()
-                if "non disponibile" in text_full:
+                if "non disponibile" in text_full or "attualmente non disponibile" in text_full:
                     continue
 
                 costo_sped, info_sped, is_prime, is_free_ship = analizza_spedizione_html(it)
 
+                # Se è attivo il filtro, accetta solo prodotti con spedizione gratuita o Prime
                 if solo_spedizione_gratuita and not is_free_ship:
                     continue
 
