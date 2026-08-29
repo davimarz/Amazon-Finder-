@@ -227,14 +227,14 @@ st.markdown("""
         color: #059669 !important;
     }
 
-    /* Riquadro Scheda Prodotto: Sfondo Scuro a Contrasto e Bordo Evidente */
+    /* Riquadro Scheda Prodotto: Sfondo Verde Chiaro e Bordo Verde Smeraldo */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: #090d16 !important;
-        border: 2px solid #38bdf8 !important;
+        background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%) !important;
+        border: 2px solid #22c55e !important;
         border-radius: 12px !important;
         padding: 10px !important;
         margin-bottom: 12px !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 8px rgba(56, 189, 248, 0.25) !important;
+        box-shadow: 0 4px 14px rgba(22, 101, 52, 0.12), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     }
 
     .product-img-wrapper-full {
@@ -244,6 +244,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         background-color: #ffffff;
+        border: 1px solid #bbf7d0;
         border-radius: 6px;
         overflow: hidden;
         padding: 2px;
@@ -283,7 +284,7 @@ st.markdown("""
         font-size: 0.78rem !important;
         font-weight: 800 !important;
         line-height: 1.15 !important;
-        color: #38bdf8 !important;
+        color: #0f172a !important;
         margin: 0 !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
@@ -294,7 +295,7 @@ st.markdown("""
     /* Stellina Preferiti */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
-        border: 1px solid #4ade80 !important;
+        border: 1px solid #15803d !important;
         border-radius: 3px !important;
         min-height: 12px !important;
         height: 12px !important;
@@ -320,7 +321,7 @@ st.markdown("""
 
     div[data-testid="stButton"] button[key^="fav_"]:hover {
         background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
-        border-color: #86efac !important;
+        border-color: #166534 !important;
     }
 
     .buy-btn-action {
@@ -339,6 +340,7 @@ st.markdown("""
         min-height: 28px;
         height: 28px;
         margin-top: 3px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     .price-delivery-split-row {
@@ -352,12 +354,12 @@ st.markdown("""
     .deal-price-final {
         font-size: 1.05rem !important;
         font-weight: 900 !important;
-        color: #38bdf8 !important;
+        color: #047857 !important;
     }
 
     .deal-price-old {
         font-size: 0.70rem !important;
-        color: #94a3b8 !important;
+        color: #64748b !important;
         text-decoration: line-through;
         margin-left: 2px;
     }
@@ -381,9 +383,9 @@ st.markdown("""
     }
 
     .shipping-badge-free {
-        background: rgba(15, 23, 42, 0.9);
-        color: #4ade80;
-        border: 1px solid rgba(34, 197, 94, 0.5);
+        background: rgba(255, 255, 255, 0.9);
+        color: #15803d;
+        border: 1px solid #86efac;
         padding: 1px 4px;
         border-radius: 3px;
         font-size: 0.65rem;
@@ -391,9 +393,9 @@ st.markdown("""
     }
 
     .shipping-badge-paid {
-        background: rgba(30, 41, 59, 0.9);
-        color: #f59e0b;
-        border: 1px solid rgba(245, 158, 11, 0.4);
+        background: rgba(255, 255, 255, 0.9);
+        color: #b45309;
+        border: 1px solid #fde68a;
         padding: 1px 4px;
         border-radius: 3px;
         font-size: 0.65rem;
@@ -406,6 +408,7 @@ st.markdown("""
         padding: 4px 6px;
         color: #0f1111;
         margin-top: 3px;
+        border: 1px solid #dcfce7;
     }
 
     .feedback-title {
@@ -432,7 +435,7 @@ st.markdown("""
     }
 
     .fb-label { width: 22px; color: #007185; font-size: 0.60rem; }
-    .fb-bar-bg { flex: 1; height: 6px; background-color: #eee; border-radius: 2px; overflow: hidden; }
+    .fb-bar-bg { flex: 1; height: 6px; background-color: #f1f5f9; border-radius: 2px; overflow: hidden; }
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
