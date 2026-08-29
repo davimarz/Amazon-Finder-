@@ -19,7 +19,7 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.35rem 0.4rem 1rem 0.4rem !important;
+        padding: 0.30rem 0.35rem 0.80rem 0.35rem !important;
         max-width: 100% !important;
     }
 
@@ -30,7 +30,7 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
         gap: 4px !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 4px !important;
         display: flex !important;
         width: 100% !important;
     }
@@ -39,13 +39,13 @@ st.markdown("""
         flex: 1 1 0% !important;
         color: #94a3b8 !important;
         font-weight: 800 !important;
-        font-size: 0.82rem !important;
+        font-size: 0.80rem !important;
         background: rgba(30, 41, 59, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
-        min-height: 28px !important;
-        height: 28px !important;
+        min-height: 26px !important;
+        height: 26px !important;
         text-align: center !important;
         justify-content: center !important;
     }
@@ -60,7 +60,7 @@ st.markdown("""
 
     /* Header compatto */
     .hero-title-main {
-        font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+        font-size: clamp(1.3rem, 4.2vw, 1.8rem);
         font-weight: 900;
         line-height: 1.05;
         margin: 0;
@@ -73,7 +73,7 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-size: clamp(0.80rem, 2.5vw, 0.95rem);
+        font-size: clamp(0.75rem, 2.4vw, 0.90rem);
         font-weight: 700;
         color: #f1f5f9;
         margin: 0;
@@ -82,52 +82,53 @@ st.markdown("""
     .ai-badge {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.70em;
+        font-size: 0.68em;
         font-weight: 800;
-        padding: 1px 5px;
+        padding: 1px 4px;
         border-radius: 4px;
     }
 
     .hero-author-tag {
-        font-size: 0.72rem;
+        font-size: 0.70rem;
         color: #94a3b8;
         font-weight: 500;
-        margin: 0 0 6px 0;
+        margin: 0 0 4px 0;
     }
 
     .hero-author-tag strong { color: #facc15; }
 
     /* Spaziature verticali ridotte */
     div[data-testid="stVerticalBlock"] > div {
-        gap: 3px !important;
+        gap: 2px !important;
     }
 
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
         color: #cbd5e1 !important;
         font-weight: 700 !important;
-        font-size: 0.74rem !important;
+        font-size: 0.72rem !important;
         margin: 0 !important;
-        line-height: 1.1 !important;
+        line-height: 1 !important;
     }
 
-    /* Stile Input */
+    /* Stile Input generico */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         border-radius: 6px !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        min-height: 30px !important;
+        height: 30px !important;
+        padding: 0 !important;
     }
 
     div[data-baseweb="input"] input {
         color: #f8fafc !important;
         font-weight: 600 !important;
-        font-size: 0.80rem !important;
-        padding: 3px 6px !important;
+        font-size: 0.76rem !important;
+        padding: 2px 6px !important;
     }
 
-    /* 1. Riga Superiore: Casella Ricerca + Pulsante Cerca */
+    /* Riga Ricerca: Campo Testo + Tasto Cerca */
     .search-row-mobile [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -157,31 +158,40 @@ st.markdown("""
         border-radius: 6px !important;
         font-weight: 900 !important;
         font-size: 0.80rem !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        min-height: 30px !important;
+        height: 30px !important;
         width: 100% !important;
         padding: 0 !important;
     }
 
-    /* 2. SOLUZIONE FORZATA: RIGA PREZZI MIN E MAX SEMPRE AFFIANCATI SU SMARTPHONE */
-    .prices-row-forced, 
-    .prices-row-forced [data-testid="stHorizontalBlock"] {
+    /* RIGA PREZZI RIDOTTA AL 25% PER CASSETTA, CENTRATA E AFFIANCATA */
+    .prices-row-quarter {
+        width: 100% !important;
+        margin: 2px 0 4px 0 !important;
+    }
+
+    .prices-row-quarter [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
+        justify-content: center !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 8px !important;
         width: 100% !important;
-        margin-bottom: 4px !important;
     }
 
-    .prices-row-forced [data-testid="stHorizontalBlock"] > [data-testid="stColumn"],
-    .prices-row-forced [data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-        display: block !important;
-        flex: 1 1 0% !important;
+    .prices-row-quarter [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 0 0 25% !important;
+        width: 25% !important;
+        max-width: 25% !important;
         min-width: 0 !important;
-        max-width: 50% !important;
-        width: 50% !important;
+        padding: 0 !important;
+    }
+
+    .prices-row-quarter div[data-baseweb="input"] input {
+        text-align: center !important;
+        font-size: 0.74rem !important;
+        padding: 2px !important;
     }
 
     /* Radio buttons compressi */
@@ -222,10 +232,10 @@ st.markdown("""
     /* Checkbox Spedizione */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 4px 8px !important;
+        padding: 3px 8px !important;
         border-radius: 6px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        min-height: 28px !important;
+        min-height: 26px !important;
         margin: 2px 0 4px 0 !important;
     }
 
@@ -542,7 +552,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # 1. RIGA RICERCA + PULSANTE CERCA
+    # 1. Riga Input Ricerca + Pulsante Cerca
     st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
     col_input, col_submit = st.columns([0.76, 0.24])
     with col_input:
@@ -559,28 +569,22 @@ with tab_cerca:
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 2. RIGA PREZZO MINIMO E MASSIMO (BLOCCO FORZATO ORIZZONTALE SU SMARTPHONE)
-    st.markdown('<div class="prices-row-forced">', unsafe_allow_html=True)
+    # 2. Riga Prezzo Min e Max ridotti al 25% ciascuno e affiancati
+    st.markdown('<div class="prices-row-quarter">', unsafe_allow_html=True)
     col_pmin, col_pmax = st.columns(2)
     with col_pmin:
-        p_min = st.number_input(
+        p_min_str = st.text_input(
             "Min (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
             placeholder="Min €",
-            key="cerca_input_pmin",
+            key="cerca_input_pmin_str",
             label_visibility="collapsed",
             on_change=reset_elenco_prodotti
         )
     with col_pmax:
-        p_max = st.number_input(
+        p_max_str = st.text_input(
             "Max (€):",
-            min_value=0.0,
-            value=None,
-            step=1.0,
             placeholder="Max €",
-            key="cerca_input_pmax",
+            key="cerca_input_pmax_str",
             label_visibility="collapsed",
             on_change=reset_elenco_prodotti
         )
@@ -614,8 +618,20 @@ with tab_cerca:
 
     if btn_cerca_submit:
         with st.spinner("Ricerca rapida in corso..."):
-            val_min = float(p_min) if (p_min is not None and p_min > 0) else None
-            val_max = float(p_max) if (p_max is not None and p_max > 0) else None
+            val_min = None
+            if p_min_str.strip():
+                try:
+                    val_min = float(p_min_str.replace(",", ".").strip())
+                except ValueError:
+                    val_min = None
+
+            val_max = None
+            if p_max_str.strip():
+                try:
+                    val_max = float(p_max_str.replace(",", ".").strip())
+                except ValueError:
+                    val_max = None
+
             if val_min and val_max and val_min > val_max:
                 val_min, val_max = val_max, val_min
 
