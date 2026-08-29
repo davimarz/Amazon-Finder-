@@ -7,19 +7,15 @@ from curl_cffi import requests as c_requests
 from bs4 import BeautifulSoup
 
 SORT_MAPPINGS = {
-    "Prezzo: min": "Price:LowToHigh",
-    "Rilevanza": "Relevance",
-    "Prezzo: max": "Price:HighToLow",
-    "Recensioni": "AvgCustomerReviews",
-    "Novità": "NewestArrivals"
+    "Prezzo minimo": "Price:LowToHigh",
+    "Prezzo massimo": "Price:HighToLow",
+    "Recensioni": "AvgCustomerReviews"
 }
 
 SORT_FALLBACK_MAP = {
-    "Prezzo: min": "price-asc-rank",
-    "Rilevanza": "exact-aware-popularity-rank",
-    "Prezzo: max": "price-desc-rank",
-    "Recensioni": "review-rank",
-    "Novità": "date-desc-rank"
+    "Prezzo minimo": "price-asc-rank",
+    "Prezzo massimo": "price-desc-rank",
+    "Recensioni": "review-rank"
 }
 
 _TOKEN_CACHE = {
@@ -120,9 +116,9 @@ def analizza_spedizione_html(item_tag):
     return 0.0, "Standard", False, False
 
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
-    if sort_type == "Prezzo: min":
+    if sort_type == "Prezzo minimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
-    elif sort_type == "Prezzo: max":
+    elif sort_type == "Prezzo massimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"], reverse=True)
     elif sort_type == "Recensioni":
         prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
@@ -133,7 +129,7 @@ def ottieni_offerte_avanzate(
     categoria="", 
     sottocategoria="", 
     keyword="", 
-    sort_type="Prezzo: min", 
+    sort_type="Prezzo minimo", 
     solo_spedizione_gratuita=False, 
     min_price=None, 
     max_price=None, 
@@ -164,7 +160,7 @@ def ottieni_offerte_avanzate(
             "PartnerType": "Associates",
             "Marketplace": "www.amazon.it",
             "ItemCount": min(item_count, 10),
-            "SortBy": SORT_MAPPINGS.get(sort_type, "Relevance"),
+            "SortBy": SORT_MAPPINGS.get(sort_type, "Price:LowToHigh"),
             "Resources": [
                 "ItemInfo.Title",
                 "Offers.Listings.Price",
