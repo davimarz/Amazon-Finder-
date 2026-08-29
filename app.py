@@ -67,11 +67,25 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header */
+    /* Header Allineato: Stessa Larghezza e Maiuscoletto */
+    .hero-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto;
+        text-align: center;
+    }
+
     .hero-title-main {
-        font-size: clamp(2.6rem, 9.0vw, 3.6rem);
+        font-size: clamp(2.2rem, 7.8vw, 3.2rem);
         font-weight: 900;
-        line-height: 1.08;
+        line-height: 1.05;
+        width: 100%;
+        text-align: center;
+        letter-spacing: -0.5px;
         margin: 0;
         background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
         -webkit-background-clip: text;
@@ -79,25 +93,34 @@ st.markdown("""
     }
 
     .hero-subtitle-box {
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: clamp(1.5rem, 5.2vw, 1.8rem);
+        justify-content: space-between;
+        width: 100%;
+        margin: 4px 0 2px 0;
+    }
+
+    .hero-subtitle-text {
+        font-size: clamp(1.4rem, 5.0vw, 1.9rem);
         font-weight: 800;
         color: #0f172a;
-        margin: 4px 0 2px 0;
+        font-variant: small-caps;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        flex-grow: 1;
+        text-align: center;
     }
 
     .ai-badge {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.85em;
+        font-size: 0.80em;
         font-weight: 900;
-        padding: 2px 8px;
+        padding: 2px 7px;
         border-radius: 6px;
+        margin-left: 6px;
     }
 
-    /* Scritta autore dimezzata */
     .hero-author-tag {
         font-size: 0.70rem;
         color: #334155;
@@ -520,10 +543,10 @@ def trigger_ricerca():
     st.session_state.offerte = risultati if risultati else []
 
 st.markdown("""
-<div style="text-align: center;">
+<div class="hero-container">
     <div class="hero-title-main">Scala dei Turchi</div>
     <div class="hero-subtitle-box">
-        <span>Offerte Amazon</span>
+        <span class="hero-subtitle-text">Offerte Amazon</span>
         <span class="ai-badge">AI</span>
     </div>
     <div class="hero-author-tag">Realizzato da <strong>Davide Marziano</strong></div>
