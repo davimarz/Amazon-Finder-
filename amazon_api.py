@@ -50,16 +50,41 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
 def analizza_spedizione_prodotto(item_tag):
-    testo_completo = item_tag.text.lower()
-    
-    # 1. Rilevamento presenza Prime
-    has_prime_badge = bool(
-        item_tag.find("i", {"class": re.compile(r"a-icon-prime")}) or
-        item_tag.find("span", {"aria-label": re.compile(r"prime", re.IGNORECASE)}) or
-        "prime" in testo_completo
+    """
+    Analizza in profondità il blocco HTML del risultato di ricerca Amazon
+    per stabilire con precisione se la spedizione è gratuita/Prime o a pagamento.
+    """
+    # 1. Ricerca badge Prime (Icone, aria-label, svg o classi CSS)
+    is_prime = bool(
+        item_tag.find("i", class_=re.compile(r"a-icon-prime|s-prime", re.I)) or
+        item_tag.find("span", {"aria-label": re.compile(r"prime", re.I)}) or
+        item_tag.find(lambda tag: tag.name in ["span", "i", "div"] and "prime" in tag.get("class", []) if tag.get("class") else False)
     )
 
-    # 2. Rilevamento costi di consegna espliciti (es: "consegna a 7,40 €", "7,40 € di spedizione", "+ 5,00 €")
+    # 2. Estrazione delle sezioni specifiche dedicate alla consegna
+    blocchi_consegna = item_tag.find_all(
+        ["div", "span"], 
+        attrs={"data-cy": re.compile(r"delivery-receipt|delivery-info", re.I)}
+    )
+    testo_consegna = " ".join([b.get_text(" ", strip=True).lower() for b in blocchi_consegna])
+    testo_completo = item_tag.get_text(" ", strip=True).lower()
+
+    if not testo_consegna:
+        testo_consegna = testo_completo
+
+    # 3. Pattern espliciti di spedizione gratuita
+    pattern_gratis = [
+        "consegna senza costi aggiuntivi",
+        "consegna gratuita",
+        "spedizione gratuita",
+        "senza costi aggiuntivi",
+        "consegna gratis",
+        "spedizione gratis",
+        "prime"
+    ]
+    ha_dicitura_gratis = any(p in testo_consegna for p in pattern_gratis) or is_prime
+
+    # 4. Pattern di costo di spedizione a pagamento (es. "consegna a 7,40 €", "+ 5,99 € di spedizione")
     match_costo = re.search(
         r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
         r'(?:consegna\s+a\s*(\d+[.,]\d{2})\s*€)|'
@@ -67,8 +92,8 @@ def analizza_spedizione_prodotto(item_tag):
         r'(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|'
         r'(?:\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
         r'(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))',
-        testo_completo,
-        re.IGNORECASE
+        testo_consegna,
+        re.I
     )
 
     if match_costo:
@@ -80,22 +105,9 @@ def analizza_spedizione_prodotto(item_tag):
         except ValueError:
             pass
 
-    # 3. Rilevamento esplicito di consegna gratuita / senza costi aggiuntivi o Prime
-    frasi_gratis = [
-        "consegna senza costi aggiuntivi",
-        "consegna gratuita",
-        "spedizione gratuita",
-        "senza costi aggiuntivi",
-        "consegna gratis",
-        "spedizione gratis"
-    ]
-    
-    ha_dicitura_gratis = any(frase in testo_completo for frase in frasi_gratis)
-
-    if has_prime_badge or ha_dicitura_gratis:
+    if ha_dicitura_gratis:
         return 0.0, "Spedizione gratuita", True
 
-    # Se non è Prime e non ha esplicita dicitura gratuita, viene considerata non garantita gratuita
     return 0.0, "Spedizione standard", False
 
 def pulisci_titolo_descrizione(titolo_grezzo):
@@ -117,7 +129,7 @@ def ottieni_offerte_avanzate(
 ):
     termini = []
     clean_keyword = keyword.strip()
-    asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.IGNORECASE)
+    asin_url_match = re.search(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', clean_keyword, re.I)
     if asin_url_match:
         clean_keyword = asin_url_match.group(1)
 
@@ -134,10 +146,6 @@ def ottieni_offerte_avanzate(
     
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
-
-    # Se è richiesta la spedizione gratuita, applichiamo anche il filtro nativo Amazon Prime/Free Shipping
-    if solo_spedizione_gratuita:
-        base_url += "&rh=p_76%3A419121031"
 
     if min_price is not None and min_price > 0:
         base_url += f"&low-price={int(min_price)}"
@@ -191,7 +199,7 @@ def ottieni_offerte_avanzate(
 
                 costo_spedizione, info_spedizione, is_sped_gratis = analizza_spedizione_prodotto(item)
                 
-                # Controllo rigoroso: scarta se il filtro è attivo e non è Prime / Senza costi aggiuntivi
+                # Se l'utente richiede spedizione gratuita, filtra rigorosamente
                 if solo_spedizione_gratuita and not is_sped_gratis:
                     continue
 
