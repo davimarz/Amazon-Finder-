@@ -163,7 +163,7 @@ st.markdown("""
         min-height: 32px !important;
         height: 32px !important;
         padding: 0 !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 0 !important;
         box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08) !important;
     }
 
@@ -178,7 +178,23 @@ st.markdown("""
         padding: 2px 8px !important;
     }
 
-    /* Pulsante Cerca (Larghezza Dimezzata / Compatta) */
+    /* Riga con i due pulsanti affiancati */
+    .buttons-row-aligned [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin-top: 2px !important;
+    }
+
+    .buttons-row-aligned [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 1 1 50% !important;
+        min-width: 0 !important;
+    }
+
+    /* Pulsante Cerca */
     .search-btn-container {
         display: flex !important;
         justify-content: center !important;
@@ -203,7 +219,7 @@ st.markdown("""
         box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3) !important;
     }
 
-    /* Pulsante Carica Altri 10 Prodotti (Larghezza Dimezzata / Compatta) */
+    /* Pulsante Carica Altri 10 */
     .load-more-btn-container {
         display: flex !important;
         justify-content: center !important;
@@ -224,7 +240,7 @@ st.markdown("""
         min-height: 32px !important;
         height: 32px !important;
         width: 100% !important;
-        padding: 0 4px !important;
+        padding: 0 !important;
         box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
     }
 
@@ -674,7 +690,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Riquadro Scheda con sfondo verde chiaro
+    # Scheda di Ricerca con Casella al 1° rigo e Pulsanti affiancati al 2° rigo
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -685,7 +701,7 @@ with tab_cerca:
             args=(False,)
         )
         
-        # Due colonne affiancate al 50% di larghezza ciascuna
+        st.markdown('<div class="buttons-row-aligned">', unsafe_allow_html=True)
         col_btn_search, col_btn_more = st.columns(2)
         with col_btn_search:
             st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
@@ -695,6 +711,7 @@ with tab_cerca:
             st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
             btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
             st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.radio(
         "🏷️ Ordinamento:",
