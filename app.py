@@ -18,10 +18,11 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
+    /* Sfondo Celeste Chiaro */
     .stApp {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
-        color: #f8fafc !important;
+        color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
 
@@ -32,10 +33,10 @@ st.markdown("""
 
     /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
-        background: rgba(15, 23, 42, 0.75) !important;
+        background: rgba(255, 255, 255, 0.75) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid rgba(2, 132, 199, 0.25) !important;
         gap: 4px !important;
         margin-bottom: 4px !important;
         display: flex !important;
@@ -44,11 +45,11 @@ st.markdown("""
 
     button[data-baseweb="tab"] {
         flex: 1 1 0% !important;
-        color: #94a3b8 !important;
+        color: #0369a1 !important;
         font-weight: 800 !important;
         font-size: 0.80rem !important;
-        background: rgba(30, 41, 59, 0.8) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
         min-height: 28px !important;
@@ -60,18 +61,19 @@ st.markdown("""
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
-        border-color: #38bdf8 !important;
+        border-color: #0284c7 !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
     }
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header Compatto */
+    /* Header */
     .hero-title-main {
         font-size: clamp(1.3rem, 4.5vw, 1.8rem);
         font-weight: 900;
         line-height: 1.05;
         margin: 0;
-        background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 50%, #93c5fd 100%);
+        background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
@@ -82,7 +84,7 @@ st.markdown("""
         gap: 4px;
         font-size: clamp(0.75rem, 2.6vw, 0.90rem);
         font-weight: 700;
-        color: #f1f5f9;
+        color: #0f172a;
         margin: 0;
     }
 
@@ -97,12 +99,12 @@ st.markdown("""
 
     .hero-author-tag {
         font-size: 0.70rem;
-        color: #94a3b8;
+        color: #334155;
         font-weight: 500;
         margin: 0 0 4px 0;
     }
 
-    .hero-author-tag strong { color: #facc15; }
+    .hero-author-tag strong { color: #0369a1; }
 
     /* Spaziature verticali ridotte */
     div[data-testid="stVerticalBlock"] > div {
@@ -111,7 +113,7 @@ st.markdown("""
 
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
-        color: #cbd5e1 !important;
+        color: #0f172a !important;
         font-weight: 700 !important;
         font-size: 0.72rem !important;
         margin: 0 !important;
@@ -140,16 +142,21 @@ st.markdown("""
     }
 
     div[data-baseweb="input"] {
-        background-color: rgba(15, 23, 42, 0.85) !important;
-        border: 1px solid rgba(255, 255, 255, 0.18) !important;
+        background-color: #ffffff !important;
+        border: 1px solid #7dd3fc !important;
         border-radius: 6px !important;
         min-height: 30px !important;
         height: 30px !important;
         padding: 0 !important;
+        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08) !important;
+    }
+
+    div[data-baseweb="input"]:focus-within {
+        border-color: #0284c7 !important;
     }
 
     div[data-baseweb="input"] input {
-        color: #f8fafc !important;
+        color: #0f172a !important;
         font-weight: 600 !important;
         font-size: 0.76rem !important;
         padding: 2px 6px !important;
@@ -158,7 +165,7 @@ st.markdown("""
     .search-btn-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
-        border: 1px solid #38bdf8 !important;
+        border: 1px solid #0284c7 !important;
         border-radius: 6px !important;
         font-weight: 900 !important;
         font-size: 0.80rem !important;
@@ -166,6 +173,7 @@ st.markdown("""
         height: 30px !important;
         width: 100% !important;
         padding: 0 !important;
+        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3) !important;
     }
 
     /* Radio filtri inline */
@@ -185,10 +193,10 @@ st.markdown("""
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] {
-        background: rgba(30, 41, 59, 0.85) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         padding: 3px 4px !important;
         border-radius: 5px !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid #bae6fd !important;
         margin: 0 !important;
         flex: 1 1 0% !important;
         min-width: 0 !important;
@@ -197,7 +205,7 @@ st.markdown("""
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] div {
-        color: #f1f5f9 !important;
+        color: #0f172a !important;
         font-size: 0.70rem !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
@@ -205,10 +213,10 @@ st.markdown("""
 
     /* Checkbox */
     div[data-testid="stCheckbox"] {
-        background: rgba(30, 41, 59, 0.85) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         padding: 3px 8px !important;
         border-radius: 6px !important;
-        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border: 1px solid #bae6fd !important;
         min-height: 26px !important;
         margin: 2px 0 4px 0 !important;
     }
@@ -216,7 +224,7 @@ st.markdown("""
     div[data-testid="stCheckbox"] label p {
         font-size: 0.74rem !important;
         font-weight: 800 !important;
-        color: #4ade80 !important;
+        color: #059669 !important;
     }
 
     /* Riquadro Scheda Prodotto: Sfondo Scuro a Contrasto e Bordo Evidente */
@@ -226,7 +234,7 @@ st.markdown("""
         border-radius: 12px !important;
         padding: 10px !important;
         margin-bottom: 12px !important;
-        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 8px rgba(56, 189, 248, 0.25) !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 8px rgba(56, 189, 248, 0.25) !important;
     }
 
     .product-img-wrapper-full {
