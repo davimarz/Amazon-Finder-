@@ -227,7 +227,7 @@ st.markdown("""
         color: #059669 !important;
     }
 
-    /* Riquadro Scheda Prodotto: Sfondo Verde Chiaro e Bordo Verde Smeraldo */
+    /* Riquadro Scheda Prodotto: Sfondo Verde Chiaro e Bordo Verde */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%) !important;
         border: 2px solid #22c55e !important;
@@ -358,7 +358,7 @@ st.markdown("""
         flex-wrap: wrap !important;
     }
 
-    /* Raddoppiate dimensioni Prezzi e Sconti */
+    /* Prezzi e Sconti Grandi */
     .deal-price-final {
         font-size: 2.10rem !important;
         font-weight: 900 !important;
@@ -493,8 +493,30 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
-def reset_elenco_prodotti():
-    st.session_state.offerte = []
+if "has_searched" not in st.session_state:
+    st.session_state.has_searched = False
+
+def esegui_ricerca():
+    st.session_state.has_searched = True
+    kw = st.session_state.get("cerca_keyword_input", "").strip()
+    sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
+    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")
+    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))
+    free_ship = st.session_state.get("cerca_check_sped_gratis", False)
+
+    risultati = ottieni_offerte_avanzate(
+        categoria="",
+        sottocategoria="",
+        keyword=kw,
+        sort_type=sort_t,
+        solo_spedizione_gratuita=free_ship,
+        min_price=None,
+        max_price=None,
+        min_discount=min_d,
+        max_discount=max_d,
+        item_count=10
+    )
+    st.session_state.offerte = risultati if risultati else []
 
 st.markdown("""
 <div style="text-align: center;">
@@ -607,7 +629,7 @@ with tab_cerca:
             placeholder="Cosa cerchi?...",
             key="cerca_keyword_input",
             label_visibility="collapsed",
-            on_change=reset_elenco_prodotti
+            on_change=esegui_ricerca
         )
     with col_submit:
         st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
@@ -621,7 +643,7 @@ with tab_cerca:
         index=0,
         horizontal=True,
         key="cerca_radio_sort",
-        on_change=reset_elenco_prodotti
+        on_change=esegui_ricerca
     )
 
     label_disc_val = st.radio(
@@ -630,34 +652,19 @@ with tab_cerca:
         index=0,
         horizontal=True,
         key="cerca_radio_disc",
-        on_change=reset_elenco_prodotti
+        on_change=esegui_ricerca
     )
-    min_disc, max_disc = OPZIONI_SCONTO[label_disc_val]
 
     solo_gratis = st.checkbox(
         "🚚 Spedizione gratuita / Prime",
         value=False,
         key="cerca_check_sped_gratis",
-        on_change=reset_elenco_prodotti
+        on_change=esegui_ricerca
     )
 
     if btn_cerca_submit:
         with st.spinner("Ricerca rapida in corso..."):
-            risultati = ottieni_offerte_avanzate(
-                categoria="",
-                sottocategoria="",
-                keyword=keyword_val.strip(),
-                sort_type=ranking_val,
-                solo_spedizione_gratuita=solo_gratis,
-                min_price=None,
-                max_price=None,
-                min_discount=min_disc,
-                max_discount=max_disc,
-                item_count=10
-            )
-            st.session_state.offerte = risultati if risultati else []
-            if not risultati:
-                st.warning("Nessun prodotto trovato.")
+            esegui_ricerca()
 
     if st.session_state.offerte:
         st.write("")
@@ -668,6 +675,8 @@ with tab_cerca:
             if idx + 1 < len(st.session_state.offerte):
                 with col_r:
                     render_product_card(st.session_state.offerte[idx + 1], tab_key=f"cerca_{idx + 1}")
+    elif st.session_state.has_searched:
+        st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
