@@ -174,49 +174,6 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    .top-buttons-row-strict [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 3px !important;
-        width: 100% !important;
-        margin-top: 6px !important;
-        margin-bottom: 6px !important;
-    }
-
-    .top-buttons-row-strict [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        width: 16.666% !important;
-        padding: 0 !important;
-    }
-
-    .top-buttons-row-strict div[data-testid="stButton"] button {
-        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #38bdf8 !important;
-        border-radius: 6px !important;
-        font-weight: 800 !important;
-        font-size: clamp(0.62rem, 2.5vw, 0.74rem) !important;
-        padding: 0 !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.35) !important;
-        white-space: nowrap !important;
-        width: 100% !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-
-    .top-buttons-row-strict div[data-testid="stButton"] button p {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        font-size: inherit !important;
-        line-height: 1 !important;
-    }
-
     .prices-row-strict [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -608,9 +565,6 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
-if "last_target_items" not in st.session_state:
-    st.session_state.last_target_items = 10
-
 def reset_elenco_prodotti():
     st.session_state.offerte = []
 
@@ -776,22 +730,6 @@ with tab_cerca:
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="top-buttons-row-strict">', unsafe_allow_html=True)
-    t1, t2, t3, t4, t5, t6 = st.columns(6)
-    with t1:
-        btn_10 = st.button("Top 10", key="cerca_btn10", use_container_width=True)
-    with t2:
-        btn_20 = st.button("Top 20", key="cerca_btn20", use_container_width=True)
-    with t3:
-        btn_30 = st.button("Top 30", key="cerca_btn30", use_container_width=True)
-    with t4:
-        btn_50 = st.button("Top 50", key="cerca_btn50", use_container_width=True)
-    with t5:
-        btn_70 = st.button("Top 70", key="cerca_btn70", use_container_width=True)
-    with t6:
-        btn_100 = st.button("Top 100", key="cerca_btn100", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
     st.markdown('<div class="prices-row-strict">', unsafe_allow_html=True)
     col_pmin, col_pmax = st.columns(2)
     with col_pmin:
@@ -843,25 +781,8 @@ with tab_cerca:
         help="Mostra solo prodotti con spedizione gratuita o Prime"
     )
 
-    target_items = None
     if btn_cerca_submit:
-        target_items = st.session_state.last_target_items if st.session_state.last_target_items else 10
-    elif btn_10:
-        target_items = 10
-    elif btn_20:
-        target_items = 20
-    elif btn_30:
-        target_items = 30
-    elif btn_50:
-        target_items = 50
-    elif btn_70:
-        target_items = 70
-    elif btn_100:
-        target_items = 100
-
-    if target_items is not None:
-        st.session_state.last_target_items = target_items
-        with st.spinner(f"Estrazione dei Top {target_items} prodotti in corso..."):
+        with st.spinner("Estrazione dei prodotti in corso..."):
             val_min = float(p_min) if (p_min is not None and p_min > 0) else None
             val_max = float(p_max) if (p_max is not None and p_max > 0) else None
             if val_min and val_max and val_min > val_max:
@@ -877,7 +798,7 @@ with tab_cerca:
                 max_price=val_max,
                 min_discount=min_disc,
                 max_discount=max_disc,
-                item_count=target_items
+                item_count=10
             )
             st.session_state.offerte = risultati if risultati else []
             if not risultati:
