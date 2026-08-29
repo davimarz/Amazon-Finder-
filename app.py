@@ -67,7 +67,7 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header */
+    /* Header Ravvicinato */
     .hero-container {
         display: flex;
         flex-direction: column;
@@ -75,14 +75,14 @@ st.markdown("""
         justify-content: center;
         width: 100%;
         max-width: 480px;
-        margin: 0 auto;
+        margin: 0 auto 4px auto;
         text-align: center;
     }
 
     .hero-title-main {
         font-size: clamp(2.2rem, 7.8vw, 3.2rem);
         font-weight: 900;
-        line-height: 1.05;
+        line-height: 0.95;
         width: 100%;
         text-align: center;
         letter-spacing: -0.5px;
@@ -97,7 +97,7 @@ st.markdown("""
         align-items: center;
         justify-content: space-between;
         width: 100%;
-        margin: 4px 0 2px 0;
+        margin: -4px 0 0 0;
     }
 
     .hero-subtitle-text {
@@ -109,6 +109,7 @@ st.markdown("""
         text-transform: uppercase;
         flex-grow: 1;
         text-align: center;
+        line-height: 1;
     }
 
     .ai-badge {
@@ -125,7 +126,8 @@ st.markdown("""
         font-size: 0.70rem;
         color: #334155;
         font-weight: 600;
-        margin: 2px 0 8px 0;
+        margin: 0 0 6px 0;
+        line-height: 1;
     }
 
     .hero-author-tag strong { color: #0369a1; }
@@ -240,7 +242,7 @@ st.markdown("""
         min-height: 32px !important;
         height: 32px !important;
         width: 100% !important;
-        padding: 0 !important;
+        padding: 0 4px !important;
         box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
     }
 
@@ -690,7 +692,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Scheda di Ricerca con Casella al 1° rigo e Pulsanti affiancati al 2° rigo
+    # Scheda di Ricerca compatta
     with st.container(border=True):
         st.text_input(
             "Cerca:",
