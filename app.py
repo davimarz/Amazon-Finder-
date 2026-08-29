@@ -19,10 +19,11 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.35rem 0.4rem 1rem 0.4rem !important;
+        padding: 0.30rem 0.35rem 0.80rem 0.35rem !important;
         max-width: 100% !important;
     }
 
+    /* Tabs ultra-compatti */
     div[data-baseweb="tab-list"] {
         background: rgba(15, 23, 42, 0.7) !important;
         padding: 2px 4px !important;
@@ -38,13 +39,13 @@ st.markdown("""
         flex: 1 1 0% !important;
         color: #94a3b8 !important;
         font-weight: 800 !important;
-        font-size: 0.82rem !important;
+        font-size: 0.80rem !important;
         background: rgba(30, 41, 59, 0.8) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
-        min-height: 28px !important;
-        height: 28px !important;
+        min-height: 26px !important;
+        height: 26px !important;
         text-align: center !important;
         justify-content: center !important;
     }
@@ -57,8 +58,9 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
+    /* Header compatto */
     .hero-title-main {
-        font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+        font-size: clamp(1.3rem, 4.2vw, 1.8rem);
         font-weight: 900;
         line-height: 1.05;
         margin: 0;
@@ -71,7 +73,7 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-size: clamp(0.80rem, 2.5vw, 0.95rem);
+        font-size: clamp(0.75rem, 2.4vw, 0.90rem);
         font-weight: 700;
         color: #f1f5f9;
         margin: 0;
@@ -80,88 +82,99 @@ st.markdown("""
     .ai-badge {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.70em;
+        font-size: 0.68em;
         font-weight: 800;
-        padding: 1px 5px;
+        padding: 1px 4px;
         border-radius: 4px;
     }
 
     .hero-author-tag {
-        font-size: 0.72rem;
+        font-size: 0.70rem;
         color: #94a3b8;
         font-weight: 500;
-        margin: 0 0 4px 0;
+        margin: 0 0 3px 0;
     }
 
     .hero-author-tag strong { color: #facc15; }
 
+    /* Riduzione globale gap */
     div[data-testid="stVerticalBlock"] > div {
-        gap: 3px !important;
+        gap: 2px !important;
     }
 
     div[data-testid="stMarkdownContainer"] p,
     label[data-testid="stWidgetLabel"] p {
         color: #cbd5e1 !important;
         font-weight: 700 !important;
-        font-size: 0.74rem !important;
+        font-size: 0.72rem !important;
         margin: 0 !important;
-        line-height: 1.1 !important;
+        line-height: 1 !important;
     }
 
+    /* Input text compresso */
     div[data-baseweb="input"] {
         background-color: rgba(15, 23, 42, 0.85) !important;
         border: 1px solid rgba(255, 255, 255, 0.18) !important;
         border-radius: 6px !important;
-        min-height: 30px !important;
-        height: 30px !important;
+        min-height: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
     }
 
     div[data-baseweb="input"] input {
         color: #f8fafc !important;
         font-weight: 600 !important;
-        font-size: 0.78rem !important;
-        padding: 2px 6px !important;
+        font-size: 0.74rem !important;
+        padding: 2px 4px !important;
+        text-align: center !important;
     }
 
-    .search-row-mobile [data-testid="stHorizontalBlock"] {
+    /* RIGA UNICA RICERCA + PREZZI + CERCA PER SMARTPHONE */
+    .single-line-search-bar [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
-        align-items: flex-end !important;
-        gap: 4px !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 3px !important;
+        width: 100% !important;
         margin-bottom: 2px !important;
     }
 
-    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:first-child {
-        flex: 1 1 78% !important;
+    .single-line-search-bar [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {
+        flex: 1 1 45% !important;
+        min-width: 0 !important;
     }
 
-    .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:last-child {
-        flex: 1 1 22% !important;
+    .single-line-search-bar [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(2) {
+        flex: 1 1 17% !important;
+        min-width: 0 !important;
     }
 
-    .search-btn-container div[data-testid="stButton"] button {
+    .single-line-search-bar [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(3) {
+        flex: 1 1 17% !important;
+        min-width: 0 !important;
+    }
+
+    .single-line-search-bar [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(4) {
+        flex: 1 1 21% !important;
+        min-width: 0 !important;
+    }
+
+    .single-line-search-bar div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border: 1px solid #38bdf8 !important;
         border-radius: 6px !important;
         font-weight: 900 !important;
-        font-size: 0.80rem !important;
-        min-height: 30px !important;
-        height: 30px !important;
+        font-size: 0.74rem !important;
+        min-height: 28px !important;
+        height: 28px !important;
         width: 100% !important;
         padding: 0 !important;
+        white-space: nowrap !important;
     }
 
-    .prices-row-strict [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        gap: 4px !important;
-        margin-bottom: 2px !important;
-    }
-
-    .prices-row-strict [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 1 1 50% !important;
-    }
-
+    /* Radio buttons compressi inline */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
@@ -191,26 +204,28 @@ st.markdown("""
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] div {
         color: #f1f5f9 !important;
-        font-size: 0.68rem !important;
+        font-size: 0.66rem !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
     }
 
+    /* Checkbox */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
-        padding: 3px 8px !important;
-        border-radius: 6px !important;
+        padding: 2px 6px !important;
+        border-radius: 5px !important;
         border: 1px solid rgba(255, 255, 255, 0.12) !important;
-        min-height: 26px !important;
-        margin: 2px 0 4px 0 !important;
+        min-height: 24px !important;
+        margin: 1px 0 3px 0 !important;
     }
 
     div[data-testid="stCheckbox"] label p {
-        font-size: 0.74rem !important;
+        font-size: 0.72rem !important;
         font-weight: 800 !important;
         color: #4ade80 !important;
     }
 
+    /* Card Prodotto Super Compatta */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background: linear-gradient(145deg, rgba(17, 24, 39, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
         border: 1px solid rgba(255, 255, 255, 0.10) !important;
@@ -221,7 +236,7 @@ st.markdown("""
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 140px;
+        height: 135px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -244,29 +259,29 @@ st.markdown("""
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.76rem !important;
+        font-size: 0.74rem !important;
         font-weight: 800 !important;
         text-decoration: none !important;
         padding: 2px 4px;
-        border-radius: 6px;
+        border-radius: 5px;
         border: 1px solid #fcd200;
         width: 100% !important;
-        min-height: 28px;
-        height: 28px;
+        min-height: 26px;
+        height: 26px;
     }
 
     div[data-testid="stButton"] button[key^="fav_"] {
         background: #1d4ed8 !important;
         border: 1px solid #3b82f6 !important;
-        border-radius: 6px !important;
-        min-height: 28px !important;
-        height: 28px !important;
+        border-radius: 5px !important;
+        min-height: 26px !important;
+        height: 26px !important;
         padding: 0 !important;
-        font-size: 0.85rem !important;
+        font-size: 0.80rem !important;
     }
 
     .deal-title {
-        font-size: 0.78rem !important;
+        font-size: 0.76rem !important;
         font-weight: 800 !important;
         line-height: 1.15 !important;
         color: #38bdf8 !important;
@@ -281,18 +296,18 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 4px !important;
+        gap: 3px !important;
         margin: 2px 0 4px 0 !important;
     }
 
     .deal-price-final {
-        font-size: 1.05rem !important;
+        font-size: 1rem !important;
         font-weight: 900 !important;
         color: #38bdf8 !important;
     }
 
     .deal-price-old {
-        font-size: 0.70rem !important;
+        font-size: 0.68rem !important;
         color: #94a3b8 !important;
         text-decoration: line-through;
         margin-left: 2px;
@@ -301,7 +316,7 @@ st.markdown("""
     .deal-badge {
         background-color: #ef4444;
         color: white;
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         font-weight: 800;
         padding: 1px 3px;
         border-radius: 3px;
@@ -310,9 +325,9 @@ st.markdown("""
     .shipping-badge-prime {
         background: #00a8e8;
         color: #fff;
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         font-weight: 900;
-        padding: 1px 4px;
+        padding: 1px 3px;
         border-radius: 3px;
     }
 
@@ -320,9 +335,9 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9);
         color: #4ade80;
         border: 1px solid rgba(34, 197, 94, 0.5);
-        padding: 1px 4px;
+        padding: 1px 3px;
         border-radius: 3px;
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         font-weight: 700;
     }
 
@@ -330,22 +345,22 @@ st.markdown("""
         background: rgba(30, 41, 59, 0.9);
         color: #f59e0b;
         border: 1px solid rgba(245, 158, 11, 0.4);
-        padding: 1px 4px;
+        padding: 1px 3px;
         border-radius: 3px;
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         font-weight: 700;
     }
 
     .feedback-container {
         background: #ffffff;
         border-radius: 6px;
-        padding: 4px 6px;
+        padding: 3px 5px;
         color: #0f1111;
-        margin-top: 3px;
+        margin-top: 2px;
     }
 
     .feedback-title {
-        font-size: 0.72rem;
+        font-size: 0.70rem;
         font-weight: 700;
         margin-bottom: 1px;
     }
@@ -356,9 +371,9 @@ st.markdown("""
         gap: 2px;
     }
 
-    .feedback-stars { color: #ff6e00; font-size: 0.75rem; }
-    .feedback-score-text { font-size: 0.68rem; font-weight: 600; }
-    .feedback-subcount { font-size: 0.62rem; color: #565959; margin-bottom: 2px; }
+    .feedback-stars { color: #ff6e00; font-size: 0.72rem; }
+    .feedback-score-text { font-size: 0.66rem; font-weight: 600; }
+    .feedback-subcount { font-size: 0.60rem; color: #565959; margin-bottom: 2px; }
 
     .fb-row {
         display: flex;
@@ -367,22 +382,22 @@ st.markdown("""
         margin-bottom: 1px;
     }
 
-    .fb-label { width: 22px; color: #007185; font-size: 0.60rem; }
-    .fb-bar-bg { flex: 1; height: 6px; background-color: #eee; border-radius: 2px; overflow: hidden; }
+    .fb-label { width: 20px; color: #007185; font-size: 0.58rem; }
+    .fb-bar-bg { flex: 1; height: 5px; background-color: #eee; border-radius: 2px; overflow: hidden; }
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
-    .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
+    .fb-pct { width: 16px; text-align: right; color: #007185; font-size: 0.58rem; }
 
     .social-share-row-mobile {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 5px !important;
-        margin-top: 4px !important;
+        gap: 4px !important;
+        margin-top: 3px !important;
     }
 
     .share-icon-btn {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
         border-radius: 4px;
         display: flex;
         align-items: center;
@@ -390,7 +405,7 @@ st.markdown("""
         border: none;
     }
 
-    .share-icon-btn svg { width: 12px; height: 12px; }
+    .share-icon-btn svg { width: 11px; height: 11px; }
     .btn-wa { background-color: #25D366; }
     .btn-fb { background-color: #1877F2; }
     .btn-gmail { background-color: #EA4335; }
@@ -517,8 +532,10 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
-    col_input, col_submit = st.columns([0.78, 0.22])
+    # RIGA UNICA: Input Ricerca | Min € | Max € | Cerca
+    st.markdown('<div class="single-line-search-bar">', unsafe_allow_html=True)
+    col_input, col_pmin, col_pmax, col_submit = st.columns([0.45, 0.17, 0.17, 0.21])
+    
     with col_input:
         keyword_val = st.text_input(
             "Cerca:",
@@ -527,14 +544,6 @@ with tab_cerca:
             label_visibility="collapsed",
             on_change=reset_elenco_prodotti
         )
-    with col_submit:
-        st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
-        btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="prices-row-strict">', unsafe_allow_html=True)
-    col_pmin, col_pmax = st.columns(2)
     with col_pmin:
         p_min = st.number_input(
             "Min (€):",
@@ -557,6 +566,8 @@ with tab_cerca:
             label_visibility="collapsed",
             on_change=reset_elenco_prodotti
         )
+    with col_submit:
+        btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
     ranking_val = st.radio(
