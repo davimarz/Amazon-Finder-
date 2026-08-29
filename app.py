@@ -67,7 +67,7 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header con dimensioni raddoppiate */
+    /* Header */
     .hero-title-main {
         font-size: clamp(2.6rem, 9.0vw, 3.6rem);
         font-weight: 900;
@@ -97,8 +97,9 @@ st.markdown("""
         border-radius: 6px;
     }
 
+    /* Scritta autore dimezzata */
     .hero-author-tag {
-        font-size: 1.40rem;
+        font-size: 0.70rem;
         color: #334155;
         font-weight: 600;
         margin: 2px 0 8px 0;
