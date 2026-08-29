@@ -19,22 +19,40 @@ st.markdown("""
     }
 
     div[data-baseweb="tab-list"] {
-        background: transparent !important;
+        background: rgba(15, 23, 42, 0.6) !important;
+        padding: 6px 8px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
         gap: 8px !important;
+        margin-bottom: 16px !important;
     }
 
     button[data-baseweb="tab"] {
         color: #94a3b8 !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         font-size: 0.95rem !important;
-        background: transparent !important;
-        border-radius: 8px 8px 0 0 !important;
-        padding: 8px 16px !important;
+        background: rgba(30, 41, 59, 0.8) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 8px !important;
+        padding: 10px 20px !important;
+        transition: all 0.2s ease !important;
+    }
+
+    button[data-baseweb="tab"]:hover {
+        background: rgba(56, 189, 248, 0.15) !important;
+        color: #f8fafc !important;
+        border-color: rgba(56, 189, 248, 0.4) !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #38bdf8 !important;
-        border-bottom-color: #38bdf8 !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+        border-color: #38bdf8 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
+    }
+
+    div[data-baseweb="tab-highlight"] {
+        display: none !important;
     }
 
     .hero-title-main {
@@ -687,7 +705,12 @@ st.markdown("""
 
 st.divider()
 
-tab_cerca, tab_preferiti = st.tabs(["🔍 Cerca Offerte", f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"])
+# 3 Schede pulsante
+tab_cerca, tab_categorie, tab_preferiti = st.tabs([
+    "🔍 Cerca Prodotto", 
+    "📂 Sfoglia le Categorie", 
+    f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"
+])
 
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
@@ -816,107 +839,106 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-with tab_cerca:
-    col_r1_wrap, _ = st.columns([0.55, 0.45])
-    with col_r1_wrap:
-        keyword_libera = st.text_input(
+# --- FUNZIONE CONDIVISA DI RICERCA ED ESTRAZIONE ---
+def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False):
+    if use_keyword:
+        keyword_val = st.text_input(
             "🔍 Scrivi cosa ti serve:",
             placeholder="Es. cuffie bluetooth, notebook...",
-            key="keyword_input",
+            key=f"{tab_prefix}_keyword_input",
             on_change=trigger_search
         )
+    else:
+        keyword_val = ""
 
+    if use_categories:
         col_cat, col_subcat = st.columns([1.0, 1.0])
         with col_cat:
-            cat_scelta = st.selectbox(
+            cat_val = st.selectbox(
                 "Categoria Principale:",
                 list(CATEGORIE.keys()),
-                key="select_cat",
+                key=f"{tab_prefix}_select_cat",
                 on_change=trigger_search
             )
-
         with col_subcat:
-            sottocategorie_disponibili = ["Tutte"] + CATEGORIE[cat_scelta]
-            if "select_subcat" not in st.session_state or st.session_state.select_subcat not in sottocategorie_disponibili:
-                st.session_state.select_subcat = "Tutte"
-            subcat_scelta = st.selectbox(
+            sottocategorie = ["Tutte"] + CATEGORIE[cat_val]
+            subcat_val = st.selectbox(
                 "Sottocategoria:",
-                sottocategorie_disponibili,
-                key="select_subcat",
+                sottocategorie,
+                key=f"{tab_prefix}_select_subcat",
                 on_change=trigger_search
             )
+    else:
+        cat_val = ""
+        subcat_val = ""
 
     col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
         st.markdown('<div class="prices-single-row-container">', unsafe_allow_html=True)
         col_pmin, col_pmax = st.columns(2)
         with col_pmin:
-            prezzo_min = st.number_input(
+            p_min = st.number_input(
                 "Prezzo Min (€):",
                 min_value=0.0,
                 value=None,
                 step=1.0,
                 placeholder="Min...",
-                key="input_pmin",
-                on_change=trigger_search,
-                help="Lascia vuoto per nessun limite minimo"
+                key=f"{tab_prefix}_input_pmin",
+                on_change=trigger_search
             )
-
         with col_pmax:
-            prezzo_max = st.number_input(
+            p_max = st.number_input(
                 "Prezzo Max (€):",
                 min_value=0.0,
                 value=None,
                 step=1.0,
                 placeholder="Max...",
-                key="input_pmax",
-                on_change=trigger_search,
-                help="Lascia vuoto per nessun limite massimo"
+                key=f"{tab_prefix}_input_pmax",
+                on_change=trigger_search
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
-    opzioni_ordinamento = list(SORT_MAPPINGS.keys())
-    ranking_scelto = st.radio(
+    ranking_val = st.radio(
         "🏷️ Ordinamento:",
-        opzioni_ordinamento,
+        list(SORT_MAPPINGS.keys()),
         index=0,
         horizontal=True,
-        key="radio_sort",
+        key=f"{tab_prefix}_radio_sort",
         on_change=trigger_search
     )
 
-    label_sconto_scelto = st.radio(
+    label_disc_val = st.radio(
         "🔥 Sconto minimo:",
         list(OPZIONI_SCONTO.keys()),
         index=0,
         horizontal=True,
-        key="radio_disc",
+        key=f"{tab_prefix}_radio_disc",
         on_change=trigger_search
     )
-    min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
+    min_disc, max_disc = OPZIONI_SCONTO[label_disc_val]
 
     col_btn_wrap, _ = st.columns([0.65, 0.35])
     with col_btn_wrap:
         st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
         t1, t2, t3, t4, t5, t6 = st.columns(6)
         with t1:
-            btn_10 = st.button("Top 10", use_container_width=True)
+            btn_10 = st.button("Top 10", key=f"{tab_prefix}_btn10", use_container_width=True)
         with t2:
-            btn_20 = st.button("Top 20", use_container_width=True)
+            btn_20 = st.button("Top 20", key=f"{tab_prefix}_btn20", use_container_width=True)
         with t3:
-            btn_30 = st.button("Top 30", use_container_width=True)
+            btn_30 = st.button("Top 30", key=f"{tab_prefix}_btn30", use_container_width=True)
         with t4:
-            btn_50 = st.button("Top 50", use_container_width=True)
+            btn_50 = st.button("Top 50", key=f"{tab_prefix}_btn50", use_container_width=True)
         with t5:
-            btn_70 = st.button("Top 70", use_container_width=True)
+            btn_70 = st.button("Top 70", key=f"{tab_prefix}_btn70", use_container_width=True)
         with t6:
-            btn_100 = st.button("Top 100", use_container_width=True)
+            btn_100 = st.button("Top 100", key=f"{tab_prefix}_btn100", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    solo_sped_gratis = st.checkbox(
+    solo_gratis = st.checkbox(
         "🚚 Spedizione gratuita",
         value=False,
-        key="check_sped_gratis",
+        key=f"{tab_prefix}_check_sped_gratis",
         on_change=trigger_search,
         help="Mostra solo prodotti con spedizione gratuita o Prime"
     )
@@ -924,76 +946,67 @@ with tab_cerca:
     target_items = None
     if btn_10:
         target_items = 10
-        st.session_state.last_target_items = 10
     elif btn_20:
         target_items = 20
-        st.session_state.last_target_items = 20
     elif btn_30:
         target_items = 30
-        st.session_state.last_target_items = 30
     elif btn_50:
         target_items = 50
-        st.session_state.last_target_items = 50
     elif btn_70:
         target_items = 70
-        st.session_state.last_target_items = 70
     elif btn_100:
         target_items = 100
-        st.session_state.last_target_items = 100
-    elif st.session_state.auto_search_triggered or (keyword_libera.strip() and st.session_state.get("keyword_input") != keyword_libera):
+    elif st.session_state.auto_search_triggered:
         target_items = st.session_state.last_target_items
         st.session_state.auto_search_triggered = False
 
-    if 'min_disc' not in locals():
-        min_disc, max_disc = 0, 100
-
-    if target_items is not None or keyword_libera.strip():
-        if target_items is None:
-            target_items = st.session_state.last_target_items
-        
+    if target_items is not None:
+        st.session_state.last_target_items = target_items
         with st.spinner(f"Estrazione dei Top {target_items} prodotti in corso..."):
-            usa_testo = bool(keyword_libera.strip())
-            cat_pulita = "" if usa_testo else cat_scelta.split(" ", 1)[-1]
-            subcat_pulita = "" if usa_testo or subcat_scelta == "Tutte" else subcat_scelta
-            
-            val_min = float(prezzo_min) if (prezzo_min is not None and prezzo_min > 0) else None
-            val_max = float(prezzo_max) if (prezzo_max is not None and prezzo_max > 0) else None
+            cat_pulita = cat_val.split(" ", 1)[-1] if cat_val else ""
+            subcat_pulita = subcat_val if subcat_val != "Tutte" else ""
+
+            val_min = float(p_min) if (p_min is not None and p_min > 0) else None
+            val_max = float(p_max) if (p_max is not None and p_max > 0) else None
             if val_min and val_max and val_min > val_max:
                 val_min, val_max = val_max, val_min
 
             risultati = ottieni_offerte_avanzate(
                 categoria=cat_pulita,
                 sottocategoria=subcat_pulita,
-                keyword=keyword_libera.strip(),
-                sort_type=ranking_scelto,
-                solo_spedizione_gratuita=solo_sped_gratis,
+                keyword=keyword_val.strip(),
+                sort_type=ranking_val,
+                solo_spedizione_gratuita=solo_gratis,
                 min_price=val_min,
                 max_price=val_max,
                 min_discount=min_disc,
                 max_discount=max_disc,
                 item_count=target_items
             )
-            
-            if risultati:
-                st.session_state.offerte = risultati
-            else:
-                st.session_state.offerte = []
+            st.session_state.offerte = risultati if risultati else []
+            if not risultati:
                 st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
-    offerte_da_mostrare = st.session_state.offerte
-
-    if offerte_da_mostrare:
+    if st.session_state.offerte:
         st.divider()
-        for idx in range(0, len(offerte_da_mostrare), 2):
+        for idx in range(0, len(st.session_state.offerte), 2):
             col_l, col_r = st.columns(2)
             with col_l:
-                render_product_card(offerte_da_mostrare[idx], tab_key=f"search_{idx}")
-            if idx + 1 < len(offerte_da_mostrare):
+                render_product_card(st.session_state.offerte[idx], tab_key=f"{tab_prefix}_{idx}")
+            if idx + 1 < len(st.session_state.offerte):
                 with col_r:
-                    render_product_card(offerte_da_mostrare[idx + 1], tab_key=f"search_{idx + 1}")
-            
+                    render_product_card(st.session_state.offerte[idx + 1], tab_key=f"{tab_prefix}_{idx + 1}")
             st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
 
+# 1. Scheda Cerca Prodotto
+with tab_cerca:
+    esegui_interfaccia_filtri(tab_prefix="cerca", use_keyword=True, use_categories=False)
+
+# 2. Scheda Sfoglia Categorie
+with tab_categorie:
+    esegui_interfaccia_filtri(tab_prefix="cat", use_keyword=False, use_categories=True)
+
+# 3. Scheda Preferiti
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
     if not lista_preferiti:
@@ -1008,5 +1021,4 @@ with tab_preferiti:
             if idx + 1 < len(lista_preferiti):
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
-            
             st.markdown("<hr class='custom-deal-divider'>", unsafe_allow_html=True)
