@@ -67,14 +67,13 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header Ravvicinato */
+    /* Header Compatto */
     .hero-container {
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         width: 100%;
-        max-width: 480px;
         margin: 0 auto 4px auto;
         text-align: center;
     }
@@ -93,11 +92,11 @@ st.markdown("""
     }
 
     .hero-subtitle-box {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        margin: -4px 0 0 0;
+        justify-content: center;
+        gap: 5px;
+        margin: 0 0 2px 0;
     }
 
     .hero-subtitle-text {
@@ -105,21 +104,21 @@ st.markdown("""
         font-weight: 800;
         color: #0f172a;
         font-variant: small-caps;
-        letter-spacing: 0.18em;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
-        flex-grow: 1;
-        text-align: center;
         line-height: 1;
+        margin: 0;
     }
 
     .ai-badge {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.80em;
+        font-size: 0.72em;
         font-weight: 900;
-        padding: 2px 7px;
-        border-radius: 6px;
-        margin-left: 6px;
+        padding: 2px 6px;
+        border-radius: 5px;
+        line-height: 1;
+        margin: 0;
     }
 
     .hero-author-tag {
