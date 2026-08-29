@@ -144,6 +144,17 @@ st.markdown("""
         line-height: 1.1 !important;
     }
 
+    /* Riquadro Scheda Ricerca Verde Chiaro */
+    .search-box-card {
+        background-color: #dcfce7 !important;
+        background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
+        border: 2px solid #34d399 !important;
+        border-radius: 12px !important;
+        padding: 8px 8px 6px 8px !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.16), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+    }
+
     /* Barra di Ricerca */
     .search-row-mobile [data-testid="stHorizontalBlock"] {
         display: flex !important;
@@ -152,7 +163,7 @@ st.markdown("""
         align-items: center !important;
         gap: 4px !important;
         width: 100% !important;
-        margin-bottom: 3px !important;
+        margin-bottom: 4px !important;
     }
 
     .search-row-mobile [data-testid="stHorizontalBlock"] > [data-testid="stColumn"]:nth-child(1) {
@@ -167,23 +178,23 @@ st.markdown("""
 
     div[data-baseweb="input"] {
         background-color: #ffffff !important;
-        border: 1px solid #7dd3fc !important;
+        border: 1px solid #86efac !important;
         border-radius: 6px !important;
-        min-height: 30px !important;
-        height: 30px !important;
+        min-height: 32px !important;
+        height: 32px !important;
         padding: 0 !important;
-        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08) !important;
+        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08) !important;
     }
 
     div[data-baseweb="input"]:focus-within {
-        border-color: #0284c7 !important;
+        border-color: #059669 !important;
     }
 
     div[data-baseweb="input"] input {
         color: #0f172a !important;
         font-weight: 600 !important;
-        font-size: 0.76rem !important;
-        padding: 2px 6px !important;
+        font-size: 0.78rem !important;
+        padding: 2px 8px !important;
     }
 
     .search-btn-container div[data-testid="stButton"] button {
@@ -193,8 +204,8 @@ st.markdown("""
         border-radius: 6px !important;
         font-weight: 900 !important;
         font-size: 0.80rem !important;
-        min-height: 30px !important;
-        height: 30px !important;
+        min-height: 32px !important;
+        height: 32px !important;
         width: 100% !important;
         padding: 0 !important;
         box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3) !important;
@@ -202,17 +213,22 @@ st.markdown("""
 
     /* Pulsante Carica Altri 10 Prodotti */
     .load-more-btn-container div[data-testid="stButton"] button {
-        background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%) !important;
+        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
-        border: 1px solid #38bdf8 !important;
-        border-radius: 8px !important;
+        border: 1px solid #10b981 !important;
+        border-radius: 6px !important;
         font-weight: 900 !important;
-        font-size: 0.85rem !important;
-        min-height: 34px !important;
-        height: 34px !important;
+        font-size: 0.82rem !important;
+        min-height: 30px !important;
+        height: 30px !important;
         width: 100% !important;
-        margin: 4px 0 8px 0 !important;
-        box-shadow: 0 3px 8px rgba(2, 132, 199, 0.35) !important;
+        padding: 0 !important;
+        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
+    }
+
+    .load-more-btn-container div[data-testid="stButton"] button:hover {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border-color: #34d399 !important;
     }
 
     /* Radio filtri inline */
@@ -667,6 +683,9 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
+    # Riquadro Scheda di Ricerca con sfondo verde chiaro
+    st.markdown('<div class="search-box-card">', unsafe_allow_html=True)
+    
     st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
     col_input, col_submit = st.columns([0.76, 0.24])
     with col_input:
@@ -684,9 +703,11 @@ with tab_cerca:
         st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Pulsante aggiuntivo per trovare altri 10 prodotti sotto la ricerca
+    # Pulsante aggiuntivo per trovare altri 10 prodotti dentro la scheda
     st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
     btn_altri_10 = st.button("➕ Trova altri 10 prodotti", key="btn_altri_10_top", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
     st.markdown('</div>', unsafe_allow_html=True)
 
     st.radio(
