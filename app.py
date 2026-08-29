@@ -219,24 +219,14 @@ st.markdown("""
         color: #4ade80 !important;
     }
 
-    /* Card Prodotto con Bordo e Ombra Distintiva */
+    /* Riquadro Scheda Prodotto: Sfondo Scuro a Contrasto e Bordo Evidente */
     [data-testid="stVerticalBlockBorderWrapper"] {
-        background: linear-gradient(145deg, rgba(17, 24, 39, 0.96) 0%, rgba(30, 41, 59, 0.94) 100%) !important;
-        border: 1px solid rgba(56, 189, 248, 0.25) !important;
-        border-radius: 10px !important;
-        padding: 8px !important;
-        margin-bottom: 4px !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45) !important;
-    }
-
-    /* Divisore Grafico Neon tra le Card */
-    .custom-card-divider {
-        height: 2px;
-        background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, rgba(56, 189, 248, 0.7) 50%, rgba(56, 189, 248, 0.05) 100%);
-        border: none;
-        margin: 8px 0 10px 0;
-        border-radius: 2px;
-        width: 100%;
+        background: #090d16 !important;
+        border: 2px solid #38bdf8 !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), 0 0 8px rgba(56, 189, 248, 0.25) !important;
     }
 
     .product-img-wrapper-full {
@@ -655,7 +645,6 @@ with tab_cerca:
             if idx + 1 < len(st.session_state.offerte):
                 with col_r:
                     render_product_card(st.session_state.offerte[idx + 1], tab_key=f"cerca_{idx + 1}")
-            st.markdown('<hr class="custom-card-divider">', unsafe_allow_html=True)
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
@@ -670,4 +659,3 @@ with tab_preferiti:
             if idx + 1 < len(lista_preferiti):
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
-            st.markdown('<hr class="custom-card-divider">', unsafe_allow_html=True)
