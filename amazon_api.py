@@ -98,7 +98,6 @@ def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
     testo_completo = item_tag.get_text(" ", strip=True).lower()
 
-    # 1. Rilevamento Prime
     is_prime = bool(
         "a-icon-prime" in html_str or
         "s-prime" in html_str or
@@ -106,7 +105,6 @@ def analizza_spedizione_html(item_tag):
         item_tag.find("span", {"aria-label": re.compile(r"^prime$", re.I)})
     )
 
-    # 2. Rilevamento opzione gratuita presente
     frasi_gratuite = [
         "consegna senza costi aggiuntivi",
         "consegna gratuita",
@@ -119,7 +117,6 @@ def analizza_spedizione_html(item_tag):
     ]
     ha_opzione_gratis = any(f in testo_completo for f in frasi_gratuite) or is_prime
 
-    # 3. Rilevamento costo di consegna accessorio / alternativo (es. "Consegna a 19,67 €")
     costo_sped = 0.0
     match_costo = re.search(
         r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
@@ -141,20 +138,16 @@ def analizza_spedizione_html(item_tag):
         except ValueError:
             pass
 
-    # CASO COMPATTO: Se è presente sia l'opzione Gratuita/Prime che una con costo specifico
     if ha_opzione_gratis and costo_sped > 0:
         info_label = f"Spedizione gratuita • Consegna a €{costo_sped:.2f}" if not is_prime else f"Prime gratuita • Consegna a €{costo_sped:.2f}"
         return costo_sped, info_label, is_prime, True
 
-    # Solo Prime
     if is_prime:
         return 0.0, "Prime (Spedizione gratuita)", True, True
 
-    # Solo Gratuito
     if ha_opzione_gratis:
         return 0.0, "Spedizione gratuita", False, True
 
-    # Solo a Pagamento
     if costo_sped > 0:
         return costo_sped, f"Consegna a €{costo_sped:.2f}", False, False
 
@@ -191,14 +184,18 @@ def ottieni_offerte_avanzate(
         clean_keyword = asin_match.group(1)
 
     termini = []
-    if sottocategoria and sottocategoria != "Tutte":
-        termini.append(sottocategoria)
-    elif categoria:
-        termini.append(categoria)
     if clean_keyword:
         termini.append(clean_keyword)
+    elif sottocategoria and sottocategoria != "Tutte":
+        # Pulisce eventuali spiegazioni tra parentesi nella sottocategoria
+        clean_sub = re.sub(r'\(.*?\)', '', sottocategoria).strip()
+        termini.append(clean_sub)
+    elif categoria:
+        # Pulisce emoji, parentesi e punteggiatura ridondante
+        clean_cat = re.sub(r'[^\w\s]', ' ', categoria).strip()
+        termini.append(clean_cat)
 
-    query_str = " ".join(termini) if termini else "offerte"
+    query_str = " ".join(termini).strip() if termini else "offerte del giorno"
 
     # 1. Chiamata API Ufficiale Creators
     if token:
