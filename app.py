@@ -251,12 +251,6 @@ st.markdown("""
         justify-content: center !important;
     }
 
-    .top-single-row-container div[data-testid="stButton"] button p {
-        color: #ffffff !important;
-        font-weight: 900 !important;
-        font-size: inherit !important;
-    }
-
     .top-single-row-container div[data-testid="stButton"] button:hover {
         transform: translateY(-1px) !important;
         background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%) !important;
@@ -727,7 +721,7 @@ def render_product_card(p, tab_key="main"):
             elif p.get("costo_spedizione", 0.0) > 0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{p['costo_spedizione']:.2f} sped.</span>"
             else:
-                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione standard</span>"
+                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione gratuita</span>"
 
             delivery_sub_html = f"<div class='delivery-subgroup-right'>{ship_html}</div>"
 
@@ -981,8 +975,6 @@ with tab_cerca:
                 st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
     offerte_da_mostrare = st.session_state.offerte
-    if solo_sped_gratis and offerte_da_mostrare:
-        offerte_da_mostrare = [p for p in offerte_da_mostrare if p.get("is_sped_gratis")]
 
     if offerte_da_mostrare:
         st.divider()
