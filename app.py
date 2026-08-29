@@ -678,8 +678,16 @@ if "offerte" not in st.session_state:
 if "last_target_items" not in st.session_state:
     st.session_state.last_target_items = 10
 
+if "auto_search_count" not in st.session_state:
+    st.session_state.auto_search_count = None
+
 def reset_elenco_prodotti():
     st.session_state.offerte = []
+    st.session_state.auto_search_count = None
+
+def trigger_category_auto_search():
+    st.session_state.offerte = []
+    st.session_state.auto_search_count = 10
 
 st.markdown("""
 <div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
@@ -696,7 +704,6 @@ st.markdown("""
 
 st.divider()
 
-# 3 Schede pulsante
 tab_cerca, tab_categorie, tab_preferiti = st.tabs([
     "🔍 Cerca Prodotto", 
     "📂 Sfoglia le Categorie", 
@@ -741,7 +748,7 @@ def render_product_card(p, tab_key="main"):
             elif p.get("costo_spedizione", 0.0) > 0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{p['costo_spedizione']:.2f} sped.</span>"
             else:
-                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione gratuita</span>"
+                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione standard</span>"
 
             delivery_sub_html = f"<div class='delivery-subgroup-right'>{ship_html}</div>"
 
@@ -849,7 +856,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 "Categoria Principale:",
                 list(CATEGORIE.keys()),
                 key=f"{tab_prefix}_select_cat",
-                on_change=reset_elenco_prodotti
+                on_change=trigger_category_auto_search
             )
         with col_subcat:
             sottocategorie = ["Tutte"] + CATEGORIE[cat_val]
@@ -857,7 +864,7 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
                 "Sottocategoria:",
                 sottocategorie,
                 key=f"{tab_prefix}_select_subcat",
-                on_change=reset_elenco_prodotti
+                on_change=trigger_category_auto_search
             )
     else:
         cat_val = ""
@@ -947,21 +954,21 @@ def esegui_interfaccia_filtri(tab_prefix, use_keyword=True, use_categories=False
         target_items = 70
     elif btn_100:
         target_items = 100
+    elif use_categories and st.session_state.auto_search_count is not None:
+        target_items = st.session_state.auto_search_count
+        st.session_state.auto_search_count = None
 
     if target_items is not None:
         st.session_state.last_target_items = target_items
         with st.spinner(f"Estrazione dei Top {target_items} prodotti in corso..."):
-            cat_pulita = cat_val.split(" ", 1)[-1] if cat_val else ""
-            subcat_pulita = subcat_val if subcat_val != "Tutte" else ""
-
             val_min = float(p_min) if (p_min is not None and p_min > 0) else None
             val_max = float(p_max) if (p_max is not None and p_max > 0) else None
             if val_min and val_max and val_min > val_max:
                 val_min, val_max = val_max, val_min
 
             risultati = ottieni_offerte_avanzate(
-                categoria=cat_pulita,
-                sottocategoria=subcat_pulita,
+                categoria=cat_val,
+                sottocategoria=subcat_val,
                 keyword=keyword_val.strip(),
                 sort_type=ranking_val,
                 solo_spedizione_gratuita=solo_gratis,
