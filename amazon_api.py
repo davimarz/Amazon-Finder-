@@ -49,27 +49,54 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
         
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
-def estrai_costo_spedizione(item_tag):
+def analizza_spedizione_prodotto(item_tag):
     testo_completo = item_tag.text.lower()
-    match_generico = re.search(r'(?:€\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))', testo_completo, re.IGNORECASE)
-    if match_generico:
-        val_str = next(v for v in match_generico.groups() if v is not None)
+    
+    # 1. Rilevamento presenza Prime
+    has_prime_badge = bool(
+        item_tag.find("i", {"class": re.compile(r"a-icon-prime")}) or
+        item_tag.find("span", {"aria-label": re.compile(r"prime", re.IGNORECASE)}) or
+        "prime" in testo_completo
+    )
+
+    # 2. Rilevamento costi di consegna espliciti (es: "consegna a 7,40 €", "7,40 € di spedizione", "+ 5,00 €")
+    match_costo = re.search(
+        r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
+        r'(?:consegna\s+a\s*(\d+[.,]\d{2})\s*€)|'
+        r'(?:€\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
+        r'(?:(\d+[.,]\d{2})\s*€\s*(?:di\s*)?spedizione)|'
+        r'(?:\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?spedizione)|'
+        r'(?:spedizione\s*[:a]\s*€?\s*(\d+[.,]\d{2}))',
+        testo_completo,
+        re.IGNORECASE
+    )
+
+    if match_costo:
+        val_str = next(v for v in match_costo.groups() if v is not None)
         try:
             costo = float(val_str.replace(",", "."))
             if costo > 0:
-                return costo, f"Consegna a €{costo:.2f}"
+                return costo, f"Consegna a €{costo:.2f}", False
         except ValueError:
             pass
-    return 0.0, "Spedizione gratuita"
 
-def verifica_se_spedizione_gratuita(item_tag, item_text):
-    if "+ spedizione" in item_text or "di spedizione" in item_text:
-        match = re.search(r'(?:spedizione.*?(\d+[.,]\d{2})\s*€)|(?:(\d+[.,]\d{2})\s*€.*?spedizione)', item_text)
-        if match:
-            val = float(next(v for v in match.groups() if v is not None).replace(",", "."))
-            if val > 0:
-                return False
-    return True
+    # 3. Rilevamento esplicito di consegna gratuita / senza costi aggiuntivi o Prime
+    frasi_gratis = [
+        "consegna senza costi aggiuntivi",
+        "consegna gratuita",
+        "spedizione gratuita",
+        "senza costi aggiuntivi",
+        "consegna gratis",
+        "spedizione gratis"
+    ]
+    
+    ha_dicitura_gratis = any(frase in testo_completo for frase in frasi_gratis)
+
+    if has_prime_badge or ha_dicitura_gratis:
+        return 0.0, "Spedizione gratuita", True
+
+    # Se non è Prime e non ha esplicita dicitura gratuita, viene considerata non garantita gratuita
+    return 0.0, "Spedizione standard", False
 
 def pulisci_titolo_descrizione(titolo_grezzo):
     if not titolo_grezzo:
@@ -108,6 +135,10 @@ def ottieni_offerte_avanzate(
     sort_code = SORT_MAPPINGS.get(sort_type, "price-asc-rank")
     base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_code}"
 
+    # Se è richiesta la spedizione gratuita, applichiamo anche il filtro nativo Amazon Prime/Free Shipping
+    if solo_spedizione_gratuita:
+        base_url += "&rh=p_76%3A419121031"
+
     if min_price is not None and min_price > 0:
         base_url += f"&low-price={int(min_price)}"
 
@@ -126,7 +157,7 @@ def ottieni_offerte_avanzate(
     prodotti = []
     asins_visti = set()
     page_num = 1
-    max_pages = max(15, (item_count // 4) + 6)
+    max_pages = max(15, (item_count // 4) + 8)
     session = requests.Session(impersonate="chrome")
 
     try:
@@ -158,7 +189,9 @@ def ottieni_offerte_avanzate(
                 if "non disponibile" in item_text or "attualmente non disponibile" in item_text:
                     continue
 
-                is_sped_gratis = verifica_se_spedizione_gratuita(item, item_text)
+                costo_spedizione, info_spedizione, is_sped_gratis = analizza_spedizione_prodotto(item)
+                
+                # Controllo rigoroso: scarta se il filtro è attivo e non è Prime / Senza costi aggiuntivi
                 if solo_spedizione_gratuita and not is_sped_gratis:
                     continue
 
@@ -190,8 +223,6 @@ def ottieni_offerte_avanzate(
 
                 if max_price is not None and max_price > 0 and prezzo_prodotto > max_price:
                     continue
-
-                costo_spedizione, info_spedizione = estrai_costo_spedizione(item)
 
                 voto_medio = 4.8
                 num_recensioni = 765
@@ -270,19 +301,5 @@ def ottieni_offerte_avanzate(
 
     except Exception as e:
         print(f"Errore Scraping: {e}")
-
-    if not prodotti and solo_spedizione_gratuita and clean_keyword:
-        return ottieni_offerte_avanzate(
-            categoria=categoria,
-            sottocategoria=sottocategoria,
-            keyword=keyword,
-            sort_type=sort_type,
-            solo_spedizione_gratuita=False,
-            min_price=min_price,
-            max_price=max_price,
-            min_discount=min_discount,
-            max_discount=max_discount,
-            item_count=item_count
-        )
 
     return prodotti
