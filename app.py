@@ -480,7 +480,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 OPZIONI_SCONTO = {
-    "Tutti": (0, 100),
     "0-20%": (0, 20),
     "20-50%": (20, 50),
     ">50%": (50, 100)
@@ -500,8 +499,8 @@ def trigger_ricerca():
     st.session_state.has_searched = True
     kw = st.session_state.get("cerca_keyword_input", "").strip()
     sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
-    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")
-    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))
+    disc_lbl = st.session_state.get("cerca_radio_disc", "0-20%")
+    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 20))
     free_ship = st.session_state.get("cerca_check_sped_gratis", False)
 
     risultati = ottieni_offerte_avanzate(
