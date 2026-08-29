@@ -98,6 +98,7 @@ def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
     testo_completo = item_tag.get_text(" ", strip=True).lower()
 
+    # 1. Rilevamento Prime
     is_prime = bool(
         "a-icon-prime" in html_str or
         "s-prime" in html_str or
@@ -105,6 +106,20 @@ def analizza_spedizione_html(item_tag):
         item_tag.find("span", {"aria-label": re.compile(r"^prime$", re.I)})
     )
 
+    # 2. Rilevamento opzione gratuita presente
+    frasi_gratuite = [
+        "consegna senza costi aggiuntivi",
+        "consegna gratuita",
+        "spedizione gratuita",
+        "senza costi aggiuntivi",
+        "consegna gratis",
+        "spedizione gratis",
+        "gratis con prime",
+        "consegna standard gratuita"
+    ]
+    ha_opzione_gratis = any(f in testo_completo for f in frasi_gratuite) or is_prime
+
+    # 3. Rilevamento costo di consegna accessorio / alternativo (es. "Consegna a 19,67 €")
     costo_sped = 0.0
     match_costo = re.search(
         r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
@@ -126,31 +141,26 @@ def analizza_spedizione_html(item_tag):
         except ValueError:
             pass
 
-    if costo_sped > 0 and not is_prime:
-        return costo_sped, f"Consegna a €{costo_sped:.2f}", False, False
+    # CASO COMPATTO: Se è presente sia l'opzione Gratuita/Prime che una con costo specifico
+    if ha_opzione_gratis and costo_sped > 0:
+        info_label = f"Spedizione gratuita • Consegna a €{costo_sped:.2f}" if not is_prime else f"Prime gratuita • Consegna a €{costo_sped:.2f}"
+        return costo_sped, info_label, is_prime, True
 
-    frasi_gratuite = [
-        "consegna senza costi aggiuntivi",
-        "consegna gratuita",
-        "spedizione gratuita",
-        "senza costi aggiuntivi",
-        "consegna gratis",
-        "spedizione gratis"
-    ]
-    ha_dicitura_gratis = any(f in testo_completo for f in frasi_gratuite)
-
+    # Solo Prime
     if is_prime:
         return 0.0, "Prime (Spedizione gratuita)", True, True
 
-    if ha_dicitura_gratis:
+    # Solo Gratuito
+    if ha_opzione_gratis:
         return 0.0, "Spedizione gratuita", False, True
 
-    return costo_sped, "Spedizione standard", False, False
+    # Solo a Pagamento
+    if costo_sped > 0:
+        return costo_sped, f"Consegna a €{costo_sped:.2f}", False, False
+
+    return 0.0, "Spedizione standard", False, False
 
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
-    """
-    Ordina la lista finale calcolando l'ordinamento esatto sul prezzo finale effettivamente scontato.
-    """
     if sort_type == "Prezzo: dal più basso":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
     elif sort_type == "Prezzo: dal più alto":
@@ -255,8 +265,6 @@ def ottieni_offerte_avanzate(
                         charges = delivery.get("ShippingCharges", [])
                         if charges:
                             costo_sped = float(charges[0].get("Amount", 0.0))
-                            if costo_sped > 0 and not is_prime:
-                                is_free_ship = False
 
                     if solo_spedizione_gratuita and not is_free_ship:
                         continue
@@ -268,7 +276,9 @@ def ottieni_offerte_avanzate(
                     if sconto_val < min_discount or (max_discount is not None and sconto_val > max_discount):
                         continue
 
-                    if is_prime:
+                    if is_free_ship and costo_sped > 0:
+                        info_sped = f"Spedizione gratuita • Consegna a €{costo_sped:.2f}"
+                    elif is_prime:
                         info_sped = "Prime (Spedizione gratuita)"
                     elif is_free_ship:
                         info_sped = "Spedizione gratuita"
