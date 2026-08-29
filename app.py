@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
@@ -127,7 +126,6 @@ st.markdown("""
         font-size: 0.84rem !important;
     }
 
-    /* Flag Spedizione Gratuita */
     div[data-testid="stCheckbox"] {
         background: rgba(30, 41, 59, 0.85) !important;
         padding: 6px 14px !important;
@@ -202,7 +200,6 @@ st.markdown("""
         border-color: #38bdf8 !important;
     }
 
-    /* Griglia Prezzo Minimo e Massimo in un'unica riga */
     .prices-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -217,7 +214,6 @@ st.markdown("""
         width: 50% !important;
     }
 
-    /* Griglia 6 Pulsanti Top con testo ultra leggibile */
     .top-single-row-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -388,15 +384,41 @@ st.markdown("""
         text-align: right !important;
     }
 
-    .shipping-badge-text {
+    .shipping-badge-prime {
+        display: inline-flex;
+        align-items: center;
+        background: #00a8e8 !important;
+        color: #ffffff !important;
+        font-size: 0.76rem !important;
+        font-weight: 900;
+        padding: 3px 8px;
+        border-radius: 5px;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+    .shipping-badge-free {
         display: inline-flex;
         align-items: center;
         background: rgba(15, 23, 42, 0.9) !important;
         color: #4ade80 !important;
         border: 1px solid rgba(34, 197, 94, 0.5) !important;
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.82rem !important;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-size: 0.76rem !important;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .shipping-badge-paid {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(30, 41, 59, 0.9) !important;
+        color: #f59e0b !important;
+        border: 1px solid rgba(245, 158, 11, 0.4) !important;
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-size: 0.76rem !important;
         font-weight: 700;
         white-space: nowrap;
     }
@@ -650,7 +672,6 @@ if "select_cat" not in st.session_state:
 def trigger_search():
     st.session_state.auto_search_triggered = True
 
-# --- HEADER SUPERIORE CENTRATO ---
 st.markdown("""
 <div style="text-align: center; padding-top: 10px; margin-bottom: 10px;">
     <div class="hero-title-main">Scala dei Turchi</div>
@@ -690,7 +711,7 @@ def render_product_card(p, tab_key="main"):
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
-            old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p['prezzo_iniziale'] > p['prezzo_finale'] else ""
+            old_price_html = f"<span class='deal-price-old'>da €{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = (
                 f"<div class='price-subgroup-left'>"
                 f"{badge_html}"
@@ -699,8 +720,15 @@ def render_product_card(p, tab_key="main"):
                 f"</div>"
             )
 
-            ship_text = p.get('info_spedizione', 'Spedizione gratuita')
-            ship_html = f"<span class='shipping-badge-text'>🚚 {ship_text}</span>" if ship_text else ""
+            if p.get("is_prime"):
+                ship_html = "<span class='shipping-badge-prime'>prime</span>"
+            elif p.get("is_sped_gratis"):
+                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione gratuita</span>"
+            elif p.get("costo_spedizione", 0.0) > 0:
+                ship_html = f"<span class='shipping-badge-paid'>📦 +€{p['costo_spedizione']:.2f} sped.</span>"
+            else:
+                ship_html = "<span class='shipping-badge-free'>🚚 Spedizione standard</span>"
+
             delivery_sub_html = f"<div class='delivery-subgroup-right'>{ship_html}</div>"
 
             st.markdown(
@@ -791,7 +819,6 @@ def render_product_card(p, tab_key="main"):
 with tab_cerca:
     col_r1_wrap, _ = st.columns([0.55, 0.45])
     with col_r1_wrap:
-        # 1. Ricerca diretta
         keyword_libera = st.text_input(
             "🔍 Scrivi cosa ti serve:",
             placeholder="Es. cuffie bluetooth, notebook...",
@@ -799,7 +826,6 @@ with tab_cerca:
             on_change=trigger_search
         )
 
-        # 2. Categorie
         col_cat, col_subcat = st.columns([1.0, 1.0])
         with col_cat:
             cat_scelta = st.selectbox(
@@ -820,7 +846,6 @@ with tab_cerca:
                 on_change=trigger_search
             )
 
-    # 3. Prezzo Min e Max su una sola riga
     col_prices_row, _ = st.columns([0.55, 0.45])
     with col_prices_row:
         st.markdown('<div class="prices-single-row-container">', unsafe_allow_html=True)
@@ -870,7 +895,6 @@ with tab_cerca:
     )
     min_disc, max_disc = OPZIONI_SCONTO[label_sconto_scelto]
 
-    # 4. Griglia Pulsanti Top nitidi su un'unica riga
     col_btn_wrap, _ = st.columns([0.65, 0.35])
     with col_btn_wrap:
         st.markdown('<div class="top-single-row-container">', unsafe_allow_html=True)
@@ -889,13 +913,12 @@ with tab_cerca:
             btn_100 = st.button("Top 100", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # 5. Flag Spedizione Gratuita collocato dopo i pulsanti Top
     solo_sped_gratis = st.checkbox(
         "🚚 Spedizione gratuita",
         value=False,
         key="check_sped_gratis",
         on_change=trigger_search,
-        help="Mostra solo prodotti con spedizione o consegna senza costi aggiuntivi / Prime"
+        help="Mostra solo prodotti con spedizione gratuita o Prime"
     )
 
     target_items = None
