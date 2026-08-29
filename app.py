@@ -164,36 +164,6 @@ st.markdown("""
         padding: 0 !important;
     }
 
-    /* RIGA PREZZI RIDOTTA AL 25% PER CASSETTA, CENTRATA E AFFIANCATA */
-    .prices-row-quarter {
-        width: 100% !important;
-        margin: 2px 0 4px 0 !important;
-    }
-
-    .prices-row-quarter [data-testid="stHorizontalBlock"] {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 8px !important;
-        width: 100% !important;
-    }
-
-    .prices-row-quarter [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 0 0 25% !important;
-        width: 25% !important;
-        max-width: 25% !important;
-        min-width: 0 !important;
-        padding: 0 !important;
-    }
-
-    .prices-row-quarter div[data-baseweb="input"] input {
-        text-align: center !important;
-        font-size: 0.74rem !important;
-        padding: 2px !important;
-    }
-
     /* Radio buttons compressi */
     div[data-testid="stRadio"] {
         display: flex !important;
@@ -552,7 +522,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # 1. Riga Input Ricerca + Pulsante Cerca
+    # Riga Input Ricerca + Pulsante Cerca
     st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
     col_input, col_submit = st.columns([0.76, 0.24])
     with col_input:
@@ -567,27 +537,6 @@ with tab_cerca:
         st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # 2. Riga Prezzo Min e Max ridotti al 25% ciascuno e affiancati
-    st.markdown('<div class="prices-row-quarter">', unsafe_allow_html=True)
-    col_pmin, col_pmax = st.columns(2)
-    with col_pmin:
-        p_min_str = st.text_input(
-            "Min (€):",
-            placeholder="Min €",
-            key="cerca_input_pmin_str",
-            label_visibility="collapsed",
-            on_change=reset_elenco_prodotti
-        )
-    with col_pmax:
-        p_max_str = st.text_input(
-            "Max (€):",
-            placeholder="Max €",
-            key="cerca_input_pmax_str",
-            label_visibility="collapsed",
-            on_change=reset_elenco_prodotti
-        )
     st.markdown('</div>', unsafe_allow_html=True)
 
     ranking_val = st.radio(
@@ -618,31 +567,14 @@ with tab_cerca:
 
     if btn_cerca_submit:
         with st.spinner("Ricerca rapida in corso..."):
-            val_min = None
-            if p_min_str.strip():
-                try:
-                    val_min = float(p_min_str.replace(",", ".").strip())
-                except ValueError:
-                    val_min = None
-
-            val_max = None
-            if p_max_str.strip():
-                try:
-                    val_max = float(p_max_str.replace(",", ".").strip())
-                except ValueError:
-                    val_max = None
-
-            if val_min and val_max and val_min > val_max:
-                val_min, val_max = val_max, val_min
-
             risultati = ottieni_offerte_avanzate(
                 categoria="",
                 sottocategoria="",
                 keyword=keyword_val.strip(),
                 sort_type=ranking_val,
                 solo_spedizione_gratuita=solo_gratis,
-                min_price=val_min,
-                max_price=val_max,
+                min_price=None,
+                max_price=None,
                 min_discount=min_disc,
                 max_discount=max_disc,
                 item_count=10
