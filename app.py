@@ -38,7 +38,7 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
         gap: 4px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 6px !important;
         display: flex !important;
         width: 100% !important;
     }
@@ -144,18 +144,18 @@ st.markdown("""
         line-height: 1.1 !important;
     }
 
-    /* Riquadro Scheda Ricerca Verde Chiaro */
-    .search-box-card {
+    /* Riquadro Scheda di Ricerca e Scheda Prodotto */
+    [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
         border-radius: 12px !important;
-        padding: 8px 8px 6px 8px !important;
+        padding: 8px !important;
         margin-bottom: 8px !important;
-        box-shadow: 0 4px 14px rgba(16, 185, 129, 0.16), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Barra di Ricerca */
+    /* Riga Input + Pulsante Cerca */
     .search-row-mobile [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -211,7 +211,7 @@ st.markdown("""
         box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3) !important;
     }
 
-    /* Pulsante Carica Altri 10 Prodotti */
+    /* Pulsante Carica Altri 10 Prodotti nel Riquadro */
     .load-more-btn-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
@@ -273,24 +273,13 @@ st.markdown("""
         border-radius: 6px !important;
         border: 1px solid #bae6fd !important;
         min-height: 26px !important;
-        margin: 2px 0 4px 0 !important;
+        margin: 2px 0 6px 0 !important;
     }
 
     div[data-testid="stCheckbox"] label p {
         font-size: 0.74rem !important;
         font-weight: 800 !important;
         color: #059669 !important;
-    }
-
-    /* Riquadro Scheda Prodotto */
-    [data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #dcfce7 !important;
-        background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
-        border: 2px solid #34d399 !important;
-        border-radius: 12px !important;
-        padding: 10px !important;
-        margin-bottom: 12px !important;
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
     }
 
     .product-img-wrapper-full {
@@ -683,32 +672,28 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Riquadro Scheda di Ricerca con sfondo verde chiaro
-    st.markdown('<div class="search-box-card">', unsafe_allow_html=True)
-    
-    st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
-    col_input, col_submit = st.columns([0.76, 0.24])
-    with col_input:
-        st.text_input(
-            "Cerca:",
-            placeholder="Cosa cerchi?...",
-            key="cerca_keyword_input",
-            label_visibility="collapsed",
-            on_change=trigger_ricerca,
-            args=(False,)
-        )
-    with col_submit:
-        st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
-        btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
+    # Riquadro Scheda con sfondo verde chiaro che contiene input e entrambi i pulsanti
+    with st.container(border=True):
+        st.markdown('<div class="search-row-mobile">', unsafe_allow_html=True)
+        col_input, col_submit = st.columns([0.76, 0.24])
+        with col_input:
+            st.text_input(
+                "Cerca:",
+                placeholder="Cosa cerchi?...",
+                key="cerca_keyword_input",
+                label_visibility="collapsed",
+                on_change=trigger_ricerca,
+                args=(False,)
+            )
+        with col_submit:
+            st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
+            btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
+            st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
-    # Pulsante aggiuntivo per trovare altri 10 prodotti dentro la scheda
-    st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
-    btn_altri_10 = st.button("➕ Trova altri 10 prodotti", key="btn_altri_10_top", use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
+        btn_altri_10 = st.button("➕ Trova altri 10 prodotti", key="btn_altri_10_top", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
     st.radio(
         "🏷️ Ordinamento:",
