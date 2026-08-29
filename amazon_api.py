@@ -95,14 +95,9 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=765):
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
 def analizza_spedizione_html(item_tag):
-    """
-    Riconosce con precisione se un prodotto è Prime, ha consegna gratuita o a pagamento.
-    Default rigoroso: se non ci sono prove certe di Prime o Spedizione Gratuita, è considerata standard/a pagamento.
-    """
     html_str = str(item_tag).lower()
     testo_completo = item_tag.get_text(" ", strip=True).lower()
 
-    # 1. Riconoscimento badge Prime reale
     is_prime = bool(
         "a-icon-prime" in html_str or
         "s-prime" in html_str or
@@ -110,7 +105,6 @@ def analizza_spedizione_html(item_tag):
         item_tag.find("span", {"aria-label": re.compile(r"^prime$", re.I)})
     )
 
-    # 2. Riconoscimento costi di spedizione espliciti
     costo_sped = 0.0
     match_costo = re.search(
         r'(?:consegna\s+a\s*€?\s*(\d+[.,]\d{2}))|'
@@ -132,11 +126,9 @@ def analizza_spedizione_html(item_tag):
         except ValueError:
             pass
 
-    # Se c'è un costo reale > 0 e non è Prime, è a pagamento
     if costo_sped > 0 and not is_prime:
         return costo_sped, f"Consegna a €{costo_sped:.2f}", False, False
 
-    # 3. Diciture esplicite di consegna senza costi
     frasi_gratuite = [
         "consegna senza costi aggiuntivi",
         "consegna gratuita",
@@ -153,8 +145,20 @@ def analizza_spedizione_html(item_tag):
     if ha_dicitura_gratis:
         return 0.0, "Spedizione gratuita", False, True
 
-    # Default restrittivo per evitare falsi positivi
     return costo_sped, "Spedizione standard", False, False
+
+def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
+    """
+    Ordina la lista finale calcolando l'ordinamento esatto sul prezzo finale effettivamente scontato.
+    """
+    if sort_type == "Prezzo: dal più basso":
+        prodotti.sort(key=lambda x: x["prezzo_finale"])
+    elif sort_type == "Prezzo: dal più alto":
+        prodotti.sort(key=lambda x: x["prezzo_finale"], reverse=True)
+    elif sort_type == "Media recensioni clienti":
+        prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
+
+    return prodotti[:item_count]
 
 def ottieni_offerte_avanzate(
     categoria="", 
@@ -200,7 +204,7 @@ def ottieni_offerte_avanzate(
             "PartnerTag": partner_tag,
             "PartnerType": "Associates",
             "Marketplace": "www.amazon.it",
-            "ItemCount": min(item_count, 10),
+            "ItemCount": min(max(item_count, 10), 10),
             "SortBy": SORT_MAPPINGS.get(sort_type, "Relevance"),
             "Resources": [
                 "ItemInfo.Title",
@@ -292,7 +296,7 @@ def ottieni_offerte_avanzate(
                     })
 
                 if prodotti:
-                    return prodotti
+                    return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
         except Exception:
             pass
 
@@ -329,9 +333,10 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
     asins_visti = set()
     page_num = 1
     session = c_requests.Session(impersonate="chrome")
+    target_campionamento = max(item_count * 2, 20)
 
     try:
-        while len(prodotti) < item_count and page_num <= 12:
+        while len(prodotti) < target_campionamento and page_num <= 12:
             resp = session.get(f"{base_url}&page={page_num}", headers=headers, timeout=12)
             if resp.status_code != 200:
                 break
@@ -345,9 +350,6 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 break
 
             for it in items:
-                if len(prodotti) >= item_count:
-                    break
-
                 asin = it.get("data-asin", "").strip()
                 if not asin or asin in asins_visti:
                     continue
@@ -430,4 +432,4 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
     except Exception:
         pass
 
-    return prodotti
+    return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
