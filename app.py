@@ -1,6 +1,7 @@
 import streamlit as st
 import smtplib
 import sqlite3
+import re
 from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -173,7 +174,8 @@ st.markdown("""
         gap: 0px !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stTextInput"] {
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stTextInput"],
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stTextArea"] {
         margin: 0px 0px 3px 0px !important;
         padding: 0px !important;
     }
@@ -189,16 +191,26 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12) !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"]:focus-within {
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="textarea"] {
+        background-color: #ffffff !important;
+        border: 1.5px solid #10b981 !important;
+        border-radius: 5px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12) !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"]:focus-within,
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="textarea"]:focus-within {
         border-color: #047857 !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"] input {
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"] input,
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="textarea"] textarea {
         color: #064e3b !important;
         font-weight: 700 !important;
         font-size: 0.78rem !important;
-        padding: 0 8px !important;
-        height: 26px !important;
+        padding: 4px 8px !important;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button {
@@ -543,6 +555,40 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ----------------- VALIDAZIONE RIGOROSA DEI CAMPI -----------------
+EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+
+def valida_campi_contatto(nome, telefono, email, note):
+    nome_clean = nome.strip()
+    tel_digits = re.sub(r'[^\d]', '', telefono.strip())
+    email_clean = email.strip()
+    note_clean = note.strip()
+
+    # 1. Obbligatorietà di tutti i campi
+    if not nome_clean or not tel_digits or not email_clean or not note_clean:
+        return False, "Tutti i campi sono obbligatori."
+
+    # 2. Controllo Nome e Cognome
+    if len(nome_clean) < 3:
+        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."
+
+    # 3. Controllo Numero di Telefono (esattamente 10 cifre)
+    if tel_digits.startswith("39") and len(tel_digits) == 12:
+        tel_digits = tel_digits[2:]
+
+    if len(tel_digits) != 10:
+        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."
+
+    # 4. Controllo Validità Email
+    if not EMAIL_REGEX.match(email_clean):
+        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."
+
+    # 5. Controllo Messaggio / Note
+    if len(note_clean) < 10:
+        return False, "Il messaggio deve contenere almeno 10 caratteri."
+
+    return True, "OK"
+
 # ----------------- GESTIONE LIMITE 1 INVIO AL GIORNO -----------------
 def init_rate_limit_db():
     conn = sqlite3.connect("rate_limit.db")
@@ -592,7 +638,7 @@ def invia_email_smtp_diretta(nome, telefono, email, note):
     corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
 
 - Nome e Cognome: {nome}
-- Telefono: {telefono if telefono else 'Non specificato'}
+- Telefono: {telefono}
 - Email Utente: {email}
 
 Messaggio / Note:
@@ -663,6 +709,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# 3 Schede Affiancate
 tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
@@ -746,6 +793,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
+    # 1. Riquadro Scheda di Ricerca
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -758,6 +806,7 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
+    # 2. Riquadro Scheda Filtri
     with st.container(border=True):
         st.radio(
             "🏷️ Ordinamento:",
@@ -823,24 +872,25 @@ with tab_preferiti:
 
 with tab_contatti:
     with st.container(border=True):
-        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento (Tutti i campi sono obbligatori):</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
             nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
-            tel_val = st.text_input("Numero di telefono", placeholder="Es. +39 340 1234567")
+            tel_val = st.text_input("Numero di telefono (10 cifre)*", placeholder="Es. 3401234567")
             email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
-            note_val = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui il tuo messaggio...", height=120)
+            note_val = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui il tuo messaggio (minimo 10 caratteri)...", height=120)
             
             btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)
             if btn_send_form:
-                if not nome_val.strip() or not email_val.strip() or not note_val.strip():
-                    st.error("Compila tutti i campi obbligatori contrassegnati da (*).")
+                valido, msg_validazione = valida_campi_contatto(nome_val, tel_val, email_val, note_val)
+                if not valido:
+                    st.error(msg_validazione)
                 elif not verifica_puo_inviare(email_val.strip()):
-                    st.warning("Hai già inviato una richiesta oggi con questa email. Per evitare sovraccarichi, è consentito un solo messaggio al giorno per utente. Riprova domani!")
+                    st.warning("Hai già inviato una richiesta oggi con questa email. È consentito un solo messaggio al giorno per utente. Riprova domani!")
                 else:
                     with st.spinner("Invio messaggio in corso..."):
                         ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
                     if ok:
                         registra_invio_completato(email_val.strip())
-                        st.success("Messaggio inviato con successo! Il nostro team lo prenderà in carico.")
+                        st.success("Messaggio inviato con successo a davimarz.social@gmail.com! Il nostro team lo prenderà in carico.")
                     else:
                         st.error(f"Errore di invio: {msg_err}")
