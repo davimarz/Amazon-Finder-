@@ -18,14 +18,20 @@ SORT_FALLBACK_MAP = {
     "Recensioni": "review-rank"
 }
 
-# Regex precompilate per massima velocita di parsing
 RE_ASIN = re.compile(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', re.IGNORECASE)
 RE_PRICE_TEXT = re.compile(r'(\d+[\.,]\d{2})\s*€|€\s*(\d+[\.,]\d{2})')
 RE_STAR_ALT = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
 RE_DIGITS = re.compile(r'[^\d]')
 RE_REVIEWS = re.compile(r'(?:(\d{1,3}(?:\.\d{3})+|\d+))\s*(?:valutazion|recension|vot)', re.IGNORECASE)
 RE_SALES = re.compile(r'(\d+k?|\d+[\.,]\d+k?)\+?\s*acquistati\s+nel\s+mese', re.IGNORECASE)
-RE_SHIPPING_COST = re.compile(r'(?:consegna\s+a|spedizione\s*[:a]|\+)\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE)
+
+SHIPPING_PATTERNS = [
+    re.compile(r'(\d+[.,]\d{2})\s*€\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE),
+    re.compile(r'(?:consegna|spedizione)\s*(?:a|per|:)?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
+    re.compile(r'\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)?', re.IGNORECASE),
+    re.compile(r'(?:costi?\s+di\s+spedizione|costo\s+consegna)\s*[:e]?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
+    re.compile(r'eur\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE)
+]
 
 _TOKEN_CACHE = {
     "access_token": None,
@@ -165,18 +171,23 @@ def estrai_vendite_recenti(item_tag):
 
 def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
-    testo_completo = item_tag.get_text(" ", strip=True).lower()
+    testo_completo = item_tag.get_text(" ", strip=True)
 
-    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_completo)
-    ha_opzione_gratis = is_prime or any(f in testo_completo for f in FRASI_SPED_GRATUITA)
+    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_completo.lower())
+    ha_opzione_gratis = is_prime or any(f in testo_completo.lower() for f in FRASI_SPED_GRATUITA)
 
     costo_sped = 0.0
-    match_costo = RE_SHIPPING_COST.search(testo_completo)
-    if match_costo:
-        try:
-            costo_sped = float(match_costo.group(1).replace(",", "."))
-        except ValueError:
-            costo_sped = 0.0
+    for pat in SHIPPING_PATTERNS:
+        match_costo = pat.search(testo_completo)
+        if match_costo:
+            try:
+                val = float(match_costo.group(1).replace(",", "."))
+                if val > 0:
+                    costo_sped = val
+                    ha_opzione_gratis = False
+                    break
+            except ValueError:
+                pass
 
     return costo_sped, is_prime, ha_opzione_gratis
 
@@ -307,6 +318,8 @@ def ottieni_offerte_avanzate(
                         charges = delivery.get("ShippingCharges", [])
                         if charges:
                             costo_sped = float(charges[0].get("Amount", 0.0))
+                            if costo_sped > 0 and not is_prime:
+                                is_free_ship = False
 
                     if solo_spedizione_gratuita and not is_free_ship:
                         continue
@@ -400,7 +413,6 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
                 if prezzo_prodotto <= 0.0:
                     continue
 
-                # Controllo filtri prezzo min/max
                 if min_price and prezzo_prodotto < min_price:
                     continue
                 if max_price and prezzo_prodotto > max_price:
