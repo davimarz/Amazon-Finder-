@@ -29,6 +29,16 @@ RE_PRICE = re.compile(r'(\d{1,3}(?:\.\d{3})*|\d+)[,\.](\d{2})')
 RE_STAR = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
 RE_DIGITS = re.compile(r'[^\d]')
 
+FRASI_GRATIS = [
+    "consegna senza costi aggiuntivi",
+    "senza costi aggiuntivi",
+    "consegna gratuita",
+    "spedizione gratuita",
+    "consegna gratis",
+    "spedizione gratis",
+    "prime"
+]
+
 SHIPPING_STRICT_PATTERNS = [
     re.compile(r'(?:costo\s+di\s+spedizione|spese\s+di\s+spedizione|costo\s+consegna)\s*(?:a|per|di|da|:)?\s*€?\s*(\d{1,2}[\.,]\d{2})', re.IGNORECASE),
     re.compile(r'\+\s*€?\s*(\d{1,2}[\.,]\d{2})\s*(?:di)?\s*(?:spedizione|consegna)', re.IGNORECASE),
@@ -229,7 +239,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     # 2. Prezzo Effettivo (Acquisto singolo BuyBox / Offerta a tempo)
     price_val = 0.0
     
-    # Ispezione del blocco prezzo centrale / Buybox
     price_box = soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay") or \
                 soup.select_one("#corePrice_feature_div .priceToPay") or \
                 soup.select_one("#apex_desktop .priceToPay") or \
@@ -292,7 +301,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             if b_val > price_val:
                 old_price_val = b_val
 
-    # Cerca esplicito "Prezzo più basso ultimi 30gg: 249,00 €" o "Prezzo mediano: 236,00 €"
     m_ref = re.search(r'prezzo\s+(?:più\s+basso\s+ultimi\s+30gg|mediano|consigliato|recente):\s*€?\s*(\d+[\.,]\d{2}|\d+)', page_text_lower)
     if m_ref:
         ref_val = parse_price(m_ref.group(1))
@@ -322,21 +330,12 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione e Prime (Zero spese tassative se presente Prime o dicitura gratuita)
+    # 5. Spedizione e Prime (Zero spese se presente Prime o dicitura gratuita)
     costo_sped = 0.0
     is_prime = False
     is_free = False
 
-    frasi_gratis = [
-        "consegna senza costi aggiuntivi",
-        "senza costi aggiuntivi",
-        "consegna gratuita",
-        "spedizione gratuita",
-        "consegna gratis",
-        "spedizione gratis"
-    ]
-
-    has_free_mention = any(f in page_text_lower for f in frasi_gratis)
+    has_free_mention = any(f in page_text_lower for f in FRASI_GRATIS)
     has_prime_badge = bool(
         soup.select_one(".a-icon-prime") or 
         soup.select_one("img[alt*='prime' i]") or 
@@ -349,7 +348,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
         is_prime = True
         is_free = True
     else:
-        # Isola esclusivamente il testo nel div specifico di consegna (max 200 caratteri)
         deliv_elem = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
                      soup.select_one("#deliveryMessageMirId")
         if deliv_elem:
@@ -358,7 +356,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                 m = pat.search(deliv_snippet)
                 if m:
                     extracted_val = parse_price(m.group(1))
-                    # Un costo di spedizione non può essere uguale al prezzo vecchio o superiore a 30€
                     if 0 < extracted_val < 30.0 and abs(extracted_val - old_price_val) > 1.0:
                         costo_sped = extracted_val
                         break
@@ -549,7 +546,7 @@ def ottieni_offerte_avanzate(
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
             deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ").lower()
             
-            has_free_kw = any(f in deliv_text for f in frasi_gratis) or bool("prime" in deliv_text or it.select_one(".a-icon-prime"))
+            has_free_kw = any(f in deliv_text for f in FRASI_GRATIS) or bool("prime" in deliv_text or it.select_one(".a-icon-prime"))
             
             if has_free_kw:
                 costo_sped = 0.0
