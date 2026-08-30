@@ -749,19 +749,24 @@ def trigger_ricerca(increment=False):
         num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
         st.session_state.current_page = num_pag_totali
 
-# Caricamento iniziale dei 10 BEST SELLER Amazon nella Vetrina
+# Caricamento robusto iniziale dei Best Seller Amazon nella Vetrina
 if not st.session_state.offerte_vetrina:
-    vetrina_res = ottieni_offerte_avanzate(
-        keyword="bestseller",
-        sort_type="Numero di vendite",
-        solo_spedizione_gratuita=False,
-        min_price=None,
-        max_price=None,
-        min_discount=0,
-        max_discount=100,
-        item_count=10
-    )
-    st.session_state.offerte_vetrina = vetrina_res if vetrina_res else []
+    for kw_test in ["bestseller", "offerte", "novita", "top"]:
+        vetrina_res = ottieni_offerte_avanzate(
+            keyword=kw_test,
+            sort_type="Numero di vendite",
+            solo_spedizione_gratuita=False,
+            min_price=None,
+            max_price=None,
+            min_discount=0,
+            max_discount=100,
+            item_count=10
+        )
+        if vetrina_res:
+            st.session_state.offerte_vetrina = vetrina_res
+            break
+    if not st.session_state.offerte_vetrina:
+        st.session_state.offerte_vetrina = []
 
 # Ancora posizionata in cima alla pagina
 st.markdown("""
@@ -776,7 +781,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 4 Schede (con Vetrina Best Seller inserita tra Cerca Prodotto e Preferiti)
+# 4 Schede
 tab_cerca, tab_vetrina, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
     "🏆 Best Seller Vetrina",
@@ -954,7 +959,7 @@ with tab_vetrina:
                 with col_r:
                     render_product_card(st.session_state.offerte_vetrina[idx + 1], tab_key=f"bestseller_{idx + 1}")
     else:
-        st.info("Caricamento Best Seller in corso...")
+        st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
