@@ -129,6 +129,106 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=0):
     p1 = max(1, 100 - (p5 + p4 + p3 + p2))
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
+def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, max_discount=100):
+    asin = it.get("ASIN", "")
+    title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
+    img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://via.placeholder.com/300")
+    link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
+
+    listings = it.get("Offers", {}).get("Listings", [])
+    price_val = 0.0
+    old_price_val = 0.0
+    is_prime = False
+    costo_sped = 0.0
+    is_free = False
+
+    if listings:
+        first = listings[0]
+        price_val = float(first.get("Price", {}).get("Amount", 0.0))
+        old_price_val = float(first.get("SavingBasis", {}).get("Amount", price_val))
+        delivery = first.get("DeliveryInfo", {})
+        is_prime = delivery.get("IsPrimeEligible", False)
+        charges = delivery.get("ShippingCharges", [])
+        if charges:
+            costo_sped = float(charges[0].get("Amount", 0.0))
+        is_free = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
+
+    if price_val <= 0.0:
+        return None
+
+    if min_price and price_val < min_price:
+        return None
+    if max_price and price_val > max_price:
+        return None
+
+    if solo_spedizione_gratuita and costo_sped > 0:
+        return None
+
+    sconto_val = 0
+    if old_price_val > price_val > 0:
+        sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
+
+    if min_discount > 0 and sconto_val < min_discount:
+        return None
+    if max_discount < 100 and sconto_val > max_discount:
+        return None
+
+    voto = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.5))
+    recensioni = int(it.get("CustomerReviews", {}).get("Count", 0))
+
+    return {
+        "asin": asin,
+        "titolo": title,
+        "immagine_url": img,
+        "prezzo_iniziale": old_price_val,
+        "prezzo_finale": price_val,
+        "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
+        "sconto_val": sconto_val,
+        "is_prime": is_prime,
+        "is_sped_gratis": is_free,
+        "costo_spedizione": costo_sped,
+        "voto_medio": round(voto, 1),
+        "num_recensioni": recensioni,
+        "vendite_mensili": recensioni,
+        "link_affiliato": link
+    }
+
+def ottieni_dettaglio_asin_api(asin, token, partner_tag):
+    api_url = "https://webservices.amazon.it/paapi5/getitems"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json; charset=utf-8",
+        "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems"
+    }
+    payload = {
+        "ItemIds": [asin],
+        "PartnerTag": partner_tag,
+        "PartnerType": "Associates",
+        "Marketplace": "www.amazon.it",
+        "Resources": [
+            "ItemInfo.Title",
+            "Offers.Listings.Price",
+            "Offers.Listings.SavingBasis",
+            "Offers.Listings.DeliveryInfo.IsPrimeEligible",
+            "Offers.Listings.DeliveryInfo.IsFreeShippingEligible",
+            "Offers.Listings.DeliveryInfo.ShippingCharges",
+            "Images.Primary.Large",
+            "CustomerReviews.Count",
+            "CustomerReviews.StarRating"
+        ]
+    }
+    try:
+        resp = requests.post(api_url, json=payload, headers=headers, timeout=5)
+        if resp.status_code == 200:
+            items = resp.json().get("ItemsResult", {}).get("Items", [])
+            if items:
+                parsed = parse_item_api_response(items[0], partner_tag)
+                if parsed:
+                    return [parsed]
+    except Exception:
+        pass
+    return []
+
 def _ottieni_prodotto_singolo_dp(asin, partner_tag):
     url = f"https://www.amazon.it/dp/{asin}?th=1"
     html = _fetch_html(url, timeout=8)
@@ -251,85 +351,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
         "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
     }]
 
-def ottieni_dettaglio_asin_api(asin, token, partner_tag):
-    api_url = "https://webservices.amazon.it/paapi5/getitems"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json; charset=utf-8",
-        "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems"
-    }
-    payload = {
-        "ItemIds": [asin],
-        "PartnerTag": partner_tag,
-        "PartnerType": "Associates",
-        "Marketplace": "www.amazon.it",
-        "Resources": [
-            "ItemInfo.Title",
-            "Offers.Listings.Price",
-            "Offers.Listings.SavingBasis",
-            "Offers.Listings.DeliveryInfo.IsPrimeEligible",
-            "Offers.Listings.DeliveryInfo.IsFreeShippingEligible",
-            "Offers.Listings.DeliveryInfo.ShippingCharges",
-            "Images.Primary.Large",
-            "CustomerReviews.Count",
-            "CustomerReviews.StarRating"
-        ]
-    }
-    try:
-        resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
-        if resp.status_code == 200:
-            items = resp.json().get("ItemsResult", {}).get("Items", [])
-            if items:
-                it = items[0]
-                title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
-                img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://via.placeholder.com/300")
-                link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
-
-                listings = it.get("Offers", {}).get("Listings", [])
-                price_val = 0.0
-                old_price_val = 0.0
-                costo_sped = 0.0
-                is_prime = False
-                is_free = False
-
-                if listings:
-                    first = listings[0]
-                    price_val = float(first.get("Price", {}).get("Amount", 0.0))
-                    old_price_val = float(first.get("SavingBasis", {}).get("Amount", price_val))
-                    delivery = first.get("DeliveryInfo", {})
-                    is_prime = delivery.get("IsPrimeEligible", False)
-                    charges = delivery.get("ShippingCharges", [])
-                    if charges:
-                        costo_sped = float(charges[0].get("Amount", 0.0))
-                    is_free = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
-
-                sconto_val = 0
-                if old_price_val > price_val > 0:
-                    sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
-
-                voto = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.5))
-                recensioni = int(it.get("CustomerReviews", {}).get("Count", 0))
-
-                return [{
-                    "asin": asin,
-                    "titolo": title,
-                    "immagine_url": img,
-                    "prezzo_iniziale": old_price_val,
-                    "prezzo_finale": price_val,
-                    "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
-                    "sconto_val": sconto_val,
-                    "is_prime": is_prime,
-                    "is_sped_gratis": is_free,
-                    "costo_spedizione": costo_sped,
-                    "voto_medio": voto,
-                    "num_recensioni": recensioni,
-                    "vendite_mensili": recensioni,
-                    "link_affiliato": link
-                }]
-    except Exception:
-        pass
-    return []
-
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     if sort_type == "Prezzo minimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
@@ -353,11 +374,14 @@ def ottieni_offerte_avanzate(
 ):
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     clean_keyword = keyword.strip()
-    
     asin_match = RE_ASIN.search(clean_keyword)
+    token = get_creators_access_token()
+
+    # 1. ESTRAZIONE DIRETTA PRODOTTO SINGOLO TRAMITE ASIN / LINK
     if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
         asin_code = asin_match.group(1)
-        token = get_creators_access_token()
+        
+        # Priorità Assoluta: Chiamata Ufficiale PA-API GetItems
         if token:
             res_api = ottieni_dettaglio_asin_api(asin_code, token, partner_tag)
             if res_api:
@@ -365,6 +389,7 @@ def ottieni_offerte_avanzate(
                     return []
                 return res_api
 
+        # Fallback Scraper di precisione
         res_dp = _ottieni_prodotto_singolo_dp(asin_code, partner_tag)
         if res_dp:
             if solo_spedizione_gratuita and res_dp[0]["costo_spedizione"] > 0:
@@ -372,8 +397,8 @@ def ottieni_offerte_avanzate(
             return res_dp
 
     query_str = clean_keyword if clean_keyword else "offerte"
-    token = get_creators_access_token()
 
+    # 2. RICERCA MULTI-PRODOTTO TRAMITE PA-API5 (SearchItems)
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -400,66 +425,34 @@ def ottieni_offerte_avanzate(
                 "CustomerReviews.StarRating"
             ]
         }
+        if min_price and min_price > 0:
+            payload["MinPrice"] = int(min_price * 100)
+        if max_price and max_price > 0:
+            payload["MaxPrice"] = int(max_price * 100)
+
         try:
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+            resp = requests.post(api_url, json=payload, headers=headers, timeout=5)
             if resp.status_code == 200:
                 items = resp.json().get("SearchResult", {}).get("Items", [])
                 prodotti = []
                 for it in items:
-                    asin = it.get("ASIN", "")
-                    title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
-                    img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://via.placeholder.com/300")
-                    link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
-
-                    listings = it.get("Offers", {}).get("Listings", [])
-                    price_val = 0.0
-                    old_price_val = 0.0
-                    is_prime = False
-                    is_free_ship = False
-                    costo_sped = 0.0
-
-                    if listings:
-                        first = listings[0]
-                        price_val = float(first.get("Price", {}).get("Amount", 0.0))
-                        old_price_val = float(first.get("SavingBasis", {}).get("Amount", price_val))
-                        delivery = first.get("DeliveryInfo", {})
-                        is_prime = delivery.get("IsPrimeEligible", False)
-                        charges = delivery.get("ShippingCharges", [])
-                        if charges:
-                            costo_sped = float(charges[0].get("Amount", 0.0))
-                        is_free_ship = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
-
-                    if solo_spedizione_gratuita and costo_sped > 0:
-                        continue
-
-                    sconto_val = 0
-                    if old_price_val > price_val > 0:
-                        sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
-
-                    voto_reale = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.5))
-                    recensioni_reali = int(it.get("CustomerReviews", {}).get("Count", 0))
-
-                    prodotti.append({
-                        "asin": asin,
-                        "titolo": title,
-                        "immagine_url": img,
-                        "prezzo_iniziale": old_price_val,
-                        "prezzo_finale": price_val,
-                        "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
-                        "sconto_val": sconto_val,
-                        "is_prime": is_prime,
-                        "is_sped_gratis": is_free_ship,
-                        "costo_spedizione": costo_sped,
-                        "voto_medio": voto_reale,
-                        "num_recensioni": recensioni_reali,
-                        "vendite_mensili": recensioni_reali,
-                        "link_affiliato": link
-                    })
+                    parsed = parse_item_api_response(
+                        it, 
+                        partner_tag, 
+                        solo_spedizione_gratuita=solo_spedizione_gratuita,
+                        min_price=min_price,
+                        max_price=max_price,
+                        min_discount=min_discount,
+                        max_discount=max_discount
+                    )
+                    if parsed:
+                        prodotti.append(parsed)
                 if prodotti:
                     return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
         except Exception:
             pass
 
+    # 3. FALLBACK SCRAPER MULTI-PRODOTTO
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     urls_to_try = [
