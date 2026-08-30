@@ -749,7 +749,7 @@ def trigger_ricerca(increment=False):
         num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
         st.session_state.current_page = num_pag_totali
 
-# Caricamento iniziale dei prodotti "Da non perdere" nella Vetrina
+# Caricamento iniziale dei prodotti Vetrina
 if not st.session_state.offerte_vetrina:
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     st.session_state.offerte_vetrina = ottieni_vetrina_casuale(partner_tag, item_count=10)
@@ -767,10 +767,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 4 Schede
-tab_cerca, tab_vetrina, tab_preferiti, tab_contatti = st.tabs([
+# 4 Schede (Offerte Vetrina spostata all'inizio a sinistra)
+tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
+    "🔥 Offerte Vetrina",
     "🔍 Cerca Prodotto", 
-    "🔥 Offerte Da Non Perdere",
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
     "✉️ Contattaci per una richiesta o suggerimento"
 ])
@@ -850,6 +850,19 @@ def render_product_card(p, tab_key="main"):
             f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa'>{SVG_WA}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb'>{SVG_FB}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail'>{SVG_GMAIL}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg'>{SVG_TG}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy'>{SVG_COPY}</button></div>",
             unsafe_allow_html=True
         )
+
+with tab_vetrina:
+    st.markdown("<p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 8px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>", unsafe_allow_html=True)
+    if st.session_state.offerte_vetrina:
+        for idx in range(0, len(st.session_state.offerte_vetrina), 2):
+            col_l, col_r = st.columns(2)
+            with col_l:
+                render_product_card(st.session_state.offerte_vetrina[idx], tab_key=f"vetrina_{idx}")
+            if idx + 1 < len(st.session_state.offerte_vetrina):
+                with col_r:
+                    render_product_card(st.session_state.offerte_vetrina[idx + 1], tab_key=f"vetrina_{idx + 1}")
+    else:
+        st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 with tab_cerca:
     with st.container(border=True):
@@ -931,19 +944,6 @@ with tab_cerca:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati.")
-
-with tab_vetrina:
-    st.markdown("<p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 8px 2px;'>🔥 Le Migliori Offerte Da Non Perdere su Amazon:</p>", unsafe_allow_html=True)
-    if st.session_state.offerte_vetrina:
-        for idx in range(0, len(st.session_state.offerte_vetrina), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(st.session_state.offerte_vetrina[idx], tab_key=f"dononperdere_{idx}")
-            if idx + 1 < len(st.session_state.offerte_vetrina):
-                with col_r:
-                    render_product_card(st.session_state.offerte_vetrina[idx + 1], tab_key=f"dononperdere_{idx + 1}")
-    else:
-        st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
