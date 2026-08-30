@@ -27,12 +27,17 @@ RE_REVIEWS = re.compile(r'(?:(\d{1,3}(?:\.\d{3})+|\d+))\s*(?:valutazion|recensio
 RE_SALES = re.compile(r'(\d+k?|\d+[\.,]\d+k?)\+?\s*acquistati\s+nel\s+mese', re.IGNORECASE)
 
 SHIPPING_PATTERNS = [
-    re.compile(r'(\d+[.,]\d{2})\s*€\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE),
-    re.compile(r'(?:consegna|spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
-    re.compile(r'\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)?', re.IGNORECASE),
-    re.compile(r'€\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE),
-    re.compile(r'(?:costi?\s+di\s+spedizione|costo\s+consegna)\s*[:e]?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
-    re.compile(r'eur\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE)
+    # 7,76 € di spedizione / 7,76 € consegna / 7,76 € per la spedizione
+    re.compile(r'(\d+[\.,]\d{2})\s*€\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna|invio|trasporto)', re.IGNORECASE),
+    # Consegna a 7,76 € / Spedizione a 7,76 € / Consegna: 7,76 € / Spese di spedizione: 7,76 €
+    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione|invio|trasporto)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})\s*€?', re.IGNORECASE),
+    # + 7,76 € / +7,76€ / + € 7,76
+    re.compile(r'\+\s*€?\s*(\d+[\.,]\d{2})\s*€?', re.IGNORECASE),
+    # € 7,76 di spedizione
+    re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE),
+    # EUR 7,76 / 7,76 EUR
+    re.compile(r'(?:eur|euro)\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)?', re.IGNORECASE),
+    re.compile(r'(\d+[\.,]\d{2})\s*(?:eur|euro)\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE)
 ]
 
 _TOKEN_CACHE = {
@@ -164,11 +169,10 @@ def estrai_vendite_recenti(item_tag):
 
 def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
-    testo_completo = item_tag.get_text(" ", strip=True)
+    testo_completo = item_tag.get_text(" ", strip=True).replace("\xa0", " ").replace("&nbsp;", " ")
     testo_lower = testo_completo.lower()
 
-    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_lower)
-    
+    # 1. Ricerca del costo esatto (ha sempre priorità su tutto)
     costo_sped = 0.0
     for pat in SHIPPING_PATTERNS:
         match_costo = pat.search(testo_completo)
@@ -177,24 +181,24 @@ def analizza_spedizione_html(item_tag):
                 val = float(match_costo.group(1).replace(",", "."))
                 if val > 0:
                     costo_sped = val
-                    break
+                    return costo_sped, False, False
             except ValueError:
                 pass
 
-    if costo_sped > 0:
-        return costo_sped, False, False
-
+    # 2. Verifica se Prime
+    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_lower)
     if is_prime:
         return 0.0, True, True
 
-    frasi_gratis_reali = (
+    # 3. Verifica Spedizione Gratuita reale
+    frasi_gratis = (
         "consegna senza costi aggiuntivi",
         "consegna gratuita",
         "spedizione gratuita",
         "consegna gratis",
         "spedizione gratis"
     )
-    ha_gratis = any(f in testo_lower for f in frasi_gratis_reali) and "ordini idonei" not in testo_lower and "superiori a" not in testo_lower
+    ha_gratis = any(f in testo_lower for f in frasi_gratis) and "ordini superiori" not in testo_lower and "superiori a" not in testo_lower
     return 0.0, False, ha_gratis
 
 def estrai_prezzo_tag(it):
@@ -236,7 +240,7 @@ def estrai_prezzo_tag(it):
 def _ottieni_prodotto_singolo_dp(asin, partner_tag, solo_spedizione_gratuita=False):
     """
     Estrae direttamente la scheda prodotto /dp/{asin} per ottenere
-    l'importo esatto di spedizione, prezzo e recensioni al centesimo.
+    l'importo esatto al centesimo di spedizione, prezzo e recensioni.
     """
     url = f"https://www.amazon.it/dp/{asin}?th=1"
     session = c_requests.Session(impersonate="chrome120")
@@ -273,9 +277,12 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, solo_spedizione_gratuita=Fal
         deliv_block = soup.find("div", {"id": "deliveryMessageMirId"}) or \
                       soup.find("div", {"id": "mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE"}) or \
                       soup.find("div", {"id": "delivery-message"}) or \
-                      soup.find("div", {"id": "amazonGlobal_feature_div"})
+                      soup.find("div", {"id": "amazonGlobal_feature_div"}) or \
+                      soup.find("div", {"id": "tabular-buybox"}) or \
+                      soup.find("div", {"id": "buyBoxAccordion"})
 
-        deliv_text = deliv_block.get_text(" ", strip=True) if deliv_block else soup.get_text(" ", strip=True)
+        deliv_text = (deliv_block.get_text(" ", strip=True) if deliv_block else soup.get_text(" ", strip=True)).replace("\xa0", " ").replace("&nbsp;", " ")
+        
         costo_sped = 0.0
         for pat in SHIPPING_PATTERNS:
             match_costo = pat.search(deliv_text)
@@ -288,8 +295,8 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, solo_spedizione_gratuita=Fal
                 except ValueError:
                     pass
 
-        is_prime = bool("prime" in deliv_text.lower() or soup.find("i", {"class": "a-icon-prime"}))
-        is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in deliv_text.lower() or "gratuita" in deliv_text.lower()))
+        is_prime = bool("prime" in deliv_text.lower() or soup.find("i", {"class": "a-icon-prime"})) if costo_sped == 0.0 else False
+        is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in deliv_text.lower() or "senza costi aggiuntivi" in deliv_text.lower()))
 
         if solo_spedizione_gratuita and costo_sped > 0:
             return []
@@ -341,9 +348,7 @@ def ottieni_offerte_avanzate(
     categoria="",
     sottocategoria=""
 ):
-    token = get_creators_access_token()
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
-    
     clean_keyword = keyword.strip()
     asin_match = RE_ASIN.search(clean_keyword)
     
@@ -356,6 +361,7 @@ def ottieni_offerte_avanzate(
         clean_keyword = asin_code
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
+    token = get_creators_access_token()
 
     # 1. Chiamata PA-API5 Ufficiale
     if token:
