@@ -46,6 +46,7 @@ st.markdown("""
         max-width: 100% !important;
     }
 
+    /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
         background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
@@ -61,11 +62,11 @@ st.markdown("""
         flex: 1 1 0% !important;
         color: #0369a1 !important;
         font-weight: 800 !important;
-        font-size: 0.76rem !important;
+        font-size: 0.74rem !important;
         background: rgba(255, 255, 255, 0.85) !important;
         border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
-        padding: 4px 6px !important;
+        padding: 4px 5px !important;
         min-height: 28px !important;
         height: 28px !important;
         text-align: center !important;
@@ -572,16 +573,6 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* BARRA DI PAGINAZIONE A SCHEDE */
-    .pagination-bar-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 6px;
-        margin: 10px 0 14px 0;
-        flex-wrap: wrap;
-    }
-
     .btn-back-to-top {
         display: inline-flex !important;
         align-items: center !important;
@@ -609,7 +600,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- VALIDAZIONE RIGOROSA DEI CAMPI -----------------
+# ----------------- VALIDAZIONE DEI CAMPI CONTATTI -----------------
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 def valida_campi_contatto(nome, telefono, email, note):
@@ -717,6 +708,9 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
+if "offerte_vetrina" not in st.session_state:
+    st.session_state.offerte_vetrina = []
+
 if "has_searched" not in st.session_state:
     st.session_state.has_searched = False
 
@@ -752,10 +746,23 @@ def trigger_ricerca(increment=False):
     )
     st.session_state.offerte = risultati if risultati else []
     
-    # Se abbiamo aggiunto 10 elementi, spostiamo automaticamente la visualizzazione sull'ultima pagina caricata
     if increment:
         num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
         st.session_state.current_page = num_pag_totali
+
+# Caricamento iniziale automatico delle Offerte Vetrina
+if not st.session_state.offerte_vetrina:
+    vetrina_res = ottieni_offerte_avanzate(
+        keyword="offerte del giorno",
+        sort_type="Prezzo minimo",
+        solo_spedizione_gratuita=False,
+        min_price=None,
+        max_price=None,
+        min_discount=0,
+        max_discount=100,
+        item_count=10
+    )
+    st.session_state.offerte_vetrina = vetrina_res if vetrina_res else []
 
 # Ancora posizionata in cima alla pagina
 st.markdown("""
@@ -770,9 +777,10 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3 Schede
-tab_cerca, tab_preferiti, tab_contatti = st.tabs([
+# 4 Schede (con Vetrina inserita tra Cerca Prodotto e Preferiti)
+tab_cerca, tab_vetrina, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
+    "🔥 Offerte Vetrina",
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
     "✉️ Contattaci per una richiesta o suggerimento"
 ])
@@ -909,7 +917,6 @@ with tab_cerca:
         tot_offerte = len(st.session_state.offerte)
         tot_pagine = max(1, (tot_offerte + 9) // 10)
 
-        # Barra di selezione pagina (se presenti più di 10 prodotti)
         if tot_pagine > 1:
             st.markdown("<div style='margin-top: 6px;'></div>", unsafe_allow_html=True)
             cols_pag = st.columns([1] * tot_pagine + [max(1, 10 - tot_pagine)])
@@ -921,7 +928,6 @@ with tab_cerca:
                         st.session_state.current_page = p_num
                         st.rerun()
 
-        # Calcolo indice dei 10 prodotti per la pagina attiva
         start_idx = (st.session_state.current_page - 1) * 10
         end_idx = min(start_idx + 10, tot_offerte)
         offerte_pagina = st.session_state.offerte[start_idx:end_idx]
@@ -937,6 +943,19 @@ with tab_cerca:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati.")
+
+with tab_vetrina:
+    st.markdown("<p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 8px 2px;'>🔥 Offerte Vetrina Amazon in Evidenza:</p>", unsafe_allow_html=True)
+    if st.session_state.offerte_vetrina:
+        for idx in range(0, len(st.session_state.offerte_vetrina), 2):
+            col_l, col_r = st.columns(2)
+            with col_l:
+                render_product_card(st.session_state.offerte_vetrina[idx], tab_key=f"vetrina_{idx}")
+            if idx + 1 < len(st.session_state.offerte_vetrina):
+                with col_r:
+                    render_product_card(st.session_state.offerte_vetrina[idx + 1], tab_key=f"vetrina_{idx + 1}")
+    else:
+        st.info("Caricamento offerte vetrina in corso...")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
