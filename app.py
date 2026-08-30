@@ -564,26 +564,21 @@ def valida_campi_contatto(nome, telefono, email, note):
     email_clean = email.strip()
     note_clean = note.strip()
 
-    # 1. Obbligatorietà di tutti i campi
     if not nome_clean or not tel_digits or not email_clean or not note_clean:
         return False, "Tutti i campi sono obbligatori."
 
-    # 2. Controllo Nome e Cognome
     if len(nome_clean) < 3:
         return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."
 
-    # 3. Controllo Numero di Telefono (esattamente 10 cifre)
     if tel_digits.startswith("39") and len(tel_digits) == 12:
         tel_digits = tel_digits[2:]
 
     if len(tel_digits) != 10:
         return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."
 
-    # 4. Controllo Validità Email
     if not EMAIL_REGEX.match(email_clean):
         return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."
 
-    # 5. Controllo Messaggio / Note
     if len(note_clean) < 10:
         return False, "Il messaggio deve contenere almeno 10 caratteri."
 
@@ -655,6 +650,7 @@ Messaggio / Note:
         return False, str(e)
 
 OPZIONI_SCONTO = {
+    "Tutti": (0, 100),
     "0-20%": (0, 20),
     "20-50%": (20, 50),
     ">50%": (50, 100)
@@ -682,8 +678,8 @@ def trigger_ricerca(increment=False):
 
     kw = st.session_state.get("cerca_keyword_input", "").strip()
     sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
-    disc_lbl = st.session_state.get("cerca_radio_disc", "0-20%")
-    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 20))
+    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")
+    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))
     free_ship = st.session_state.get("cerca_check_sped_gratis", False)
 
     risultati = ottieni_offerte_avanzate(
