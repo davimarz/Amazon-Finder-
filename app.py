@@ -6,7 +6,7 @@ from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
-from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
+from amazon_api import ottieni_offerte_avanzate, ottieni_vetrina_casuale, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
 
 st.set_page_config(
@@ -749,24 +749,10 @@ def trigger_ricerca(increment=False):
         num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
         st.session_state.current_page = num_pag_totali
 
-# Caricamento robusto iniziale dei Best Seller Amazon nella Vetrina
+# Caricamento robusto iniziale dei Best Seller Randomizzati per la Vetrina
 if not st.session_state.offerte_vetrina:
-    for kw_test in ["bestseller", "offerte", "novita", "top"]:
-        vetrina_res = ottieni_offerte_avanzate(
-            keyword=kw_test,
-            sort_type="Numero di vendite",
-            solo_spedizione_gratuita=False,
-            min_price=None,
-            max_price=None,
-            min_discount=0,
-            max_discount=100,
-            item_count=10
-        )
-        if vetrina_res:
-            st.session_state.offerte_vetrina = vetrina_res
-            break
-    if not st.session_state.offerte_vetrina:
-        st.session_state.offerte_vetrina = []
+    partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
+    st.session_state.offerte_vetrina = ottieni_vetrina_casuale(partner_tag, item_count=10)
 
 # Ancora posizionata in cima alla pagina
 st.markdown("""
@@ -866,7 +852,6 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # 1. Riquadro Scheda di Ricerca
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -879,7 +864,6 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
-    # 2. Riquadro Scheda Filtri
     with st.container(border=True):
         st.radio(
             "🏷️ Ordinamento:",
