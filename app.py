@@ -24,7 +24,6 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
-    /* 1. Sfondo Celeste Chiaro Pagina */
     .stApp {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
@@ -37,7 +36,6 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
         background: rgba(255, 255, 255, 0.80) !important;
         padding: 2px 4px !important;
@@ -73,7 +71,6 @@ st.markdown("""
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header Compatto */
     .hero-container {
         display: flex;
         flex-direction: column;
@@ -137,7 +134,6 @@ st.markdown("""
 
     .hero-author-tag strong { color: #0369a1; }
 
-    /* 2. Pannello Interposto fra Pagina e Schede */
     div[data-baseweb="tab-panel"] {
         background: rgba(255, 255, 255, 0.60) !important;
         backdrop-filter: blur(10px) !important;
@@ -149,7 +145,6 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
     }
 
-    /* 3. Schede con Sfondo in Contrasto */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         background: linear-gradient(150deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%) !important;
@@ -171,7 +166,6 @@ st.markdown("""
         gap: 0px !important;
     }
 
-    /* Input Ricerca */
     div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stTextInput"] {
         margin: 0px 0px 3px 0px !important;
         padding: 0px !important;
@@ -200,7 +194,6 @@ st.markdown("""
         height: 26px !important;
     }
 
-    /* Pulsante Cerca */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
@@ -224,7 +217,6 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Pulsante + Altri 10 */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
@@ -248,7 +240,6 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Filtri */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
@@ -307,7 +298,6 @@ st.markdown("""
         color: #065f46 !important;
     }
 
-    /* Card Prodotto */
     .product-img-wrapper-full {
         width: 100%;
         height: 135px;
@@ -641,14 +631,16 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
-            # Spedizione esatta garantita
+            # Gestione univoca del badge di spedizione
             costo_s = float(p.get("costo_spedizione", 0.0))
             if costo_s > 0.0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
             elif p.get("is_prime"):
                 ship_html = "<span class='shipping-badge-prime'>prime</span>"
-            else:
+            elif p.get("is_sped_gratis"):
                 ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
+            else:
+                ship_html = "<span class='shipping-badge-paid'>📦 Sped. da verificare</span>"
 
             st.markdown(f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>", unsafe_allow_html=True)
             st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
@@ -684,7 +676,6 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # 1. Riquadro Scheda di Ricerca
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -697,7 +688,6 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
-    # 2. Riquadro Scheda Filtri
     with st.container(border=True):
         st.radio(
             "🏷️ Ordinamento:",
