@@ -24,7 +24,7 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
-    /* Sfondo Celeste Chiaro Pagina */
+    /* 1. Sfondo Celeste Chiaro Pagina */
     .stApp {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
@@ -137,7 +137,7 @@ st.markdown("""
 
     .hero-author-tag strong { color: #0369a1; }
 
-    /* Pannello Interposto */
+    /* 2. Pannello Interposto fra Pagina e Schede */
     div[data-baseweb="tab-panel"] {
         background: rgba(255, 255, 255, 0.60) !important;
         backdrop-filter: blur(10px) !important;
@@ -149,7 +149,7 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
     }
 
-    /* Schede con Sfondo in Contrasto */
+    /* 3. Schede con Sfondo in Contrasto */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
         background: linear-gradient(150deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%) !important;
@@ -641,14 +641,12 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
-            # Spedizione Esatta Garantita
-            costo_s = p.get("costo_spedizione", 0.0)
-            if p.get("is_prime"):
-                ship_html = "<span class='shipping-badge-prime'>prime</span>"
-            elif costo_s > 0.0:
+            # Spedizione esatta garantita
+            costo_s = float(p.get("costo_spedizione", 0.0))
+            if costo_s > 0.0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
-            elif p.get("is_sped_gratis"):
-                ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
+            elif p.get("is_prime"):
+                ship_html = "<span class='shipping-badge-prime'>prime</span>"
             else:
                 ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
 
