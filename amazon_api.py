@@ -236,9 +236,8 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo (Acquisto singolo BuyBox / Offerta a tempo)
+    # 2. Prezzo Effettivo di vendita
     price_val = 0.0
-    
     price_box = soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay") or \
                 soup.select_one("#corePrice_feature_div .priceToPay") or \
                 soup.select_one("#apex_desktop .priceToPay") or \
@@ -276,7 +275,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                     price_val = val
                     break
 
-    # Correzione automatica per prezzo B2B/IVA esclusa
     if 0 < price_val < 180 and "236" in page_text_lower:
         val_with_tax = round(price_val * 1.22, 2)
         if abs(val_with_tax - 199.0) < 1.5:
@@ -330,7 +328,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione e Prime (Zero spese se presente Prime o dicitura gratuita)
+    # 5. Spedizione e Prime
     costo_sped = 0.0
     is_prime = False
     is_free = False
@@ -456,7 +454,7 @@ def ottieni_offerte_avanzate(
                 pass
         return _ottieni_prodotto_singolo_dp(asin_code, partner_tag, min_price, max_price, min_discount, max_discount, solo_spedizione_gratuita)
 
-    query_str = clean_keyword if clean_keyword else "offerte del giorno"
+    query_str = clean_keyword if clean_keyword else "bestseller amazon"
 
     # 2. Ricerca tramite PA-API5 (se autenticata)
     if token:
@@ -464,7 +462,7 @@ def ottieni_offerte_avanzate(
         headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
         payload = {
             "Keywords": query_str, "PartnerTag": partner_tag, "PartnerType": "Associates", "Marketplace": "www.amazon.it",
-            "ItemCount": min(item_count, 10), "SortBy": SORT_MAPPINGS.get(sort_type, "Price:LowToHigh"),
+            "ItemCount": min(item_count, 10), "SortBy": SORT_MAPPINGS.get(sort_type, "SalesRank"),
             "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
         }
         if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
@@ -478,9 +476,9 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 3. Parser Diretto dei Risultati di Ricerca
+    # 3. Parser Diretto dei Risultati di Ricerca (con fallback specifico per i Best Seller)
     query_encoded = urllib.parse.quote_plus(query_str)
-    sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
+    sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
     urls_to_try = [
         f"https://www.amazon.it/s?k={query_encoded}&s={sort_param}",
         f"https://www.amazon.it/s?k={query_encoded}"
@@ -507,13 +505,11 @@ def ottieni_offerte_avanzate(
             if not asin or asin in asins_visti:
                 continue
 
-            # Titolo
             title_tag = it.find("h2") or it.find("span", {"class": re.compile(r"a-text-normal")})
             if not title_tag:
                 continue
             titolo = title_tag.get_text(strip=True)
 
-            # Prezzo
             p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or \
                      it.select_one("span.a-price-whole") or \
                      it.select_one(".a-color-price")
@@ -526,7 +522,6 @@ def ottieni_offerte_avanzate(
             if max_price and prezzo_prodotto > max_price:
                 continue
 
-            # Prezzo Barrato / Listino
             basis_elem = it.select_one("span.a-price[data-a-strike='true'] span.a-offscreen") or it.select_one("span.a-text-price span.a-offscreen")
             prezzo_iniziale = parse_price(basis_elem.get_text(strip=True)) if basis_elem else prezzo_prodotto
             if prezzo_iniziale < prezzo_prodotto:
@@ -541,7 +536,6 @@ def ottieni_offerte_avanzate(
             if max_discount < 100 and sconto_val > max_discount:
                 continue
 
-            # Spedizione
             costo_sped = 0.0
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
             deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ").lower()
@@ -566,11 +560,9 @@ def ottieni_offerte_avanzate(
             if solo_spedizione_gratuita and costo_sped > 0:
                 continue
 
-            # Immagine
             img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
             img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
 
-            # Voto e Recensioni
             voto_val = 4.5
             num_rev_val = 0
             star_elem = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
