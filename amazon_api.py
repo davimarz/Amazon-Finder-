@@ -3,8 +3,13 @@ import requests
 import urllib.parse
 import re
 import time
-from curl_cffi import requests as c_requests
 from bs4 import BeautifulSoup
+
+try:
+    from curl_cffi import requests as c_requests
+    HAS_CURL_CFFI = True
+except ImportError:
+    HAS_CURL_CFFI = False
 
 SORT_MAPPINGS = {
     "Prezzo minimo": "Price:LowToHigh",
@@ -18,7 +23,8 @@ SORT_FALLBACK_MAP = {
     "Recensioni": "review-rank"
 }
 
-RE_ASIN = re.compile(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})|^([A-Z0-9]{10})$', re.IGNORECASE)
+# Regex rigorosa per ASIN (link completi o codice isolato da 10 caratteri)
+RE_ASIN = re.compile(r'(?:/dp/|/gp/product/|/d/|^)([A-Z0-9]{10})(?:[/?&]|$)', re.IGNORECASE)
 RE_PRICE_TEXT = re.compile(r'(\d+[\.,]\d{2})\s*€|€\s*(\d+[\.,]\d{2})')
 RE_STAR_ALT = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
 RE_DIGITS = re.compile(r'[^\d]')
@@ -27,7 +33,7 @@ RE_SALES = re.compile(r'(\d+k?|\d+[\.,]\d+k?)\+?\s*acquistati\s+nel\s+mese', re.
 
 SHIPPING_PATTERNS = [
     re.compile(r'(\d+[\.,]\d{2})\s*€\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna|invio|trasporto)', re.IGNORECASE),
-    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
+    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})\s*€?', re.IGNORECASE),
     re.compile(r'\+\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
     re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE),
     re.compile(r'(?:eur|euro)\s*(\d+[\.,]\d{2})', re.IGNORECASE)
@@ -41,8 +47,36 @@ _TOKEN_CACHE = {
 _HTTP_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Sec-Ch-Ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+    "Sec-Ch-Ua-Mobile": "?0",
+    "Sec-Ch-Ua-Platform": '"Windows"',
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1"
 }
+
+def _fetch_html(url, timeout=7):
+    """Esegue la richiesta con curl_cffi o fallback su requests standard."""
+    if HAS_CURL_CFFI:
+        try:
+            s = c_requests.Session(impersonate="chrome120")
+            r = s.get(url, headers=_HTTP_HEADERS, timeout=timeout)
+            if r.status_code == 200 and r.text and len(r.text) > 2000:
+                return r.text
+        except Exception:
+            pass
+
+    try:
+        s = requests.Session()
+        r = s.get(url, headers=_HTTP_HEADERS, timeout=timeout)
+        if r.status_code == 200 and r.text:
+            return r.text
+    except Exception:
+        pass
+    return None
 
 def get_creators_access_token():
     now = time.time()
@@ -50,9 +84,11 @@ def get_creators_access_token():
         return _TOKEN_CACHE["access_token"]
 
     try:
-        creds = st.secrets["amazon_api"]
-        client_id = creds["client_id"]
-        client_secret = creds["client_secret"]
+        creds = st.secrets.get("amazon_api", {})
+        client_id = creds.get("client_id")
+        client_secret = creds.get("client_secret")
+        if not client_id or not client_secret:
+            return None
     except Exception:
         return None
 
@@ -65,7 +101,7 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=4)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=3)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
@@ -125,6 +161,14 @@ def analizza_recensioni_html(soup_item):
             except ValueError:
                 num_recensioni = 0
 
+    if num_recensioni == 0:
+        m_rev = RE_REVIEWS.search(soup_item.get_text(" ", strip=True))
+        if m_rev:
+            try:
+                num_recensioni = int(m_rev.group(1).replace(".", ""))
+            except ValueError:
+                num_recensioni = 0
+
     return round(voto_medio, 1), num_recensioni
 
 def estrai_prezzo_tag(it):
@@ -164,8 +208,78 @@ def estrai_prezzo_tag(it):
             pass
     return 0.0
 
+def _ottieni_prodotto_singolo_dp(asin, partner_tag):
+    """Estrae la scheda prodotto esatta /dp/{asin} con il costo reale di spedizione."""
+    url = f"https://www.amazon.it/dp/{asin}?th=1"
+    html_content = _fetch_html(url, timeout=7)
+    if not html_content:
+        return []
+
+    soup = BeautifulSoup(html_content, "html.parser")
+    title_tag = soup.find("span", {"id": "productTitle"})
+    titolo = title_tag.get_text(strip=True) if title_tag else "Prodotto Amazon"
+
+    price_block = soup.find("div", {"id": "corePrice_desktop"}) or \
+                  soup.find("div", {"id": "corePriceDisplay_desktop_feature_div"}) or \
+                  soup.find("div", {"id": "apex_desktop"}) or soup
+    prezzo_finale = estrai_prezzo_tag(price_block)
+    if prezzo_finale <= 0:
+        prezzo_finale = estrai_prezzo_tag(soup)
+
+    basis_tag = soup.find("span", {"class": "basisPrice"}) or soup.find("span", {"data-a-strike": "true"})
+    prezzo_iniziale = estrai_prezzo_tag(basis_tag) if basis_tag else prezzo_finale
+    if prezzo_iniziale < prezzo_finale:
+        prezzo_iniziale = prezzo_finale
+
+    sconto_val = 0
+    if prezzo_iniziale > prezzo_finale > 0:
+        sconto_val = int(round(((prezzo_iniziale - prezzo_finale) / prezzo_iniziale) * 100))
+
+    deliv_block = soup.find("div", {"id": "deliveryMessageMirId"}) or \
+                  soup.find("div", {"id": "mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE"}) or \
+                  soup.find("div", {"id": "delivery-message"}) or \
+                  soup.find("div", {"id": "tabular-buybox"}) or \
+                  soup.find("div", {"id": "buyBoxAccordion"}) or soup
+
+    deliv_text = deliv_block.get_text(" ", strip=True).replace("\xa0", " ")
+    costo_sped = 0.0
+    for pat in SHIPPING_PATTERNS:
+        m = pat.search(deliv_text)
+        if m:
+            try:
+                val = float(m.group(1).replace(",", "."))
+                if val > 0:
+                    costo_sped = val
+                    break
+            except ValueError:
+                pass
+
+    is_prime = bool("prime" in deliv_text.lower() or soup.find("i", {"class": "a-icon-prime"})) if costo_sped == 0.0 else False
+    is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in deliv_text.lower() or "senza costi aggiuntivi" in deliv_text.lower()))
+
+    img_tag = soup.find("img", {"id": "landingImage"}) or soup.find("img", {"id": "imgBlkFront"})
+    img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
+    voto_estratto, recensioni_estratte = analizza_recensioni_html(soup)
+
+    return [{
+        "asin": asin,
+        "titolo": titolo,
+        "immagine_url": img_url,
+        "prezzo_iniziale": prezzo_iniziale,
+        "prezzo_finale": prezzo_finale,
+        "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
+        "sconto_val": sconto_val,
+        "is_prime": is_prime,
+        "is_sped_gratis": is_free,
+        "costo_spedizione": costo_sped,
+        "voto_medio": voto_estratto,
+        "num_recensioni": recensioni_estratte,
+        "vendite_mensili": recensioni_estratte,
+        "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
+    }]
+
 def ottieni_dettaglio_asin_api(asin, token, partner_tag):
-    """Estrae i dati ufficiali tramite endpoint GetItems della PA-API5 / Creators API."""
+    """Interroga l'endpoint ufficiale GetItems se le credenziali PA-API sono attive."""
     api_url = "https://webservices.amazon.it/paapi5/getitems"
     headers = {
         "Authorization": f"Bearer {token}",
@@ -204,7 +318,6 @@ def ottieni_dettaglio_asin_api(asin, token, partner_tag):
                 old_price_val = 0.0
                 costo_sped = 0.0
                 is_prime = False
-                is_free_ship = False
 
                 if listings:
                     first = listings[0]
@@ -215,8 +328,6 @@ def ottieni_dettaglio_asin_api(asin, token, partner_tag):
                     charges = delivery.get("ShippingCharges", [])
                     if charges:
                         costo_sped = float(charges[0].get("Amount", 0.0))
-                    
-                    is_free_ship = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
 
                 sconto_val = 0
                 if old_price_val > price_val > 0:
@@ -234,7 +345,7 @@ def ottieni_dettaglio_asin_api(asin, token, partner_tag):
                     "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
                     "sconto_val": sconto_val,
                     "is_prime": is_prime,
-                    "is_sped_gratis": is_free_ship,
+                    "is_sped_gratis": (costo_sped == 0.0 and is_prime),
                     "costo_spedizione": costo_sped,
                     "voto_medio": voto,
                     "num_recensioni": recensioni,
@@ -244,79 +355,6 @@ def ottieni_dettaglio_asin_api(asin, token, partner_tag):
     except Exception:
         pass
     return []
-
-def _ottieni_prodotto_singolo_dp(asin, partner_tag):
-    """Fallback: Scraping profondo della scheda /dp/{asin} se l'API non è disponibile."""
-    url = f"https://www.amazon.it/dp/{asin}?th=1"
-    session = c_requests.Session(impersonate="chrome120")
-    try:
-        resp = session.get(url, headers=_HTTP_HEADERS, timeout=7)
-        if resp.status_code != 200 or not resp.text:
-            return []
-
-        soup = BeautifulSoup(resp.text, "html.parser")
-        title_tag = soup.find("span", {"id": "productTitle"})
-        titolo = title_tag.get_text(strip=True) if title_tag else "Prodotto Amazon"
-
-        price_block = soup.find("div", {"id": "corePrice_desktop"}) or \
-                      soup.find("div", {"id": "corePriceDisplay_desktop_feature_div"}) or \
-                      soup.find("div", {"id": "apex_desktop"}) or soup
-        prezzo_finale = estrai_prezzo_tag(price_block)
-
-        basis_tag = soup.find("span", {"class": "basisPrice"}) or soup.find("span", {"data-a-strike": "true"})
-        prezzo_iniziale = estrai_prezzo_tag(basis_tag) if basis_tag else prezzo_finale
-        if prezzo_iniziale < prezzo_finale:
-            prezzo_iniziale = prezzo_finale
-
-        sconto_val = 0
-        if prezzo_iniziale > prezzo_finale > 0:
-            sconto_val = int(round(((prezzo_iniziale - prezzo_finale) / prezzo_iniziale) * 100))
-
-        # Parsing accurato del box consegna per venditori terzi
-        deliv_block = soup.find("div", {"id": "deliveryMessageMirId"}) or \
-                      soup.find("div", {"id": "mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE"}) or \
-                      soup.find("div", {"id": "delivery-message"}) or \
-                      soup.find("div", {"id": "tabular-buybox"}) or \
-                      soup.find("div", {"id": "buyBoxAccordion"}) or soup
-
-        deliv_text = deliv_block.get_text(" ", strip=True).replace("\xa0", " ")
-        costo_sped = 0.0
-        for pat in SHIPPING_PATTERNS:
-            m = pat.search(deliv_text)
-            if m:
-                try:
-                    val = float(m.group(1).replace(",", "."))
-                    if val > 0:
-                        costo_sped = val
-                        break
-                except ValueError:
-                    pass
-
-        is_prime = bool("prime" in deliv_text.lower() or soup.find("i", {"class": "a-icon-prime"})) if costo_sped == 0.0 else False
-        is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in deliv_text.lower() or "senza costi aggiuntivi" in deliv_text.lower()))
-
-        img_tag = soup.find("img", {"id": "landingImage"})
-        img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
-        voto_estratto, recensioni_estratte = analizza_recensioni_html(soup)
-
-        return [{
-            "asin": asin,
-            "titolo": titolo,
-            "immagine_url": img_url,
-            "prezzo_iniziale": prezzo_iniziale,
-            "prezzo_finale": prezzo_finale,
-            "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
-            "sconto_val": sconto_val,
-            "is_prime": is_prime,
-            "is_sped_gratis": is_free,
-            "costo_spedizione": costo_sped,
-            "voto_medio": voto_estratto,
-            "num_recensioni": recensioni_estratte,
-            "vendite_mensili": recensioni_estratte,
-            "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
-        }]
-    except Exception:
-        return []
 
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     if sort_type == "Prezzo minimo":
@@ -341,28 +379,29 @@ def ottieni_offerte_avanzate(
 ):
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     clean_keyword = keyword.strip()
-    asin_match = RE_ASIN.search(clean_keyword)
-    token = get_creators_access_token()
     
-    # Se la ricerca è un ASIN o un Link, esegui la chiamata mirata GetItems (o fallback DP)
-    if asin_match:
-        asin_code = asin_match.group(1) or asin_match.group(2)
+    # 1. Se l'utente ha incollato un link o un ASIN esatto
+    asin_match = RE_ASIN.search(clean_keyword)
+    if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
+        asin_code = asin_match.group(1)
+        token = get_creators_access_token()
         if token:
             res_api = ottieni_dettaglio_asin_api(asin_code, token, partner_tag)
             if res_api:
                 if solo_spedizione_gratuita and res_api[0]["costo_spedizione"] > 0:
                     return []
                 return res_api
+
         res_dp = _ottieni_prodotto_singolo_dp(asin_code, partner_tag)
         if res_dp:
             if solo_spedizione_gratuita and res_dp[0]["costo_spedizione"] > 0:
                 return []
             return res_dp
-        clean_keyword = asin_code
 
-    query_str = clean_keyword if clean_keyword else "offerte del giorno"
+    query_str = clean_keyword if clean_keyword else "offerte"
+    token = get_creators_access_token()
 
-    # Chiamata SearchItems (Ricerca Multipla)
+    # 2. Ricerca tramite PA-API5 se configurata
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -389,11 +428,6 @@ def ottieni_offerte_avanzate(
                 "CustomerReviews.StarRating"
             ]
         }
-        if min_price and min_price > 0:
-            payload["MinPrice"] = int(min_price * 100)
-        if max_price and max_price > 0:
-            payload["MaxPrice"] = int(max_price * 100)
-
         try:
             resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
             if resp.status_code == 200:
@@ -421,7 +455,6 @@ def ottieni_offerte_avanzate(
                         charges = delivery.get("ShippingCharges", [])
                         if charges:
                             costo_sped = float(charges[0].get("Amount", 0.0))
-                        
                         is_free_ship = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
 
                     if solo_spedizione_gratuita and costo_sped > 0:
@@ -430,11 +463,6 @@ def ottieni_offerte_avanzate(
                     sconto_val = 0
                     if old_price_val > price_val > 0:
                         sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
-
-                    if min_discount > 0 and sconto_val < min_discount:
-                        continue
-                    if max_discount < 100 and sconto_val > max_discount:
-                        continue
 
                     voto_reale = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.5))
                     recensioni_reali = int(it.get("CustomerReviews", {}).get("Count", 0))
@@ -460,6 +488,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
+    # 3. Fallback Scraper ad alta resilienza
     return _ottieni_offerte_fallback(
         query_str=query_str,
         sort_type=sort_type,
@@ -482,105 +511,101 @@ def _ottieni_offerte_fallback(query_str, sort_type, solo_spedizione_gratuita, mi
 
     prodotti = []
     asins_visti = set()
-    session = c_requests.Session(impersonate="chrome120")
 
     for base_url in urls_to_try:
-        try:
-            resp = session.get(base_url, headers=_HTTP_HEADERS, timeout=6)
-            if resp.status_code != 200 or not resp.text:
+        html_text = _fetch_html(base_url, timeout=7)
+        if not html_text:
+            continue
+
+        soup = BeautifulSoup(html_text, "html.parser")
+        items = soup.find_all("div", {"data-component-type": "s-search-result"})
+        if not items:
+            items = [div for div in soup.find_all("div", attrs={"data-asin": True}) if len(div.get("data-asin", "").strip()) == 10]
+
+        for it in items:
+            if len(prodotti) >= item_count:
+                break
+
+            asin = it.get("data-asin", "").strip()
+            if not asin or asin in asins_visti:
                 continue
 
-            soup = BeautifulSoup(resp.text, "html.parser")
-            items = soup.find_all("div", {"data-component-type": "s-search-result"})
-            if not items:
-                items = [div for div in soup.find_all("div", attrs={"data-asin": True}) if len(div.get("data-asin", "").strip()) == 10]
+            text_full = it.get_text(" ", strip=True).replace("\xa0", " ")
+            if "non disponibile" in text_full.lower():
+                continue
 
-            for it in items:
-                if len(prodotti) >= item_count:
-                    break
+            # Estrazione Spedizione
+            costo_sped = 0.0
+            for pat in SHIPPING_PATTERNS:
+                m = pat.search(text_full)
+                if m:
+                    try:
+                        val = float(m.group(1).replace(",", "."))
+                        if val > 0:
+                            costo_sped = val
+                            break
+                    except ValueError:
+                        pass
 
-                asin = it.get("data-asin", "").strip()
-                if not asin or asin in asins_visti:
-                    continue
+            is_prime = bool("a-icon-prime" in str(it).lower() or "prime" in text_full.lower()) if costo_sped == 0.0 else False
+            is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in text_full.lower() or "senza costi aggiuntivi" in text_full.lower()))
 
-                text_full = it.get_text(" ", strip=True)
-                if "non disponibile" in text_full.lower():
-                    continue
+            if solo_spedizione_gratuita and costo_sped > 0:
+                continue
 
-                costo_sped = 0.0
-                for pat in SHIPPING_PATTERNS:
-                    m = pat.search(text_full)
-                    if m:
-                        try:
-                            val = float(m.group(1).replace(",", "."))
-                            if val > 0:
-                                costo_sped = val
-                                break
-                        except ValueError:
-                            pass
+            prezzo_prodotto = estrai_prezzo_tag(it)
+            if prezzo_prodotto <= 0.0:
+                continue
 
-                is_prime = bool("a-icon-prime" in str(it).lower() or "prime" in text_full.lower()) if costo_sped == 0.0 else False
-                is_free = bool(costo_sped == 0.0 and (is_prime or "gratuita" in text_full.lower() or "gratis" in text_full.lower()))
+            if min_price and prezzo_prodotto < min_price:
+                continue
+            if max_price and prezzo_prodotto > max_price:
+                continue
 
-                if solo_spedizione_gratuita and costo_sped > 0:
-                    continue
+            basis_price_tag = it.find("span", {"class": "a-price", "data-a-strike": "true"}) or it.find("span", {"class": "a-text-price"})
+            prezzo_iniziale = prezzo_prodotto
+            if basis_price_tag:
+                p_init = estrai_prezzo_tag(basis_price_tag)
+                if p_init > prezzo_prodotto:
+                    prezzo_iniziale = p_init
 
-                prezzo_prodotto = estrai_prezzo_tag(it)
-                if prezzo_prodotto <= 0.0:
-                    continue
+            sconto_val = 0
+            if prezzo_iniziale > prezzo_prodotto > 0:
+                sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
 
-                if min_price and prezzo_prodotto < min_price:
-                    continue
-                if max_price and prezzo_prodotto > max_price:
-                    continue
+            # Se l'utente seleziona un filtro di sconto specifico, applicalo solo se c'è uno sconto minimo richiesto
+            if min_discount > 0 and sconto_val < min_discount:
+                continue
 
-                basis_price_tag = it.find("span", {"class": "a-price", "data-a-strike": "true"}) or it.find("span", {"class": "a-text-price"})
-                prezzo_iniziale = prezzo_prodotto
-                if basis_price_tag:
-                    p_init = estrai_prezzo_tag(basis_price_tag)
-                    if p_init > prezzo_prodotto:
-                        prezzo_iniziale = p_init
+            title_tag = it.find("h2")
+            titolo = title_tag.get_text(strip=True) if title_tag else "Prodotto Amazon"
+            img_tag = it.find("img", {"class": "s-image"})
+            img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
 
-                sconto_val = 0
-                if prezzo_iniziale > prezzo_prodotto > 0:
-                    sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
+            voto_estratto, recensioni_estratte = analizza_recensioni_html(it)
+            vendite_estratte = estrai_vendite_recenti(it)
+            if vendite_estratte == 0:
+                vendite_estratte = recensioni_estratte
 
-                if min_discount > 0 and sconto_val < min_discount:
-                    continue
-                if max_discount < 100 and sconto_val > max_discount:
-                    continue
+            asins_visti.add(asin)
+            prodotti.append({
+                "asin": asin,
+                "titolo": titolo,
+                "immagine_url": img_url,
+                "prezzo_iniziale": prezzo_iniziale,
+                "prezzo_finale": prezzo_prodotto,
+                "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
+                "sconto_val": sconto_val,
+                "is_prime": is_prime,
+                "is_sped_gratis": is_free,
+                "costo_spedizione": costo_sped,
+                "voto_medio": voto_estratto,
+                "num_recensioni": recensioni_estratte,
+                "vendite_mensili": vendite_estratte,
+                "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
+            })
 
-                title_tag = it.find("h2")
-                titolo = title_tag.get_text(strip=True) if title_tag else "Prodotto Amazon"
-                img_tag = it.find("img", {"class": "s-image"})
-                img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
-
-                voto_estratto, recensioni_estratte = analizza_recensioni_html(it)
-                vendite_estratte = estrai_vendite_recenti(it)
-                if vendite_estratte == 0:
-                    vendite_estratte = recensioni_estratte
-
-                asins_visti.add(asin)
-                prodotti.append({
-                    "asin": asin,
-                    "titolo": titolo,
-                    "immagine_url": img_url,
-                    "prezzo_iniziale": prezzo_iniziale,
-                    "prezzo_finale": prezzo_prodotto,
-                    "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
-                    "sconto_val": sconto_val,
-                    "is_prime": is_prime,
-                    "is_sped_gratis": is_free,
-                    "costo_spedizione": costo_sped,
-                    "voto_medio": voto_estratto,
-                    "num_recensioni": recensioni_estratte,
-                    "vendite_mensili": vendite_estratte,
-                    "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
-                })
-
-            if prodotti:
-                break
-        except Exception:
-            continue
+        if prodotti:
+            break
 
     return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
