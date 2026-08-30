@@ -18,7 +18,7 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
-    /* Sfondo Celeste Chiaro Originale della Pagina */
+    /* 1. SFONDO PAGINA: Celeste Chiaro */
     .stApp {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
@@ -33,14 +33,15 @@ st.markdown("""
 
     /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
-        background: rgba(255, 255, 255, 0.75) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
-        border: 1px solid rgba(2, 132, 199, 0.25) !important;
+        border: 1px solid rgba(2, 132, 199, 0.30) !important;
         gap: 4px !important;
-        margin-bottom: 4px !important;
+        margin-bottom: 5px !important;
         display: flex !important;
         width: 100% !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.12) !important;
     }
 
     button[data-baseweb="tab"] {
@@ -48,7 +49,7 @@ st.markdown("""
         color: #0369a1 !important;
         font-weight: 800 !important;
         font-size: 0.80rem !important;
-        background: rgba(255, 255, 255, 0.85) !important;
+        background: rgba(255, 255, 255, 0.90) !important;
         border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
@@ -132,7 +133,21 @@ st.markdown("""
     .hero-author-tag strong { color: #0369a1; }
 
     /* =========================================================================
-       RIQUADRI (SFONDO BIANCO/VERDE MENTA IN RISALTO RISPETTO AL CELESTE)
+       2. RETTANGOLO INTERPOSTO (PANNELLO CONTENITORE ARROTONDATO)
+       ========================================================================= */
+    div[data-baseweb="tab-panel"] {
+        background: rgba(255, 255, 255, 0.65) !important;
+        backdrop-filter: blur(12px) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        border: 2px solid rgba(255, 255, 255, 0.85) !important;
+        border-radius: 14px !important;
+        padding: 8px 6px !important;
+        margin-top: 2px !important;
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+    }
+
+    /* =========================================================================
+       3. SCHEDE INTERNE (RICERCA, FILTRI E PRODOTTI)
        ========================================================================= */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
@@ -141,7 +156,7 @@ st.markdown("""
         border-radius: 10px !important;
         padding: 5px 6px !important;
         margin-bottom: 6px !important;
-        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.20), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.18), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     }
 
     /* Azzeramento spazi interni verticali */
@@ -185,7 +200,7 @@ st.markdown("""
         height: 26px !important;
     }
 
-    /* Pulsante Cerca (Incolonnato - Blu) */
+    /* Pulsante Cerca */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button,
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:first-of-type button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
@@ -211,7 +226,7 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Pulsante + Altri 10 (Incolonnato - Verde) */
+    /* Pulsante + Altri 10 */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button,
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
