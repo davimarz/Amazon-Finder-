@@ -10,6 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Icone SVG Social Condivisione Ottimizzate
+SVG_WA = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
+SVG_FB = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
+SVG_GMAIL = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
+SVG_TG = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
+SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
+
 st.markdown("""
 <style>
     #MainMenu, header, footer { visibility: hidden !important; height: 0 !important; }
@@ -18,7 +25,7 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
-    /* 1. SFONDO PAGINA: Celeste Chiaro */
+    /* 1. Sfondo Celeste Chiaro Pagina */
     .stApp {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
@@ -33,15 +40,14 @@ st.markdown("""
 
     /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
-        background: rgba(255, 255, 255, 0.85) !important;
+        background: rgba(255, 255, 255, 0.80) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
-        border: 1px solid rgba(2, 132, 199, 0.30) !important;
+        border: 1px solid rgba(2, 132, 199, 0.25) !important;
         gap: 4px !important;
-        margin-bottom: 5px !important;
+        margin-bottom: 4px !important;
         display: flex !important;
         width: 100% !important;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.12) !important;
     }
 
     button[data-baseweb="tab"] {
@@ -49,7 +55,7 @@ st.markdown("""
         color: #0369a1 !important;
         font-weight: 800 !important;
         font-size: 0.80rem !important;
-        background: rgba(255, 255, 255, 0.90) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
@@ -133,21 +139,21 @@ st.markdown("""
     .hero-author-tag strong { color: #0369a1; }
 
     /* =========================================================================
-       2. RETTANGOLO INTERPOSTO (PANNELLO CONTENITORE ARROTONDATO)
+       2. PANNELLO INTERPOSTO FRA PAGINA E SCHEDE
        ========================================================================= */
     div[data-baseweb="tab-panel"] {
-        background: rgba(255, 255, 255, 0.65) !important;
-        backdrop-filter: blur(12px) !important;
-        -webkit-backdrop-filter: blur(12px) !important;
+        background: rgba(255, 255, 255, 0.60) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
         border: 2px solid rgba(255, 255, 255, 0.85) !important;
-        border-radius: 14px !important;
-        padding: 8px 6px !important;
+        border-radius: 12px !important;
+        padding: 6px !important;
         margin-top: 2px !important;
-        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
     }
 
     /* =========================================================================
-       3. SCHEDE INTERNE (RICERCA, FILTRI E PRODOTTI)
+       3. SCHEDE CON SFONDO BIANCO/VERDE MENTA IN CONTRASTO
        ========================================================================= */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
@@ -156,10 +162,9 @@ st.markdown("""
         border-radius: 10px !important;
         padding: 5px 6px !important;
         margin-bottom: 6px !important;
-        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.18), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 3px 12px rgba(5, 150, 105, 0.18) !important;
     }
 
-    /* Azzeramento spazi interni verticali */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
         gap: 0px !important;
         row-gap: 0px !important;
@@ -200,9 +205,8 @@ st.markdown("""
         height: 26px !important;
     }
 
-    /* Pulsante Cerca */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button,
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:first-of-type button {
+    /* Pulsante 1: Cerca (Incolonnato a filo - Blu) */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border: 1px solid #0284c7 !important;
@@ -217,8 +221,7 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3) !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button p,
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:first-of-type button p {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button p {
         color: #ffffff !important;
         font-weight: 900 !important;
         font-size: 0.78rem !important;
@@ -226,9 +229,8 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Pulsante + Altri 10 */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button,
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button {
+    /* Pulsante 2: + Altri 10 (Incolonnato a filo - Verde) */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
         border: 1px solid #10b981 !important;
@@ -243,8 +245,7 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25) !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button p,
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button p {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button p {
         color: #ffffff !important;
         font-weight: 900 !important;
         font-size: 0.78rem !important;
@@ -549,7 +550,6 @@ st.markdown("""
     .btn-wa { background-color: #25D366; }
     .btn-fb { background-color: #1877F2; }
     .btn-gmail { background-color: #EA4335; }
-    .btn-ig { background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%); }
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 </style>
@@ -588,8 +588,6 @@ def trigger_ricerca(increment=False):
     free_ship = st.session_state.get("cerca_check_sped_gratis", False)
 
     risultati = ottieni_offerte_avanzate(
-        categoria="",
-        sottocategoria="",
         keyword=kw,
         sort_type=sort_t,
         solo_spedizione_gratuita=free_ship,
@@ -665,8 +663,8 @@ def render_product_card(p, tab_key="main"):
             st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
 
         with col_fb:
-            voto = p.get("voto_medio", 4.8)
-            num_val = p.get("num_recensioni", 765)
+            voto = p.get("voto_medio", 4.5)
+            num_val = p.get("num_recensioni", 0)
             distrib = calcola_distribuzione_recensioni(voto, num_val)
             voto_str = f"{voto:.1f}".replace(".", ",")
             stelle_icon = "★" * int(voto) + "☆" * (5 - int(voto))
@@ -686,24 +684,16 @@ def render_product_card(p, tab_key="main"):
         wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
         fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
         gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
-        ig_url = "https://www.instagram.com/"
         tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
-
-        svg_wa = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
-        svg_fb = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
-        svg_gmail = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
-        svg_ig = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>'
-        svg_tg = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
-        svg_copy = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
         copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato!');}});"
 
         st.markdown(
-            f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa'>{svg_wa}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb'>{svg_fb}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail'>{svg_gmail}</a><a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig'>{svg_ig}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg'>{svg_tg}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy'>{svg_copy}</button></div>",
+            f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa'>{SVG_WA}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb'>{SVG_FB}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail'>{SVG_GMAIL}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg'>{SVG_TG}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy'>{SVG_COPY}</button></div>",
             unsafe_allow_html=True
         )
 
 with tab_cerca:
-    # 1. Riquadro Scheda di Ricerca (Casella, Cerca, Altri 10)
+    # 1. Riquadro Scheda di Ricerca
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -716,7 +706,7 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
-    # 2. Riquadro Scheda Filtri (Ordinamento, Sconto, Spedizione)
+    # 2. Riquadro Scheda Filtri
     with st.container(border=True):
         st.radio(
             "🏷️ Ordinamento:",
