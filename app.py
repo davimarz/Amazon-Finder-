@@ -767,7 +767,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 4 Schede (Offerte Vetrina spostata all'inizio a sinistra)
+# 4 Schede (Offerte Vetrina all'inizio a sinistra)
 tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔥 Offerte Vetrina",
     "🔍 Cerca Prodotto", 
@@ -852,7 +852,11 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_vetrina:
-    st.markdown("<p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 8px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>", unsafe_allow_html=True)
+    st.markdown("""
+        <p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 2px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>
+        <p style='font-size: 0.74rem; font-weight: 600; color: #334155; margin: 0 0 10px 2px; font-style: italic;'>*I prodotti che vengono visualizzati in questa pagina hanno un prezzo che poi andrà a variare in base alle misure, colori, taglie.*</p>
+    """, unsafe_allow_html=True)
+
     if st.session_state.offerte_vetrina:
         for idx in range(0, len(st.session_state.offerte_vetrina), 2):
             col_l, col_r = st.columns(2)
