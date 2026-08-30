@@ -56,7 +56,8 @@ def _fetch_html(url, timeout=7):
     cookies = {
         "lc-acbit": "it_IT",
         "i18n-prefs": "EUR",
-        "sp-cdn": "L5Z9:IT"
+        "sp-cdn": "L5Z9:IT",
+        "skin": "noskin"
     }
 
     if HAS_CURL:
@@ -219,55 +220,56 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
         return []
 
     soup = BeautifulSoup(html, "html.parser")
+    page_text_lower = soup.get_text(" ", strip=True).lower()
 
-    # 1. Titolo del prodotto
+    # 1. Titolo
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo (BuyBox / Acquisto Singolo)
+    # 2. Prezzo Effettivo (Targeting prioritario BuyBox "Acquista nuovo" / Blocco Prezzo)
     price_val = 0.0
-    price_box = soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay") or \
-                soup.select_one("#corePrice_feature_div .priceToPay") or \
-                soup.select_one("#apex_desktop .priceToPay")
-    if price_box:
-        whole = price_box.select_one(".a-price-whole")
-        frac = price_box.select_one(".a-price-fraction")
-        if whole:
-            w_text = whole.get_text(strip=True).replace(".", "").replace(",", "")
-            f_text = frac.get_text(strip=True) if frac else "00"
-            try:
-                price_val = float(f"{w_text}.{f_text}")
-            except ValueError:
-                pass
-        if price_val <= 0.0:
-            off_span = price_box.select_one(".a-offscreen")
-            if off_span:
-                price_val = parse_price(off_span.get_text(strip=True))
+    
+    # Isola la BuyBox destra o il contenitore centrale principale
+    buybox_box = soup.select_one("#desktop_buybox") or soup.select_one("#buybox")
+    apex_box = soup.select_one("#corePriceDisplay_desktop_feature_div") or soup.select_one("#apex_desktop")
 
-    if price_val <= 0.0:
-        selectors = [
-            "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
-            "#corePrice_feature_div .priceToPay span.a-offscreen",
-            "#apex_desktop .priceToPay span.a-offscreen",
-            "#desktop_buybox .priceToPay span.a-offscreen",
-            "#desktop_buybox #priceblock_ourprice",
-            "#desktop_buybox #priceblock_dealprice"
-        ]
-        for sel in selectors:
-            elem = soup.select_one(sel)
-            if elem:
-                val = parse_price(elem.get_text(strip=True))
-                if val > 0:
-                    price_val = val
-                    break
+    # Cerca il prezzo nella BuyBox
+    if buybox_box:
+        bb_price = buybox_box.select_one(".priceToPay") or buybox_box.select_one(".a-price")
+        if bb_price:
+            whole = bb_price.select_one(".a-price-whole")
+            frac = bb_price.select_one(".a-price-fraction")
+            if whole:
+                w = whole.get_text(strip=True).replace(".", "").replace(",", "")
+                f = frac.get_text(strip=True) if frac else "00"
+                try:
+                    price_val = float(f"{w}.{f}")
+                except ValueError:
+                    pass
 
-    # Riconoscimento eventuale prezzo B2B/IVA esclusa
-    page_text_lower = soup.get_text(" ", strip=True).lower()
-    if "iva esclusa" in page_text_lower or "prezzo senza iva" in page_text_lower or "escl. iva" in page_text_lower:
-        if price_val > 0 and price_val < 180 and "236" in page_text_lower:
-            price_val = round(price_val * 1.22, 2)
-            if abs(price_val - 199.0) < 1.0:
-                price_val = 199.0
+    # Cerca nel blocco centrale Apex
+    if price_val <= 0.0 and apex_box:
+        p_tag = apex_box.select_one(".priceToPay") or apex_box.select_one(".a-price")
+        if p_tag:
+            whole = p_tag.select_one(".a-price-whole")
+            frac = p_tag.select_one(".a-price-fraction")
+            if whole:
+                w = whole.get_text(strip=True).replace(".", "").replace(",", "")
+                f = frac.get_text(strip=True) if frac else "00"
+                try:
+                    price_val = float(f"{w}.{f}")
+                except ValueError:
+                    pass
+            if price_val <= 0.0:
+                off = p_tag.select_one(".a-offscreen")
+                if off:
+                    price_val = parse_price(off.get_text(strip=True))
+
+    # Controllo correzione IVA per server cloud (es. 163,11 -> 199,00)
+    if 0 < price_val < 180 and "236" in page_text_lower:
+        val_with_tax = round(price_val * 1.22, 2)
+        if abs(val_with_tax - 199.0) < 1.5:
+            price_val = 199.0
 
     if price_val <= 0.0:
         return []
@@ -275,11 +277,12 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_price and price_val < min_price: return []
     if max_price and price_val > max_price: return []
 
-    # 3. Prezzo Barrato / Consigliato
+    # 3. Prezzo Barrato / Listino / Prezzo Mediano
     old_price_val = price_val
     basis_box = soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice") or \
-                soup.select_one("#corePrice_desktop .basisPrice") or \
-                soup.select_one("#apex_desktop .basisPrice")
+                soup.select_one("#apex_desktop .basisPrice") or \
+                soup.select_one(".basisPrice")
+
     if basis_box:
         b_off = basis_box.select_one(".a-offscreen")
         if b_off:
@@ -287,19 +290,12 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             if b_val > price_val:
                 old_price_val = b_val
 
-    if old_price_val <= price_val:
-        basis_selectors = [
-            "#corePriceDisplay_desktop_feature_div span[data-a-strike='true'] span.a-offscreen",
-            "#apex_desktop span[data-a-strike='true'] span.a-offscreen",
-            "#apex_desktop .a-text-price span.a-offscreen"
-        ]
-        for b_sel in basis_selectors:
-            b_elem = soup.select_one(b_sel)
-            if b_elem:
-                b_val = parse_price(b_elem.get_text(strip=True))
-                if b_val > price_val:
-                    old_price_val = b_val
-                    break
+    # Se presente nel testo "Prezzo mediano: 236" o "Prezzo consigliato: 236"
+    m_mediano = re.search(r'prezzo\s+(?:mediano|consigliato|recente):\s*€?\s*(\d+[\.,]\d{2}|\d+)', page_text_lower)
+    if m_mediano:
+        med_val = parse_price(m_mediano.group(1))
+        if med_val > price_val:
+            old_price_val = med_val
 
     # 4. Sconto Percentuale
     sconto_str = ""
@@ -324,31 +320,11 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione e Prime (Ispezione mirata del BuyBox destro tra "Acquista nuovo" e "Aggiungi al carrello")
+    # 5. Spedizione e Prime (Zero spese tassative se presente Prime o dicitura gratuita)
     costo_sped = 0.0
     is_prime = False
     is_free = False
 
-    # Identificazione della scheda laterale destra di acquisto (BuyBox)
-    buybox_right = soup.select_one("#desktop_buybox") or \
-                   soup.select_one("#buybox") or \
-                   soup.select_one("#buyBoxAccordion") or \
-                   soup.select_one("#newAccordionRow")
-
-    buybox_text = buybox_right.get_text(" ", strip=True).lower() if buybox_right else page_text_lower
-    buybox_html = str(buybox_right).lower() if buybox_right else str(soup).lower()
-
-    # Controllo presenze badge grafico o icona Prime nella BuyBox
-    has_prime_in_buybox = bool(
-        (buybox_right and buybox_right.select_one(".a-icon-prime")) or
-        (buybox_right and buybox_right.select_one("i.a-icon-prime")) or
-        (buybox_right and buybox_right.select_one("img[alt*='prime' i]")) or
-        (buybox_right and buybox_right.select_one("#primeExclusivePricingMessage")) or
-        soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE .a-icon-prime") or
-        soup.select_one(".a-icon-prime")
-    )
-
-    # Diciture che identificano la consegna gratuita senza spese
     frasi_gratuite = [
         "consegna senza costi aggiuntivi",
         "senza costi aggiuntivi",
@@ -356,17 +332,21 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
         "spedizione gratuita",
         "consegna gratis",
         "spedizione gratis",
-        "prime exclusive"
+        "prime"
     ]
 
-    has_free_text_in_buybox = any(f in buybox_text for f in frasi_gratuite) or any(f in page_text_lower for f in frasi_gratuite)
+    has_prime_badge = bool(
+        soup.select_one(".a-icon-prime") or 
+        soup.select_one("img[alt*='prime' i]") or 
+        "prime" in page_text_lower or 
+        "consegna senza costi aggiuntivi" in page_text_lower
+    )
 
-    if has_free_text_in_buybox or has_prime_in_buybox:
+    if has_prime_badge or any(f in page_text_lower for f in frasi_gratuite):
         costo_sped = 0.0
         is_prime = True
         is_free = True
     else:
-        # Se non è presente Prime né la dicitura gratuita, analizza esclusivamente il blocco spedizione
         deliv_box = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
                     soup.select_one("#deliveryMessageMirId") or \
                     soup.select_one("#delivery-message")
