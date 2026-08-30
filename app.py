@@ -1028,23 +1028,26 @@ with tab_contatti:
 
 # ----------------- STATISTICHE VISITE E PULSANTE TORNA ALL'INIZIO -----------------
 giornaliere, totali = ottieni_statistiche()
-st.markdown(f"""
-<div style="text-align: center; font-size: 0.74rem; font-weight: 700; color: #334155; margin: 20px 0 10px 0;">
-    📊 Visite oggi: <strong>{giornaliere}</strong> | Visite totali: <strong>{totali}</strong>
-</div>
-<div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 10px 0 15px 0;">
-    <a href="#top_page" target="_self" onclick="(function(){
-        try {
-            const stContainer = window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid=\\'stAppViewContainer\\']');
-            if(stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
-        } catch(e) {}
-        try {
-            const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
-            if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-        } catch(e) {}
-        try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-    })()" class="btn-back-to-top">
-        ⬆️ Torna all'inizio
-    </a>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div style="text-align: center; font-size: 0.74rem; font-weight: 700; color: #334155; margin: 20px 0 10px 0;">
+        📊 Visite oggi: <strong>{giornaliere}</strong> | Visite totali: <strong>{totali}</strong>
+    </div>
+    <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 10px 0 15px 0;">
+        <a href="#top_page" target="_self" onclick="(function(){{
+            try {{
+                const stContainer = window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid=\\'stAppViewContainer\\']');
+                if(stContainer) {{ stContainer.scrollTo({{top: 0, behavior: 'smooth'}}); }}
+            }} catch(e) {{}}
+            try {{
+                const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
+                if(el) {{ el.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}
+            }} catch(e) {{}}
+            try {{ window.scrollTo({{top: 0, behavior: 'smooth'}}); }} catch(e) {{}}
+        }})" class="btn-back-to-top">
+            ⬆️ Torna all'inizio
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
