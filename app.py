@@ -42,7 +42,6 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* Tabs Compatti a 3 Colonne */
     div[data-baseweb="tab-list"] {
         background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
