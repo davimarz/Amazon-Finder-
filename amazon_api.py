@@ -18,7 +18,8 @@ SORT_FALLBACK_MAP = {
     "Recensioni": "review-rank"
 }
 
-RE_ASIN = re.compile(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})', re.IGNORECASE)
+# Regex precompilate ad alte prestazioni
+RE_ASIN = re.compile(r'/(?:dp|gp/product|d)/([A-Z0-9]{10})|^([A-Z0-9]{10})$', re.IGNORECASE)
 RE_PRICE_TEXT = re.compile(r'(\d+[\.,]\d{2})\s*€|€\s*(\d+[\.,]\d{2})')
 RE_STAR_ALT = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
 RE_DIGITS = re.compile(r'[^\d]')
@@ -27,8 +28,9 @@ RE_SALES = re.compile(r'(\d+k?|\d+[\.,]\d+k?)\+?\s*acquistati\s+nel\s+mese', re.
 
 SHIPPING_PATTERNS = [
     re.compile(r'(\d+[.,]\d{2})\s*€\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE),
-    re.compile(r'(?:consegna|spedizione)\s*(?:a|per|:)?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
+    re.compile(r'(?:consegna|spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
     re.compile(r'\+\s*€?\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)?', re.IGNORECASE),
+    re.compile(r'€\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE),
     re.compile(r'(?:costi?\s+di\s+spedizione|costo\s+consegna)\s*[:e]?\s*€?\s*(\d+[.,]\d{2})', re.IGNORECASE),
     re.compile(r'eur\s*(\d+[.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)', re.IGNORECASE)
 ]
@@ -43,15 +45,6 @@ _HTTP_HEADERS = {
     "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
 }
-
-FRASI_SPED_GRATUITA = (
-    "consegna senza costi aggiuntivi",
-    "consegna gratuita",
-    "spedizione gratuita",
-    "senza costi aggiuntivi",
-    "consegna gratis",
-    "spedizione gratis"
-)
 
 def get_creators_access_token():
     now = time.time()
@@ -172,10 +165,10 @@ def estrai_vendite_recenti(item_tag):
 def analizza_spedizione_html(item_tag):
     html_str = str(item_tag).lower()
     testo_completo = item_tag.get_text(" ", strip=True)
+    testo_lower = testo_completo.lower()
 
-    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_completo.lower())
-    ha_opzione_gratis = is_prime or any(f in testo_completo.lower() for f in FRASI_SPED_GRATUITA)
-
+    is_prime = bool("a-icon-prime" in html_str or "s-prime" in html_str or "prime" in testo_lower)
+    
     costo_sped = 0.0
     for pat in SHIPPING_PATTERNS:
         match_costo = pat.search(testo_completo)
@@ -184,12 +177,25 @@ def analizza_spedizione_html(item_tag):
                 val = float(match_costo.group(1).replace(",", "."))
                 if val > 0:
                     costo_sped = val
-                    ha_opzione_gratis = False
                     break
             except ValueError:
                 pass
 
-    return costo_sped, is_prime, ha_opzione_gratis
+    if costo_sped > 0:
+        return costo_sped, False, False
+
+    if is_prime:
+        return 0.0, True, True
+
+    frasi_gratis_reali = (
+        "consegna senza costi aggiuntivi",
+        "consegna gratuita",
+        "spedizione gratuita",
+        "consegna gratis",
+        "spedizione gratis"
+    )
+    ha_gratis = any(f in testo_lower for f in frasi_gratis_reali) and "ordini idonei" not in testo_lower and "superiori a" not in testo_lower
+    return 0.0, False, ha_gratis
 
 def estrai_prezzo_tag(it):
     price_whole = it.find("span", {"class": "a-price-whole"})
@@ -227,6 +233,93 @@ def estrai_prezzo_tag(it):
 
     return 0.0
 
+def _ottieni_prodotto_singolo_dp(asin, partner_tag, solo_spedizione_gratuita=False):
+    """
+    Estrae direttamente la scheda prodotto /dp/{asin} per ottenere
+    l'importo esatto di spedizione, prezzo e recensioni al centesimo.
+    """
+    url = f"https://www.amazon.it/dp/{asin}?th=1"
+    session = c_requests.Session(impersonate="chrome120")
+    try:
+        resp = session.get(url, headers=_HTTP_HEADERS, timeout=7)
+        if resp.status_code != 200 or not resp.text:
+            return []
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        
+        # Titolo
+        title_tag = soup.find("span", {"id": "productTitle"})
+        titolo = title_tag.get_text(strip=True) if title_tag else "Prodotto Amazon"
+
+        # Prezzo Attuale
+        price_block = soup.find("div", {"id": "corePrice_desktop"}) or \
+                      soup.find("div", {"id": "corePriceDisplay_desktop_feature_div"}) or \
+                      soup.find("div", {"id": "apex_desktop"}) or soup
+        prezzo_finale = estrai_prezzo_tag(price_block)
+        if prezzo_finale <= 0:
+            prezzo_finale = estrai_prezzo_tag(soup)
+
+        # Prezzo Iniziale (Listino / Risparmio)
+        basis_tag = soup.find("span", {"class": "basisPrice"}) or soup.find("span", {"data-a-strike": "true"})
+        prezzo_iniziale = estrai_prezzo_tag(basis_tag) if basis_tag else prezzo_finale
+        if prezzo_iniziale < prezzo_finale:
+            prezzo_iniziale = prezzo_finale
+
+        sconto_val = 0
+        if prezzo_iniziale > prezzo_finale > 0:
+            sconto_val = int(round(((prezzo_iniziale - prezzo_finale) / prezzo_iniziale) * 100))
+
+        # Estrazione Spedizione Esatta dal blocco consegna
+        deliv_block = soup.find("div", {"id": "deliveryMessageMirId"}) or \
+                      soup.find("div", {"id": "mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE"}) or \
+                      soup.find("div", {"id": "delivery-message"}) or \
+                      soup.find("div", {"id": "amazonGlobal_feature_div"})
+
+        deliv_text = deliv_block.get_text(" ", strip=True) if deliv_block else soup.get_text(" ", strip=True)
+        costo_sped = 0.0
+        for pat in SHIPPING_PATTERNS:
+            match_costo = pat.search(deliv_text)
+            if match_costo:
+                try:
+                    val = float(match_costo.group(1).replace(",", "."))
+                    if val > 0:
+                        costo_sped = val
+                        break
+                except ValueError:
+                    pass
+
+        is_prime = bool("prime" in deliv_text.lower() or soup.find("i", {"class": "a-icon-prime"}))
+        is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in deliv_text.lower() or "gratuita" in deliv_text.lower()))
+
+        if solo_spedizione_gratuita and costo_sped > 0:
+            return []
+
+        # Immagine
+        img_tag = soup.find("img", {"id": "landingImage"})
+        img_url = img_tag["src"] if img_tag and "src" in img_tag.attrs else "https://via.placeholder.com/300"
+
+        # Voto e Recensioni
+        voto_estratto, recensioni_estratte = analizza_recensioni_html(soup)
+
+        return [{
+            "asin": asin,
+            "titolo": titolo,
+            "immagine_url": img_url,
+            "prezzo_iniziale": prezzo_iniziale,
+            "prezzo_finale": prezzo_finale,
+            "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
+            "sconto_val": sconto_val,
+            "is_prime": is_prime,
+            "is_sped_gratis": is_free,
+            "costo_spedizione": costo_sped,
+            "voto_medio": voto_estratto,
+            "num_recensioni": recensioni_estratte,
+            "vendite_mensili": recensioni_estratte,
+            "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
+        }]
+    except Exception:
+        return []
+
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     if sort_type == "Prezzo minimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
@@ -253,8 +346,14 @@ def ottieni_offerte_avanzate(
     
     clean_keyword = keyword.strip()
     asin_match = RE_ASIN.search(clean_keyword)
+    
+    # Se la ricerca è un ASIN o un Link diretto, estraiamo direttamente la scheda prodotto live
     if asin_match:
-        clean_keyword = asin_match.group(1)
+        asin_code = asin_match.group(1) or asin_match.group(2)
+        prodotti_dp = _ottieni_prodotto_singolo_dp(asin_code, partner_tag, solo_spedizione_gratuita)
+        if prodotti_dp:
+            return prodotti_dp
+        clean_keyword = asin_code
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
@@ -318,7 +417,7 @@ def ottieni_offerte_avanzate(
                         charges = delivery.get("ShippingCharges", [])
                         if charges:
                             costo_sped = float(charges[0].get("Amount", 0.0))
-                            if costo_sped > 0 and not is_prime:
+                            if costo_sped > 0:
                                 is_free_ship = False
 
                     if solo_spedizione_gratuita and not is_free_ship:
