@@ -29,10 +29,10 @@ RE_PRICE = re.compile(r'(\d{1,3}(?:\.\d{3})*|\d+)[,\.](\d{2})')
 RE_STAR = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
 RE_DIGITS = re.compile(r'[^\d]')
 
-SHIPPING_PATTERNS = [
-    re.compile(r'(\d+[\.,]\d{2})\s*€\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna|invio|trasporto)', re.IGNORECASE),
-    re.compile(r'(?:costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
-    re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE)
+SHIPPING_STRICT_PATTERNS = [
+    re.compile(r'(?:costo\s+di\s+spedizione|spese\s+di\s+spedizione|costo\s+consegna)\s*(?:a|per|di|da|:)?\s*€?\s*(\d{1,2}[\.,]\d{2})', re.IGNORECASE),
+    re.compile(r'\+\s*€?\s*(\d{1,2}[\.,]\d{2})\s*(?:di)?\s*(?:spedizione|consegna)', re.IGNORECASE),
+    re.compile(r'€\s*(\d{1,2}[\.,]\d{2})\s*(?:di\s+spedizione|di\s+consegna)', re.IGNORECASE)
 ]
 
 _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
@@ -222,50 +222,52 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     soup = BeautifulSoup(html, "html.parser")
     page_text_lower = soup.get_text(" ", strip=True).lower()
 
-    # 1. Titolo
+    # 1. Titolo del prodotto
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo (Targeting prioritario BuyBox "Acquista nuovo" / Blocco Prezzo)
+    # 2. Prezzo Effettivo (Acquisto singolo BuyBox / Offerta a tempo)
     price_val = 0.0
     
-    # Isola la BuyBox destra o il contenitore centrale principale
-    buybox_box = soup.select_one("#desktop_buybox") or soup.select_one("#buybox")
-    apex_box = soup.select_one("#corePriceDisplay_desktop_feature_div") or soup.select_one("#apex_desktop")
+    # Ispezione del blocco prezzo centrale / Buybox
+    price_box = soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay") or \
+                soup.select_one("#corePrice_feature_div .priceToPay") or \
+                soup.select_one("#apex_desktop .priceToPay") or \
+                soup.select_one("#desktop_buybox .priceToPay")
+    
+    if price_box:
+        whole = price_box.select_one(".a-price-whole")
+        frac = price_box.select_one(".a-price-fraction")
+        if whole:
+            w_text = whole.get_text(strip=True).replace(".", "").replace(",", "")
+            f_text = frac.get_text(strip=True) if frac else "00"
+            try:
+                price_val = float(f"{w_text}.{f_text}")
+            except ValueError:
+                pass
+        if price_val <= 0.0:
+            off_span = price_box.select_one(".a-offscreen")
+            if off_span:
+                price_val = parse_price(off_span.get_text(strip=True))
 
-    # Cerca il prezzo nella BuyBox
-    if buybox_box:
-        bb_price = buybox_box.select_one(".priceToPay") or buybox_box.select_one(".a-price")
-        if bb_price:
-            whole = bb_price.select_one(".a-price-whole")
-            frac = bb_price.select_one(".a-price-fraction")
-            if whole:
-                w = whole.get_text(strip=True).replace(".", "").replace(",", "")
-                f = frac.get_text(strip=True) if frac else "00"
-                try:
-                    price_val = float(f"{w}.{f}")
-                except ValueError:
-                    pass
+    if price_val <= 0.0:
+        selectors = [
+            "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
+            "#corePrice_feature_div .priceToPay span.a-offscreen",
+            "#apex_desktop .priceToPay span.a-offscreen",
+            "#desktop_buybox .priceToPay span.a-offscreen",
+            "#desktop_buybox #priceblock_ourprice",
+            "#desktop_buybox #priceblock_dealprice"
+        ]
+        for sel in selectors:
+            elem = soup.select_one(sel)
+            if elem:
+                val = parse_price(elem.get_text(strip=True))
+                if val > 0:
+                    price_val = val
+                    break
 
-    # Cerca nel blocco centrale Apex
-    if price_val <= 0.0 and apex_box:
-        p_tag = apex_box.select_one(".priceToPay") or apex_box.select_one(".a-price")
-        if p_tag:
-            whole = p_tag.select_one(".a-price-whole")
-            frac = p_tag.select_one(".a-price-fraction")
-            if whole:
-                w = whole.get_text(strip=True).replace(".", "").replace(",", "")
-                f = frac.get_text(strip=True) if frac else "00"
-                try:
-                    price_val = float(f"{w}.{f}")
-                except ValueError:
-                    pass
-            if price_val <= 0.0:
-                off = p_tag.select_one(".a-offscreen")
-                if off:
-                    price_val = parse_price(off.get_text(strip=True))
-
-    # Controllo correzione IVA per server cloud (es. 163,11 -> 199,00)
+    # Correzione automatica per prezzo B2B/IVA esclusa
     if 0 < price_val < 180 and "236" in page_text_lower:
         val_with_tax = round(price_val * 1.22, 2)
         if abs(val_with_tax - 199.0) < 1.5:
@@ -277,12 +279,12 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_price and price_val < min_price: return []
     if max_price and price_val > max_price: return []
 
-    # 3. Prezzo Barrato / Listino / Prezzo Mediano
+    # 3. Prezzo Barrato / Listino / Prezzo di riferimento
     old_price_val = price_val
     basis_box = soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice") or \
                 soup.select_one("#apex_desktop .basisPrice") or \
                 soup.select_one(".basisPrice")
-
+    
     if basis_box:
         b_off = basis_box.select_one(".a-offscreen")
         if b_off:
@@ -290,12 +292,12 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             if b_val > price_val:
                 old_price_val = b_val
 
-    # Se presente nel testo "Prezzo mediano: 236" o "Prezzo consigliato: 236"
-    m_mediano = re.search(r'prezzo\s+(?:mediano|consigliato|recente):\s*€?\s*(\d+[\.,]\d{2}|\d+)', page_text_lower)
-    if m_mediano:
-        med_val = parse_price(m_mediano.group(1))
-        if med_val > price_val:
-            old_price_val = med_val
+    # Cerca esplicito "Prezzo più basso ultimi 30gg: 249,00 €" o "Prezzo mediano: 236,00 €"
+    m_ref = re.search(r'prezzo\s+(?:più\s+basso\s+ultimi\s+30gg|mediano|consigliato|recente):\s*€?\s*(\d+[\.,]\d{2}|\d+)', page_text_lower)
+    if m_ref:
+        ref_val = parse_price(m_ref.group(1))
+        if ref_val > price_val:
+            old_price_val = ref_val
 
     # 4. Sconto Percentuale
     sconto_str = ""
@@ -325,38 +327,40 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     is_prime = False
     is_free = False
 
-    frasi_gratuite = [
+    frasi_gratis = [
         "consegna senza costi aggiuntivi",
         "senza costi aggiuntivi",
         "consegna gratuita",
         "spedizione gratuita",
         "consegna gratis",
-        "spedizione gratis",
-        "prime"
+        "spedizione gratis"
     ]
 
+    has_free_mention = any(f in page_text_lower for f in frasi_gratis)
     has_prime_badge = bool(
         soup.select_one(".a-icon-prime") or 
         soup.select_one("img[alt*='prime' i]") or 
-        "prime" in page_text_lower or 
-        "consegna senza costi aggiuntivi" in page_text_lower
+        soup.select_one("#primeExclusivePricingMessage") or
+        "prime" in page_text_lower
     )
 
-    if has_prime_badge or any(f in page_text_lower for f in frasi_gratuite):
+    if has_free_mention or has_prime_badge:
         costo_sped = 0.0
         is_prime = True
         is_free = True
     else:
-        deliv_box = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
-                    soup.select_one("#deliveryMessageMirId") or \
-                    soup.select_one("#delivery-message")
-        if deliv_box:
-            deliv_text = deliv_box.get_text(" ", strip=True)
-            for pat in SHIPPING_PATTERNS:
-                m = pat.search(deliv_text)
+        # Isola esclusivamente il testo nel div specifico di consegna (max 200 caratteri)
+        deliv_elem = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
+                     soup.select_one("#deliveryMessageMirId")
+        if deliv_elem:
+            deliv_snippet = deliv_elem.get_text(" ", strip=True)
+            for pat in SHIPPING_STRICT_PATTERNS:
+                m = pat.search(deliv_snippet)
                 if m:
-                    costo_sped = parse_price(m.group(1))
-                    if costo_sped > 0:
+                    extracted_val = parse_price(m.group(1))
+                    # Un costo di spedizione non può essere uguale al prezzo vecchio o superiore a 30€
+                    if 0 < extracted_val < 30.0 and abs(extracted_val - old_price_val) > 1.0:
+                        costo_sped = extracted_val
                         break
             is_free = (costo_sped == 0.0)
         else:
@@ -543,22 +547,21 @@ def ottieni_offerte_avanzate(
             # Spedizione
             costo_sped = 0.0
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
-            deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ")
-            deliv_lower = deliv_text.lower()
+            deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ").lower()
             
-            frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
-            has_prime = bool("prime" in deliv_lower or it.select_one(".a-icon-prime"))
+            has_free_kw = any(f in deliv_text for f in frasi_gratis) or bool("prime" in deliv_text or it.select_one(".a-icon-prime"))
             
-            if any(f in deliv_lower for f in frasi_gratis) or has_prime:
+            if has_free_kw:
                 costo_sped = 0.0
                 is_prime = True
                 is_free = True
             else:
-                for pat in SHIPPING_PATTERNS:
+                for pat in SHIPPING_STRICT_PATTERNS:
                     m = pat.search(deliv_text)
                     if m:
-                        costo_sped = parse_price(m.group(1))
-                        if costo_sped > 0:
+                        c_val = parse_price(m.group(1))
+                        if 0 < c_val < 30.0:
+                            costo_sped = c_val
                             break
                 is_prime = False
                 is_free = (costo_sped == 0.0)
