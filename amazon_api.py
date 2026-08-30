@@ -30,7 +30,7 @@ RE_DIGITS = re.compile(r'[^\d]')
 
 SHIPPING_PATTERNS = [
     re.compile(r'(\d+[\.,]\d{2})\s*€\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna|invio|trasporto)', re.IGNORECASE),
-    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})\s*€?', re.IGNORECASE),
+    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
     re.compile(r'\+\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
     re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE),
     re.compile(r'(?:eur|euro)\s*(\d+[\.,]\d{2})', re.IGNORECASE)
@@ -137,11 +137,9 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
 
     soup = BeautifulSoup(html, "html.parser")
 
-    # 1. Titolo
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Finale (isolato strettamente nel blocco principale BuyBox)
     price_val = 0.0
     p_tags = [
         soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen"),
@@ -158,7 +156,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
             if price_val > 0:
                 break
 
-    # 3. Prezzo Iniziale
     old_price_val = price_val
     basis_tags = [
         soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen"),
@@ -173,7 +170,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
                 old_price_val = op
                 break
 
-    # 4. Percentuale Sconto
     sconto_str = ""
     sconto_val = 0
     disc_tag = soup.select_one("#corePriceDisplay_desktop_feature_div .savingPriceOverride") or \
@@ -189,7 +185,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
         if sconto_val > 0:
             sconto_str = f"-{sconto_val}%"
 
-    # 5. Spedizione circoscritta al solo modulo BuyBox/Consegna
     deliv_box = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
                 soup.select_one("#deliveryMessageMirId") or \
                 soup.select_one("#delivery-message") or \
@@ -216,11 +211,9 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
             frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
             is_free = is_prime or any(f in deliv_lower for f in frasi_gratis)
 
-    # 6. Immagine
     img_tag = soup.select_one("#landingImage") or soup.select_one("#imgBlkFront") or soup.select_one("#main-image-container img")
     img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
 
-    # 7. Voto e Numero Recensioni
     voto_val = 4.5
     num_rev_val = 0
     star_tag = soup.select_one("#acrPopover span.a-icon-alt") or soup.select_one("#averageCustomerReviews span.a-icon-alt")
@@ -361,7 +354,6 @@ def ottieni_offerte_avanzate(
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     clean_keyword = keyword.strip()
     
-    # 1. Se viene fornito un link o un ASIN diretto
     asin_match = RE_ASIN.search(clean_keyword)
     if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
         asin_code = asin_match.group(1)
@@ -382,7 +374,6 @@ def ottieni_offerte_avanzate(
     query_str = clean_keyword if clean_keyword else "offerte"
     token = get_creators_access_token()
 
-    # 2. Ricerca Multi-prodotto PA-API5
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -469,7 +460,6 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 3. Fallback Scraper Multi-prodotto
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     urls_to_try = [
@@ -502,13 +492,11 @@ def ottieni_offerte_avanzate(
             if "non disponibile" in text_full.lower():
                 continue
 
-            # Prezzo Prodotto
             p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or it.select_one("span.a-price-whole")
             prezzo_prodotto = parse_price(p_elem.get_text(strip=True)) if p_elem else 0.0
             if prezzo_prodotto <= 0.0:
                 continue
 
-            # Prezzo Barrato
             basis_elem = it.select_one("span.a-price[data-a-strike='true'] span.a-offscreen") or it.select_one("span.a-text-price span.a-offscreen")
             prezzo_iniziale = parse_price(basis_elem.get_text(strip=True)) if basis_elem else prezzo_prodotto
             if prezzo_iniziale < prezzo_prodotto:
@@ -521,7 +509,6 @@ def ottieni_offerte_avanzate(
             if min_discount > 0 and sconto_val < min_discount:
                 continue
 
-            # Spedizione
             costo_sped = 0.0
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
             deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ")
