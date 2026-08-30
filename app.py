@@ -749,7 +749,7 @@ def trigger_ricerca(increment=False):
         num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
         st.session_state.current_page = num_pag_totali
 
-# Caricamento robusto iniziale dei Best Seller Randomizzati per la Vetrina
+# Caricamento iniziale dei prodotti "Da non perdere" nella Vetrina
 if not st.session_state.offerte_vetrina:
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     st.session_state.offerte_vetrina = ottieni_vetrina_casuale(partner_tag, item_count=10)
@@ -770,7 +770,7 @@ st.markdown("""
 # 4 Schede
 tab_cerca, tab_vetrina, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
-    "🏆 Best Seller Vetrina",
+    "🔥 Offerte Da Non Perdere",
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
     "✉️ Contattaci per una richiesta o suggerimento"
 ])
@@ -933,15 +933,15 @@ with tab_cerca:
         st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
 with tab_vetrina:
-    st.markdown("<p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 8px 2px;'>🏆 I 10 Prodotti Più Venduti (Best Seller) su Amazon:</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 8px 2px;'>🔥 Le Migliori Offerte Da Non Perdere su Amazon:</p>", unsafe_allow_html=True)
     if st.session_state.offerte_vetrina:
         for idx in range(0, len(st.session_state.offerte_vetrina), 2):
             col_l, col_r = st.columns(2)
             with col_l:
-                render_product_card(st.session_state.offerte_vetrina[idx], tab_key=f"bestseller_{idx}")
+                render_product_card(st.session_state.offerte_vetrina[idx], tab_key=f"dononperdere_{idx}")
             if idx + 1 < len(st.session_state.offerte_vetrina):
                 with col_r:
-                    render_product_card(st.session_state.offerte_vetrina[idx + 1], tab_key=f"bestseller_{idx + 1}")
+                    render_product_card(st.session_state.offerte_vetrina[idx + 1], tab_key=f"dononperdere_{idx + 1}")
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
