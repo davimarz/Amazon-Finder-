@@ -461,7 +461,6 @@ st.markdown("""
         display: inline-block !important;
     }
 
-    /* BADGE PRIME CON COLORI UFFICIALI E LOGHETTO */
     .shipping-badge-prime {
         display: inline-flex !important;
         align-items: center !important;
@@ -568,6 +567,31 @@ st.markdown("""
     .btn-gmail { background-color: #EA4335; }
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
+
+    /* PULSANTE TORNA IN CIMA ALLA PAGINA */
+    .btn-back-to-top {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 7px 20px !important;
+        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        border-radius: 8px !important;
+        font-weight: 800 !important;
+        font-size: 0.80rem !important;
+        box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35) !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease-in-out !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    }
+
+    .btn-back-to-top:hover {
+        background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 14px rgba(2, 132, 199, 0.45) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -711,7 +735,7 @@ def trigger_ricerca(increment=False):
     st.session_state.offerte = risultati if risultati else []
 
 st.markdown("""
-<div class="hero-container">
+<div class="hero-container" id="top_page">
     <div class="hero-title-main">Scala dei Turchi</div>
     <div class="hero-subtitle-box">
         <span class="hero-subtitle-text">Offerte Amazon</span>
@@ -721,6 +745,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# 3 Schede
 tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
@@ -762,7 +787,6 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
-            # Logica Spedizione: Badge Prime con Logo/Colori o Tariffa
             costo_s = float(p.get("costo_spedizione", 0.0))
             if p.get("is_prime") or (p.get("is_sped_gratis") and costo_s == 0.0):
                 ship_html = "<span class='shipping-badge-prime'>prime</span>"
@@ -906,3 +930,12 @@ with tab_contatti:
                         st.success("Messaggio inviato con successo a davimarz.social@gmail.com! Il nostro team lo prenderà in carico.")
                     else:
                         st.error(f"Errore di invio: {msg_err}")
+
+# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
+st.markdown("""
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 25px 0 15px 0;">
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'}); document.querySelector('.stApp').scrollIntoView({behavior: 'smooth'});" class="btn-back-to-top">
+        ⬆️ Torna all'inizio
+    </button>
+</div>
+""", unsafe_allow_html=True)
