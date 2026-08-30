@@ -31,10 +31,8 @@ RE_DIGITS = re.compile(r'[^\d]')
 
 SHIPPING_PATTERNS = [
     re.compile(r'(\d+[\.,]\d{2})\s*€\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna|invio|trasporto)', re.IGNORECASE),
-    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
-    re.compile(r'\+\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
-    re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE),
-    re.compile(r'(?:eur|euro)\s*(\d+[\.,]\d{2})', re.IGNORECASE)
+    re.compile(r'(?:costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
+    re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE)
 ]
 
 _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
@@ -42,8 +40,7 @@ _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0"
 ]
 
 def _fetch_html(url, timeout=7):
@@ -211,18 +208,20 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
 
     soup = BeautifulSoup(html, "html.parser")
 
+    # 1. Titolo
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
+    # 2. Prezzo Effettivo (Isolato con precisione nel box principale)
     price_val = 0.0
     p_tags = [
         soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen"),
         soup.select_one("#corePrice_desktop .priceToPay span.a-offscreen"),
         soup.select_one("#apex_desktop .priceToPay span.a-offscreen"),
+        soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay"),
         soup.select_one("#priceblock_ourprice"),
         soup.select_one("#priceblock_dealprice"),
-        soup.select_one("#corePriceDisplay_desktop_feature_div .a-price-whole"),
-        soup.select_one("#desktop_buybox .a-price span.a-offscreen")
+        soup.select_one("#desktop_buybox .priceToPay span.a-offscreen")
     ]
     for pt in p_tags:
         if pt:
@@ -233,13 +232,15 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if price_val <= 0.0:
         return []
 
-    if min_price and price_val < min_price: return None
-    if max_price and price_val > max_price: return None
+    if min_price and price_val < min_price: return []
+    if max_price and price_val > max_price: return []
 
+    # 3. Prezzo Barrato / Listino Iniziale
     old_price_val = price_val
     basis_tags = [
         soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen"),
         soup.select_one("#corePriceDisplay_desktop_feature_div span[data-a-strike='true'] span.a-offscreen"),
+        soup.select_one("#corePrice_desktop .basisPrice span.a-offscreen"),
         soup.select_one("#apex_desktop .basisPrice span.a-offscreen"),
         soup.select_one("#apex_desktop .a-text-price span.a-offscreen")
     ]
@@ -250,21 +251,33 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                 old_price_val = op
                 break
 
+    # 4. Sconto Percentuale
     sconto_str = ""
     sconto_val = 0
-    if old_price_val > price_val > 0:
+    disc_tag = soup.select_one("#corePriceDisplay_desktop_feature_div .savingPriceOverride") or \
+               soup.select_one("#corePriceDisplay_desktop_feature_div .savingsPercentage")
+    if disc_tag:
+        d_match = re.search(r'(\d+)\s*%', disc_tag.get_text(strip=True))
+        if d_match:
+            sconto_val = int(d_match.group(1))
+            sconto_str = f"-{sconto_val}%"
+
+    if not sconto_str and old_price_val > price_val > 0:
         sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
         if sconto_val > 0:
             sconto_str = f"-{sconto_val}%"
 
+    if sconto_val > 0 and old_price_val == price_val:
+        old_price_val = round(price_val / (1 - (sconto_val / 100.0)), 2)
+
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
+    # 5. Spedizione (Circoscritta al solo blocco Consegna)
     deliv_box = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
                 soup.select_one("#deliveryMessageMirId") or \
                 soup.select_one("#delivery-message") or \
-                soup.select_one("#desktop_buybox #delivery-message") or \
-                soup.select_one("#tabular-buybox")
+                soup.select_one("#desktop_buybox #delivery-message")
 
     costo_sped = 0.0
     is_prime = False
@@ -274,24 +287,28 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
         deliv_text = deliv_box.get_text(" ", strip=True).replace("\xa0", " ")
         deliv_lower = deliv_text.lower()
 
-        for pat in SHIPPING_PATTERNS:
-            m = pat.search(deliv_text)
-            if m:
-                costo_sped = parse_price(m.group(1))
-                if costo_sped > 0:
-                    break
-
-        if costo_sped == 0.0:
+        frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
+        if any(f in deliv_lower for f in frasi_gratis) or "prime" in deliv_lower or soup.select_one("#desktop_buybox .a-icon-prime"):
+            costo_sped = 0.0
             is_prime = bool("prime" in deliv_lower or soup.select_one("#desktop_buybox .a-icon-prime"))
-            frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
-            is_free = is_prime or any(f in deliv_lower for f in frasi_gratis)
+            is_free = True
+        else:
+            for pat in SHIPPING_PATTERNS:
+                m = pat.search(deliv_text)
+                if m:
+                    costo_sped = parse_price(m.group(1))
+                    if costo_sped > 0:
+                        break
+            is_free = (costo_sped == 0.0)
 
     if solo_spedizione_gratuita and costo_sped > 0:
         return []
 
+    # 6. Immagine
     img_tag = soup.select_one("#landingImage") or soup.select_one("#imgBlkFront") or soup.select_one("#main-image-container img")
     img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
 
+    # 7. Voto e Recensioni
     voto_val = 4.5
     num_rev_val = 0
     star_tag = soup.select_one("#acrPopover span.a-icon-alt") or soup.select_one("#averageCustomerReviews span.a-icon-alt")
@@ -398,7 +415,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 3. Parser Diretto della Scheda Risultati di Ricerca
+    # 3. Parser Diretto dei Risultati di Ricerca
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     urls_to_try = [
@@ -465,15 +482,22 @@ def ottieni_offerte_avanzate(
             costo_sped = 0.0
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
             deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ")
-            for pat in SHIPPING_PATTERNS:
-                m = pat.search(deliv_text)
-                if m:
-                    costo_sped = parse_price(m.group(1))
-                    if costo_sped > 0:
-                        break
-
-            is_prime = bool("a-icon-prime" in str(it).lower() or "prime" in deliv_text.lower()) if costo_sped == 0.0 else False
-            is_free = bool(costo_sped == 0.0 and (is_prime or "gratis" in deliv_text.lower() or "gratuita" in deliv_text.lower()))
+            deliv_lower = deliv_text.lower()
+            
+            frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
+            if any(f in deliv_lower for f in frasi_gratis) or "prime" in deliv_lower or it.select_one(".a-icon-prime"):
+                costo_sped = 0.0
+                is_prime = bool("prime" in deliv_lower or it.select_one(".a-icon-prime"))
+                is_free = True
+            else:
+                for pat in SHIPPING_PATTERNS:
+                    m = pat.search(deliv_text)
+                    if m:
+                        costo_sped = parse_price(m.group(1))
+                        if costo_sped > 0:
+                            break
+                is_prime = False
+                is_free = (costo_sped == 0.0)
 
             if solo_spedizione_gratuita and costo_sped > 0:
                 continue
