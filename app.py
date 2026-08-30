@@ -32,8 +32,32 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.25rem 0.35rem 0.80rem 0.35rem !important;
+        padding: 0.20rem 0.35rem 0.80rem 0.35rem !important;
         max-width: 100% !important;
+    }
+
+    /* Pulsante Contattaci in alto a destra */
+    div[data-testid="stButton"] button[key="btn_open_contact_dialog"] {
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid #0284c7 !important;
+        border-radius: 6px !important;
+        font-weight: 800 !important;
+        font-size: 0.72rem !important;
+        min-height: 24px !important;
+        height: 24px !important;
+        padding: 2px 10px !important;
+        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.25) !important;
+        float: right !important;
+        margin-bottom: 2px !important;
+    }
+
+    div[data-testid="stButton"] button[key="btn_open_contact_dialog"] p {
+        color: #ffffff !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        line-height: 1 !important;
+        margin: 0 !important;
     }
 
     div[data-baseweb="tab-list"] {
@@ -536,6 +560,29 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Dialog / Pop-up per Richiesta o Suggerimento
+@st.dialog("📬 Contattaci per una richiesta o suggerimento")
+def modal_contatti():
+    st.markdown("<p style='font-size: 0.85rem; color: #334155; margin-bottom: 8px;'>Compila i campi sottostanti con i tuoi dati e il tuo messaggio:</p>", unsafe_allow_html=True)
+    with st.form("form_contatti_popup", clear_on_submit=True):
+        nome = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
+        telefono = st.text_input("Numero di telefono", placeholder="Es. +39 340 1234567")
+        email = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
+        note = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui la tua richiesta dettagliata o il tuo suggerimento...", height=100)
+        
+        btn_invia = st.form_submit_button("✉️ Invia Richiesta", use_container_width=True)
+        if btn_invia:
+            if not nome.strip() or not email.strip() or not note.strip():
+                st.error("Per favore, compila tutti i campi obbligatori contrassegnati da (*).")
+            else:
+                st.success("Grazie! La tua richiesta è stata inviata con successo.")
+
+# Barra Superiore con Pulsante Contatti allineato a destra
+col_top_spacer, col_top_btn = st.columns([0.55, 0.45])
+with col_top_btn:
+    if st.button("✉️ Contattaci per una richiesta o suggerimento", key="btn_open_contact_dialog", use_container_width=True):
+        modal_contatti()
+
 OPZIONI_SCONTO = {
     "0-20%": (0, 20),
     "20-50%": (20, 50),
@@ -631,7 +678,6 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
-            # Spedizione esatta
             costo_s = float(p.get("costo_spedizione", 0.0))
             if costo_s > 0.0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
