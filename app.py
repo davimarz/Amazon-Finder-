@@ -693,6 +693,44 @@ Messaggio / Note:
     except Exception as e:
         return False, str(e)
 
+# ----------------- GESTIONE STATISTICHE VISITE -----------------
+def init_visite_db():
+    conn = sqlite3.connect("visite.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS statistiche_visite (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            data_visita TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def registra_visita():
+    init_visite_db()
+    oggi = date.today().isoformat()
+    if "visita_registrata" not in st.session_state:
+        st.session_state.visita_registrata = True
+        conn = sqlite3.connect("visite.db")
+        c = conn.cursor()
+        c.execute("INSERT INTO statistiche_visite (data_visita) VALUES (?)", (oggi,))
+        conn.commit()
+        conn.close()
+
+def ottieni_statistiche():
+    init_visite_db()
+    oggi = date.today().isoformat()
+    conn = sqlite3.connect("visite.db")
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM statistiche_visite WHERE data_visita = ?", (oggi,))
+    giornaliere = c.fetchone()[0]
+    c.execute("SELECT COUNT(*) FROM statistiche_visite")
+    totali = c.fetchone()[0]
+    conn.close()
+    return giornaliere, totali
+
+registra_visita()
+
 OPZIONI_SCONTO = {
     "Tutti": (0, 100),
     "0-20%": (0, 20),
@@ -767,7 +805,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 4 Schede (Offerte Vetrina all'inizio a sinistra)
+# 4 Schede
 tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔥 Offerte Vetrina",
     "🔍 Cerca Prodotto", 
@@ -988,9 +1026,13 @@ with tab_contatti:
                     else:
                         st.error(f"Errore di invio: {msg_err}")
 
-# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
-st.markdown("""
-<div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 30px 0 15px 0;">
+# ----------------- STATISTICHE VISITE E PULSANTE TORNA ALL'INIZIO -----------------
+giornaliere, totali = ottieni_statistiche()
+st.markdown(f"""
+<div style="text-align: center; font-size: 0.74rem; font-weight: 700; color: #334155; margin: 20px 0 10px 0;">
+    📊 Visite oggi: <strong>{giornaliere}</strong> | Visite totali: <strong>{totali}</strong>
+</div>
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 10px 0 15px 0;">
     <a href="#top_page" target="_self" onclick="(function(){
         try {
             const stContainer = window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid=\\'stAppViewContainer\\']');
