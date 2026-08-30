@@ -27,7 +27,7 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.30rem 0.35rem 0.80rem 0.35rem !important;
+        padding: 0.25rem 0.35rem 0.80rem 0.35rem !important;
         max-width: 100% !important;
     }
 
@@ -131,9 +131,9 @@ st.markdown("""
 
     .hero-author-tag strong { color: #0369a1; }
 
-    /* Riduzione spaziature verticali interne Streamlit */
+    /* Riduzione azzerata degli spazi verticali */
     div[data-testid="stVerticalBlock"] > div {
-        gap: 2px !important;
+        gap: 0px !important;
     }
 
     div[data-testid="stMarkdownContainer"] p,
@@ -145,34 +145,40 @@ st.markdown("""
         line-height: 1.1 !important;
     }
 
-    /* Riquadro Scheda di Ricerca e Scheda Prodotto Ultra-Compatto */
-    [data-testid="stVerticalBlockBorderWrapper"] {
+    /* Riquadro Scheda di Ricerca Aderente (Spazi Zero) */
+    .search-card-block [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
         border-radius: 10px !important;
-        padding: 4px 5px !important;
+        padding: 3px !important;
         margin-bottom: 4px !important;
-        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.16), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.16) !important;
     }
 
-    /* Input Ricerca Compresso */
-    div[data-baseweb="input"] {
+    .search-card-block div[data-testid="stVerticalBlock"] > div {
+        gap: 0px !important;
+        padding: 0px !important;
+        margin: 0px !important;
+    }
+
+    /* Input Ricerca */
+    .search-card-block div[data-baseweb="input"] {
         background-color: #ffffff !important;
         border: 1px solid #86efac !important;
         border-radius: 5px !important;
         min-height: 26px !important;
         height: 26px !important;
         padding: 0 !important;
-        margin-bottom: 0 !important;
+        margin: 0 0 2px 0 !important;
         box-shadow: 0 1px 2px rgba(16, 185, 129, 0.06) !important;
     }
 
-    div[data-baseweb="input"]:focus-within {
+    .search-card-block div[data-baseweb="input"]:focus-within {
         border-color: #059669 !important;
     }
 
-    div[data-baseweb="input"] input {
+    .search-card-block div[data-baseweb="input"] input {
         color: #0f172a !important;
         font-weight: 600 !important;
         font-size: 0.74rem !important;
@@ -180,38 +186,23 @@ st.markdown("""
         height: 24px !important;
     }
 
-    /* Riga con i due pulsanti affiancati e attaccati */
-    .buttons-row-aligned {
-        margin-top: 2px !important;
-    }
-
-    .buttons-row-aligned [data-testid="stHorizontalBlock"] {
+    /* Contenitori Pulsanti Incolonnati al 100% */
+    .search-btn-container,
+    .load-more-btn-container {
         display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        align-items: center !important;
-        gap: 3px !important;
         width: 100% !important;
         margin: 0 !important;
-    }
-
-    .buttons-row-aligned [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 1 1 50% !important;
-        min-width: 0 !important;
         padding: 0 !important;
     }
 
-    /* Pulsante Cerca Compresso */
-    .search-btn-container {
-        display: flex !important;
-        justify-content: center !important;
+    .search-btn-container div[data-testid="stButton"],
+    .load-more-btn-container div[data-testid="stButton"] {
         width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    .search-btn-container div[data-testid="stButton"] {
-        width: 100% !important;
-    }
-
+    /* Pulsante Cerca */
     .search-btn-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
@@ -223,6 +214,7 @@ st.markdown("""
         height: 24px !important;
         width: 100% !important;
         padding: 0 !important;
+        margin: 0 0 2px 0 !important;
         box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25) !important;
     }
 
@@ -232,17 +224,7 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Pulsante Carica Altri 10 Compresso */
-    .load-more-btn-container {
-        display: flex !important;
-        justify-content: center !important;
-        width: 100% !important;
-    }
-
-    .load-more-btn-container div[data-testid="stButton"] {
-        width: 100% !important;
-    }
-
+    /* Pulsante Altri 10 */
     .load-more-btn-container div[data-testid="stButton"] button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
@@ -253,7 +235,8 @@ st.markdown("""
         min-height: 24px !important;
         height: 24px !important;
         width: 100% !important;
-        padding: 0 2px !important;
+        padding: 0 !important;
+        margin: 0 !important;
         box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2) !important;
     }
 
@@ -273,7 +256,7 @@ st.markdown("""
         display: flex !important;
         flex-direction: column !important;
         gap: 1px !important;
-        margin: 1px 0 !important;
+        margin: 2px 0 1px 0 !important;
     }
 
     div[data-testid="stRadio"] > div {
@@ -317,6 +300,17 @@ st.markdown("""
         font-size: 0.72rem !important;
         font-weight: 800 !important;
         color: #059669 !important;
+    }
+
+    /* Schede Prodotto */
+    [data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #dcfce7 !important;
+        background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
+        border: 2px solid #34d399 !important;
+        border-radius: 12px !important;
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
     }
 
     .product-img-wrapper-full {
@@ -709,7 +703,8 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Scheda di Ricerca Super-Compatta con spazi interni azzerati
+    # Scheda di Ricerca compatta a Colonna Unica senza spazi
+    st.markdown('<div class="search-card-block">', unsafe_allow_html=True)
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -720,17 +715,14 @@ with tab_cerca:
             args=(False,)
         )
         
-        st.markdown('<div class="buttons-row-aligned">', unsafe_allow_html=True)
-        col_btn_search, col_btn_more = st.columns(2)
-        with col_btn_search:
-            st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
-            btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-        with col_btn_more:
-            st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
-            btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
+        btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
+        btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.radio(
         "🏷️ Ordinamento:",
