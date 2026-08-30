@@ -136,6 +136,7 @@ def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min
     link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
 
     listings = it.get("Offers", {}).get("Listings", [])
+    summaries = it.get("Offers", {}).get("Summaries", [])
     price_val = 0.0
     old_price_val = 0.0
     is_prime = False
@@ -152,6 +153,10 @@ def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min
         if charges:
             costo_sped = float(charges[0].get("Amount", 0.0))
         is_free = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
+    elif summaries:
+        first_sum = summaries[0]
+        price_val = float(first_sum.get("LowestPrice", {}).get("Amount", 0.0))
+        old_price_val = price_val
 
     if price_val <= 0.0:
         return None
@@ -212,6 +217,7 @@ def ottieni_dettaglio_asin_api(asin, token, partner_tag):
             "Offers.Listings.DeliveryInfo.IsPrimeEligible",
             "Offers.Listings.DeliveryInfo.IsFreeShippingEligible",
             "Offers.Listings.DeliveryInfo.ShippingCharges",
+            "Offers.Summaries.LowestPrice",
             "Images.Primary.Large",
             "CustomerReviews.Count",
             "CustomerReviews.StarRating"
@@ -296,7 +302,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
     is_free = False
 
     if deliv_box:
-        deliv_text = deliv_box.get_text(" ", strip=True).replace("\xa0", " ")
+        deliv_text = deliv_box.get_text(" ", strip=True).replace(" ", " ").replace("\xa0", " ")
         deliv_lower = deliv_text.lower()
 
         for pat in SHIPPING_PATTERNS:
@@ -381,7 +387,7 @@ def ottieni_offerte_avanzate(
     if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
         asin_code = asin_match.group(1)
         
-        # Priorità Assoluta: Chiamata Ufficiale PA-API GetItems
+        # Priorità 1: PA-API GetItems
         if token:
             res_api = ottieni_dettaglio_asin_api(asin_code, token, partner_tag)
             if res_api:
@@ -389,14 +395,14 @@ def ottieni_offerte_avanzate(
                     return []
                 return res_api
 
-        # Fallback Scraper di precisione
+        # Priorità 2: Fallback DP Scraper
         res_dp = _ottieni_prodotto_singolo_dp(asin_code, partner_tag)
         if res_dp:
             if solo_spedizione_gratuita and res_dp[0]["costo_spedizione"] > 0:
                 return []
             return res_dp
 
-    query_str = clean_keyword if clean_keyword else "offerte"
+    query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
     # 2. RICERCA MULTI-PRODOTTO TRAMITE PA-API5 (SearchItems)
     if token:
@@ -420,6 +426,7 @@ def ottieni_offerte_avanzate(
                 "Offers.Listings.DeliveryInfo.IsPrimeEligible",
                 "Offers.Listings.DeliveryInfo.IsFreeShippingEligible",
                 "Offers.Listings.DeliveryInfo.ShippingCharges",
+                "Offers.Summaries.LowestPrice",
                 "Images.Primary.Large",
                 "CustomerReviews.Count",
                 "CustomerReviews.StarRating"
@@ -481,13 +488,18 @@ def ottieni_offerte_avanzate(
             if not asin or asin in asins_visti:
                 continue
 
-            text_full = it.get_text(" ", strip=True).replace("\xa0", " ")
+            text_full = it.get_text(" ", strip=True).replace(" ", " ").replace("\xa0", " ")
             if "non disponibile" in text_full.lower():
                 continue
 
             p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or it.select_one("span.a-price-whole")
             prezzo_prodotto = parse_price(p_elem.get_text(strip=True)) if p_elem else 0.0
             if prezzo_prodotto <= 0.0:
+                continue
+
+            if min_price and prezzo_prodotto < min_price:
+                continue
+            if max_price and prezzo_prodotto > max_price:
                 continue
 
             basis_elem = it.select_one("span.a-price[data-a-strike='true'] span.a-offscreen") or it.select_one("span.a-text-price span.a-offscreen")
@@ -501,10 +513,12 @@ def ottieni_offerte_avanzate(
 
             if min_discount > 0 and sconto_val < min_discount:
                 continue
+            if max_discount < 100 and sconto_val > max_discount:
+                continue
 
             costo_sped = 0.0
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
-            deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ")
+            deliv_text = deliv_elem.get_text(" ", strip=True).replace(" ", " ").replace("\xa0", " ")
             for pat in SHIPPING_PATTERNS:
                 m = pat.search(deliv_text)
                 if m:
