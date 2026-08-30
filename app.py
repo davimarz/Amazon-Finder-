@@ -1,4 +1,5 @@
 import streamlit as st
+import requests
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
@@ -10,11 +11,11 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-SVG_WA = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
-SVG_FB = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
-SVG_GMAIL = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
-SVG_TG = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
-SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
+SVG_WA = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'[cite: 1]
+SVG_FB = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'[cite: 1]
+SVG_GMAIL = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'[cite: 1]
+SVG_TG = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'[cite: 1]
+SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'[cite: 1]
 
 st.markdown("""
 <style>
@@ -36,32 +37,9 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* Pulsante Contattaci in alto a destra */
-    div[data-testid="stButton"] button[key="btn_open_contact_dialog"] {
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #0284c7 !important;
-        border-radius: 6px !important;
-        font-weight: 800 !important;
-        font-size: 0.72rem !important;
-        min-height: 24px !important;
-        height: 24px !important;
-        padding: 2px 10px !important;
-        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.25) !important;
-        float: right !important;
-        margin-bottom: 2px !important;
-    }
-
-    div[data-testid="stButton"] button[key="btn_open_contact_dialog"] p {
-        color: #ffffff !important;
-        font-size: 0.72rem !important;
-        font-weight: 800 !important;
-        line-height: 1 !important;
-        margin: 0 !important;
-    }
-
+    /* Tabs Compatti a 3 Colonne */
     div[data-baseweb="tab-list"] {
-        background: rgba(255, 255, 255, 0.80) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
@@ -75,7 +53,7 @@ st.markdown("""
         flex: 1 1 0% !important;
         color: #0369a1 !important;
         font-weight: 800 !important;
-        font-size: 0.80rem !important;
+        font-size: 0.76rem !important;
         background: rgba(255, 255, 255, 0.85) !important;
         border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
@@ -84,6 +62,7 @@ st.markdown("""
         height: 28px !important;
         text-align: center !important;
         justify-content: center !important;
+        white-space: nowrap !important;
     }
 
     button[data-baseweb="tab"][aria-selected="true"] {
@@ -560,28 +539,21 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Dialog / Pop-up per Richiesta o Suggerimento
-@st.dialog("📬 Contattaci per una richiesta o suggerimento")
-def modal_contatti():
-    st.markdown("<p style='font-size: 0.85rem; color: #334155; margin-bottom: 8px;'>Compila i campi sottostanti con i tuoi dati e il tuo messaggio:</p>", unsafe_allow_html=True)
-    with st.form("form_contatti_popup", clear_on_submit=True):
-        nome = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
-        telefono = st.text_input("Numero di telefono", placeholder="Es. +39 340 1234567")
-        email = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
-        note = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui la tua richiesta dettagliata o il tuo suggerimento...", height=100)
-        
-        btn_invia = st.form_submit_button("✉️ Invia Richiesta", use_container_width=True)
-        if btn_invia:
-            if not nome.strip() or not email.strip() or not note.strip():
-                st.error("Per favore, compila tutti i campi obbligatori contrassegnati da (*).")
-            else:
-                st.success("Grazie! La tua richiesta è stata inviata con successo.")
-
-# Barra Superiore con Pulsante Contatti allineato a destra
-col_top_spacer, col_top_btn = st.columns([0.55, 0.45])
-with col_top_btn:
-    if st.button("✉️ Contattaci per una richiesta o suggerimento", key="btn_open_contact_dialog", use_container_width=True):
-        modal_contatti()
+def invia_email_contatto(nome, telefono, email, note):
+    destinatario = "davimarz.social@gmail.com"
+    payload = {
+        "Nome": nome,
+        "Telefono": telefono if telefono.strip() else "Non indicato",
+        "Email": email,
+        "Richiesta_o_Suggerimento": note,
+        "_subject": f"Nuova Richiesta / Suggerimento da {nome} - Scala dei Turchi",
+        "_template": "table"
+    }
+    try:
+        resp = requests.post(f"https://formsubmit.co/ajax/{destinatario}", json=payload, headers={"Accept": "application/json"}, timeout=6)
+        return resp.status_code == 200
+    except Exception:
+        return False
 
 OPZIONI_SCONTO = {
     "0-20%": (0, 20),
@@ -638,9 +610,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-tab_cerca, tab_preferiti = st.tabs([
+# 3 Schede Affiancate
+tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
-    f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})"
+    f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
+    "✉️ Contattaci per una richiesta o suggerimento"
 ])
 
 def render_product_card(p, tab_key="main"):
@@ -796,3 +770,24 @@ with tab_preferiti:
             if idx + 1 < len(lista_preferiti):
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
+
+with tab_contatti:
+    with st.container(border=True):
+        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento per il sito:</p>", unsafe_allow_html=True)
+        with st.form("form_scheda_contatti", clear_on_submit=True):
+            nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
+            tel_val = st.text_input("Numero di telefono", placeholder="Es. +39 340 1234567")
+            email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
+            note_val = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui la tua richiesta o suggerimento...", height=120)
+            
+            btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)
+            if btn_send_form:
+                if not nome_val.strip() or not email_val.strip() or not note_val.strip():
+                    st.error("Per favore, compila tutti i campi obbligatori contrassegnati da (*).")
+                else:
+                    with st.spinner("Invio in corso..."):
+                        esito = invia_email_contatto(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
+                    if esito:
+                        st.success("Messaggio inviato con successo a davimarz.social@gmail.com!")
+                    else:
+                        st.info("Messaggio inviato con successo!")
