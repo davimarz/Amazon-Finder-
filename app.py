@@ -33,10 +33,10 @@ st.markdown("""
 
     /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
-        background: rgba(255, 255, 255, 0.75) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
-        border: 1px solid rgba(2, 132, 199, 0.25) !important;
+        border: 1px solid rgba(2, 132, 199, 0.30) !important;
         gap: 4px !important;
         margin-bottom: 4px !important;
         display: flex !important;
@@ -48,7 +48,7 @@ st.markdown("""
         color: #0369a1 !important;
         font-weight: 800 !important;
         font-size: 0.80rem !important;
-        background: rgba(255, 255, 255, 0.85) !important;
+        background: rgba(255, 255, 255, 0.90) !important;
         border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
@@ -132,19 +132,19 @@ st.markdown("""
     .hero-author-tag strong { color: #0369a1; }
 
     /* =========================================================================
-       RIQUADRI VERDI COMPATTI (RICERCA E FILTRI)
+       STILE RIQUADRI (SFONDO IN NETTO CONTRASTO CON LA PAGINA CELESTE)
        ========================================================================= */
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #dcfce7 !important;
-        background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
-        border: 2px solid #34d399 !important;
+        background-color: #ffffff !important;
+        background: linear-gradient(150deg, #ffffff 0%, #ecfdf5 60%, #d1fae5 100%) !important;
+        border: 2px solid #059669 !important;
         border-radius: 10px !important;
-        padding: 4px 6px !important;
-        margin-bottom: 5px !important;
-        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15) !important;
+        padding: 5px 6px !important;
+        margin-bottom: 6px !important;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.20), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Azzeramento spazi interni di tutti i container */
+    /* Azzeramento spazi interni verticali */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
         gap: 0px !important;
         row-gap: 0px !important;
@@ -158,29 +158,29 @@ st.markdown("""
 
     /* Input Ricerca */
     div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stTextInput"] {
-        margin: 0px 0px 2px 0px !important;
+        margin: 0px 0px 3px 0px !important;
         padding: 0px !important;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"] {
         background-color: #ffffff !important;
-        border: 1px solid #86efac !important;
+        border: 1.5px solid #10b981 !important;
         border-radius: 5px !important;
         min-height: 28px !important;
         height: 28px !important;
         padding: 0 !important;
         margin: 0 !important;
-        box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08) !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12) !important;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"]:focus-within {
-        border-color: #059669 !important;
+        border-color: #047857 !important;
     }
 
     div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"] input {
-        color: #0f172a !important;
-        font-weight: 600 !important;
-        font-size: 0.76rem !important;
+        color: #064e3b !important;
+        font-weight: 700 !important;
+        font-size: 0.78rem !important;
         padding: 0 8px !important;
         height: 26px !important;
     }
@@ -238,7 +238,7 @@ st.markdown("""
     }
 
     /* =========================================================================
-       ELEMENTI DENTRO LA SCHEDA FILTRI
+       FILTRI (ORDINAMENTO, SCONTO, SPEDIZIONE)
        ========================================================================= */
     div[data-testid="stRadio"] {
         display: flex !important;
@@ -258,21 +258,21 @@ st.markdown("""
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 2px !important;
+        gap: 3px !important;
         width: 100% !important;
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] {
-        background: rgba(255, 255, 255, 0.9) !important;
+        background: #ffffff !important;
         padding: 2px 4px !important;
         border-radius: 5px !important;
-        border: 1px solid #86efac !important;
+        border: 1px solid #a7f3d0 !important;
         margin: 0 !important;
         flex: 1 1 0% !important;
         min-width: 0 !important;
         text-align: center !important;
         justify-content: center !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] div {
@@ -283,13 +283,13 @@ st.markdown("""
     }
 
     div[data-testid="stCheckbox"] {
-        background: rgba(255, 255, 255, 0.9) !important;
+        background: #ffffff !important;
         padding: 3px 6px !important;
         border-radius: 5px !important;
-        border: 1px solid #86efac !important;
+        border: 1px solid #a7f3d0 !important;
         min-height: 24px !important;
         margin: 3px 0 1px 0 !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
 
     div[data-testid="stCheckbox"] label p {
