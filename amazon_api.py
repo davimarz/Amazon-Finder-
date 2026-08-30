@@ -212,24 +212,33 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Acquisto Singolo (One-time purchase / BuyBox centrale)
-    # Evita i box di Subscribe & Save / Iscriviti e Risparmia
+    # 2. Prezzo Effettivo di Vendita (Acquisto singolo / BuyBox primario)
     price_val = 0.0
-    p_tags = [
-        soup.select_one("#newAccordionRow #corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen"),
-        soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen"),
-        soup.select_one("#corePrice_desktop .priceToPay span.a-offscreen"),
-        soup.select_one("#apex_desktop .priceToPay span.a-offscreen"),
-        soup.select_one("#priceblock_ourprice"),
-        soup.select_one("#priceblock_dealprice"),
-        soup.select_one("#desktop_buybox .priceToPay span.a-offscreen"),
-        soup.select_one("#corePriceDisplay_desktop_feature_div .a-price-whole")
+    primary_selectors = [
+        "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
+        "#corePrice_feature_div .priceToPay span.a-offscreen",
+        "#apex_desktop .priceToPay span.a-offscreen",
+        "#apex_desktop_newAccordionRow .priceToPay span.a-offscreen",
+        "#newAccordionRow #corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
+        "#desktop_buybox #priceblock_ourprice",
+        "#desktop_buybox #priceblock_dealprice",
+        "#desktop_buybox .priceToPay span.a-offscreen"
     ]
-    for pt in p_tags:
-        if pt:
-            price_val = parse_price(pt.get_text(strip=True))
-            if price_val > 0:
+    for sel in primary_selectors:
+        elem = soup.select_one(sel)
+        if elem:
+            val = parse_price(elem.get_text(strip=True))
+            if val > 0:
+                price_val = val
                 break
+
+    # Se non trovato nei contenitori mirati, tenta l'offscreen all'interno del modulo centrale
+    if price_val <= 0.0:
+        apex = soup.select_one("#apex_desktop") or soup.select_one("#corePriceDisplay_desktop_feature_div")
+        if apex:
+            off_tag = apex.select_one(".priceToPay .a-offscreen") or apex.select_one(".a-price .a-offscreen")
+            if off_tag:
+                price_val = parse_price(off_tag.get_text(strip=True))
 
     if price_val <= 0.0:
         return []
@@ -237,27 +246,30 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_price and price_val < min_price: return []
     if max_price and price_val > max_price: return []
 
-    # 3. Prezzo Barrato / Consigliato (Lista)
+    # 3. Prezzo Barrato / Listino (Prezzo consigliato)
     old_price_val = price_val
-    basis_tags = [
-        soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen"),
-        soup.select_one("#corePriceDisplay_desktop_feature_div span[data-a-strike='true'] span.a-offscreen"),
-        soup.select_one("#corePrice_desktop .basisPrice span.a-offscreen"),
-        soup.select_one("#apex_desktop .basisPrice span.a-offscreen"),
-        soup.select_one("#apex_desktop .a-text-price span.a-offscreen")
+    basis_selectors = [
+        "#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen",
+        "#corePriceDisplay_desktop_feature_div span[data-a-strike='true'] span.a-offscreen",
+        "#corePrice_desktop .basisPrice span.a-offscreen",
+        "#apex_desktop .basisPrice span.a-offscreen",
+        "#apex_desktop .a-text-price span.a-offscreen",
+        "#apex_desktop span[data-a-strike='true'] span.a-offscreen"
     ]
-    for bt in basis_tags:
-        if bt:
-            op = parse_price(bt.get_text(strip=True))
-            if op > price_val:
-                old_price_val = op
+    for b_sel in basis_selectors:
+        b_elem = soup.select_one(b_sel)
+        if b_elem:
+            b_val = parse_price(b_elem.get_text(strip=True))
+            if b_val > price_val:
+                old_price_val = b_val
                 break
 
-    # 4. Calcolo Sconto
+    # 4. Sconto Percentuale
     sconto_str = ""
     sconto_val = 0
     disc_tag = soup.select_one("#corePriceDisplay_desktop_feature_div .savingPriceOverride") or \
-               soup.select_one("#corePriceDisplay_desktop_feature_div .savingsPercentage")
+               soup.select_one("#corePriceDisplay_desktop_feature_div .savingsPercentage") or \
+               soup.select_one("#apex_desktop .savingsPercentage")
     if disc_tag:
         d_match = re.search(r'(\d+)\s*%', disc_tag.get_text(strip=True))
         if d_match:
@@ -269,32 +281,34 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
         if sconto_val > 0:
             sconto_str = f"-{sconto_val}%"
 
-    # Se lo sconto era indicato (es. 32%) ma il prezzo iniziale nel DOM mancava
-    if sconto_val > 0 and old_price_val == price_val:
+    # Ricostruzione coerente del prezzo consigliato iniziale in presenza di sconto percentuale certificato
+    if sconto_val > 0 and (old_price_val == price_val or old_price_val < price_val):
         old_price_val = round(price_val / (1.0 - (sconto_val / 100.0)), 2)
 
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione (Isolata rigorosamente nel delivery box)
+    # 5. Spedizione (Rigorosamente circoscritta all'area di consegna)
+    costo_sped = 0.0
+    is_prime = False
+    is_free = False
+
     deliv_box = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
                 soup.select_one("#deliveryMessageMirId") or \
                 soup.select_one("#delivery-message") or \
                 soup.select_one("#desktop_buybox #delivery-message") or \
                 soup.select_one("#deliveryBlockMessage")
 
-    costo_sped = 0.0
-    is_prime = False
-    is_free = False
-
     if deliv_box:
         deliv_text = deliv_box.get_text(" ", strip=True).replace("\xa0", " ")
         deliv_lower = deliv_text.lower()
 
         frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
-        if any(f in deliv_lower for f in frasi_gratis) or "prime" in deliv_lower or soup.select_one("#desktop_buybox .a-icon-prime") or soup.select_one("#primeExclusivePricingMessage"):
+        has_prime_badge = bool(soup.select_one("#desktop_buybox .a-icon-prime") or soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE .a-icon-prime") or soup.select_one("#primeExclusivePricingMessage"))
+
+        if any(f in deliv_lower for f in frasi_gratis) or "prime" in deliv_lower or has_prime_badge:
             costo_sped = 0.0
-            is_prime = bool("prime" in deliv_lower or soup.select_one("#desktop_buybox .a-icon-prime"))
+            is_prime = bool("prime" in deliv_lower or has_prime_badge)
             is_free = True
         else:
             for pat in SHIPPING_PATTERNS:
@@ -304,6 +318,10 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                     if costo_sped > 0:
                         break
             is_free = (costo_sped == 0.0)
+    else:
+        # Se il modulo di consegna non compare esplicitamente, assume Prime/Gratuito per default
+        is_free = True
+        costo_sped = 0.0
 
     if solo_spedizione_gratuita and costo_sped > 0:
         return []
