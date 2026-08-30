@@ -1,5 +1,7 @@
 import streamlit as st
-import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, SORT_MAPPINGS, calcola_distribuzione_recensioni
 from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
@@ -539,21 +541,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-def invia_email_contatto(nome, telefono, email, note):
+def invia_email_smtp_diretta(nome, telefono, email, note):
     destinatario = "davimarz.social@gmail.com"
-    payload = {
-        "Nome": nome,
-        "Telefono": telefono if telefono.strip() else "Non indicato",
-        "Email": email,
-        "Richiesta_o_Suggerimento": note,
-        "_subject": f"Nuova Richiesta / Suggerimento da {nome} - Scala dei Turchi",
-        "_template": "table"
-    }
+    email_cfg = st.secrets.get("email", {})
+    sender = email_cfg.get("sender", "davimarz.social@gmail.com")
+    app_pwd = email_cfg.get("app_password", "").replace(" ", "")
+
+    if not app_pwd:
+        return False, "Password per le app non configurata nei Secrets."
+
+    msg = MIMEMultipart()
+    msg['From'] = f"Scala dei Turchi <{sender}>"
+    msg['To'] = destinatario
+    msg['Subject'] = f"Nuovo Messaggio da {nome} - Scala dei Turchi"
+
+    corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
+
+- Nome e Cognome: {nome}
+- Telefono: {telefono if telefono else 'Non specificato'}
+- Email Utente: {email}
+
+Messaggio / Note:
+{note}
+"""
+    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
+
     try:
-        resp = requests.post(f"https://formsubmit.co/ajax/{destinatario}", json=payload, headers={"Accept": "application/json"}, timeout=6)
-        return resp.status_code == 200
-    except Exception:
-        return False
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+            server.login(sender, app_pwd)
+            server.sendmail(sender, [destinatario], msg.as_string())
+        return True, "OK"
+    except Exception as e:
+        return False, str(e)
 
 OPZIONI_SCONTO = {
     "0-20%": (0, 20),
@@ -774,21 +793,21 @@ with tab_preferiti:
 
 with tab_contatti:
     with st.container(border=True):
-        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento per il sito:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento:</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
             nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
             tel_val = st.text_input("Numero di telefono", placeholder="Es. +39 340 1234567")
             email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
-            note_val = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui la tua richiesta o suggerimento...", height=120)
+            note_val = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui il tuo messaggio...", height=120)
             
             btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)
             if btn_send_form:
                 if not nome_val.strip() or not email_val.strip() or not note_val.strip():
-                    st.error("Per favore, compila tutti i campi obbligatori contrassegnati da (*).")
+                    st.error("Compila tutti i campi obbligatori contrassegnati da (*).")
                 else:
-                    with st.spinner("Invio in corso..."):
-                        esito = invia_email_contatto(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
-                    if esito:
+                    with st.spinner("Invio messaggio in corso..."):
+                        ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
+                    if ok:
                         st.success("Messaggio inviato con successo a davimarz.social@gmail.com!")
                     else:
-                        st.info("Messaggio inviato con successo!")
+                        st.error(f"Errore di invio: {msg_err}")
