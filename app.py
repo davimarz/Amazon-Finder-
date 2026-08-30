@@ -18,9 +18,9 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
-    /* Sfondo Celeste Chiaro App */
+    /* Sfondo Esterno Pagina: Tonalità Ardesia / Blu Acciaio Elegante per Massimo Contrasto */
     .stApp {
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
+        background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 50%, #64748b 100%) !important;
         background-attachment: fixed !important;
         color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
@@ -33,23 +33,24 @@ st.markdown("""
 
     /* Tabs Compatti */
     div[data-baseweb="tab-list"] {
-        background: rgba(255, 255, 255, 0.85) !important;
+        background: rgba(255, 255, 255, 0.90) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
-        border: 1px solid rgba(2, 132, 199, 0.30) !important;
+        border: 1px solid rgba(15, 23, 42, 0.20) !important;
         gap: 4px !important;
         margin-bottom: 4px !important;
         display: flex !important;
         width: 100% !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
     }
 
     button[data-baseweb="tab"] {
         flex: 1 1 0% !important;
-        color: #0369a1 !important;
+        color: #0f172a !important;
         font-weight: 800 !important;
         font-size: 0.80rem !important;
-        background: rgba(255, 255, 255, 0.90) !important;
-        border: 1px solid rgba(2, 132, 199, 0.2) !important;
+        background: rgba(255, 255, 255, 0.80) !important;
+        border: 1px solid rgba(15, 23, 42, 0.15) !important;
         border-radius: 6px !important;
         padding: 4px 6px !important;
         min-height: 28px !important;
@@ -60,14 +61,14 @@ st.markdown("""
 
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
-        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         border-color: #0284c7 !important;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.40) !important;
     }
 
     div[data-baseweb="tab-highlight"] { display: none !important; }
 
-    /* Header Compatto */
+    /* Header Compatto con Contrasto */
     .hero-container {
         display: flex;
         flex-direction: column;
@@ -86,9 +87,10 @@ st.markdown("""
         text-align: center;
         letter-spacing: -0.5px;
         margin: 0;
-        background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
+        background: linear-gradient(90deg, #0f172a 0%, #0369a1 50%, #1e293b 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        text-shadow: 0 1px 2px rgba(255, 255, 255, 0.4);
     }
 
     .hero-subtitle-box {
@@ -119,29 +121,30 @@ st.markdown("""
         border-radius: 5px;
         line-height: 1;
         margin: 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
 
     .hero-author-tag {
         font-size: 0.70rem;
-        color: #334155;
-        font-weight: 600;
+        color: #1e293b;
+        font-weight: 700;
         margin: 0 0 4px 0;
         line-height: 1;
     }
 
-    .hero-author-tag strong { color: #0369a1; }
+    .hero-author-tag strong { color: #0284c7; }
 
     /* =========================================================================
-       STILE RIQUADRI (SFONDO IN NETTO CONTRASTO CON LA PAGINA CELESTE)
+       SFONDO DENTRO TUTTI I RIQUADRI: BIANCO MENTA LUMINOSO IN NETTO CONTRASTO
        ========================================================================= */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
-        background: linear-gradient(150deg, #ffffff 0%, #ecfdf5 60%, #d1fae5 100%) !important;
+        background: linear-gradient(150deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%) !important;
         border: 2px solid #059669 !important;
         border-radius: 10px !important;
         padding: 5px 6px !important;
         margin-bottom: 6px !important;
-        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.20), 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25), 0 1px 3px rgba(0, 0, 0, 0.10) !important;
     }
 
     /* Azzeramento spazi interni verticali */
@@ -238,7 +241,7 @@ st.markdown("""
     }
 
     /* =========================================================================
-       FILTRI (ORDINAMENTO, SCONTO, SPEDIZIONE)
+       FILTRI
        ========================================================================= */
     div[data-testid="stRadio"] {
         display: flex !important;
