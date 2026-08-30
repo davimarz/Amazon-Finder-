@@ -17,16 +17,16 @@ _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 def get_creators_access_token():
     now = time.time()
     if _TOKEN_CACHE["access_token"] and now < _TOKEN_CACHE["expires_at"] - 60:
-        return _TOKEN_CACHE["access_token"]
+        return _TOKEN_CACHE["access_token"], None
 
     try:
         creds = st.secrets.get("amazon_api", {})
-        client_id = creds.get("client_id")
-        client_secret = creds.get("client_secret")
+        client_id = creds.get("client_id", "").strip()
+        client_secret = creds.get("client_secret", "").strip()
         if not client_id or not client_secret:
-            return None
-    except Exception:
-        return None
+            return None, "Credenziali `client_id` o `client_secret` non trovate nei Secrets di Streamlit."
+    except Exception as e:
+        return None, f"Errore lettura Secrets: {str(e)}"
 
     token_url = "https://api.amazon.com/auth/o2/token"
     payload = {
@@ -37,17 +37,23 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=6)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=7)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
             expires_in = data.get("expires_in", 3600)
             _TOKEN_CACHE["access_token"] = token
             _TOKEN_CACHE["expires_at"] = now + expires_in
-            return token
-    except Exception:
-        pass
-    return None
+            return token, None
+        else:
+            try:
+                err_json = resp.json()
+                err_desc = err_json.get("error_description") or err_json.get("error") or resp.text
+                return None, f"Risposta Amazon Auth ({resp.status_code}): {err_desc}"
+            except Exception:
+                return None, f"Risposta Amazon Auth ({resp.status_code}): {resp.text}"
+    except Exception as e:
+        return None, f"Errore di rete durante autenticazione Amazon: {str(e)}"
 
 def calcola_distribuzione_recensioni(voto_medio, num_recensioni=0):
     v = max(1.0, min(5.0, float(voto_medio))) if voto_medio else 4.5
@@ -167,8 +173,15 @@ def ottieni_dettaglio_asin_api(asin, token, partner_tag):
                 parsed = parse_item_api_response(items[0], partner_tag)
                 if parsed:
                     return [parsed]
-    except Exception:
-        pass
+        else:
+            try:
+                err_data = resp.json()
+                msg = err_data.get("Errors", [{}])[0].get("Message", resp.text)
+                st.warning(f"Dettaglio errore GetItems Amazon: {msg}")
+            except Exception:
+                pass
+    except Exception as e:
+        st.error(f"Errore chiamata GetItems: {str(e)}")
     return []
 
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
@@ -195,13 +208,13 @@ def ottieni_offerte_avanzate(
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     clean_keyword = keyword.strip()
     asin_match = RE_ASIN.search(clean_keyword)
-    token = get_creators_access_token()
+    token, err_auth = get_creators_access_token()
 
     if not token:
-        st.error("⚠️ Impossibile autenticarsi alle API Amazon ufficiali. Verifica le credenziali nei Secrets di Streamlit.")
+        st.error(f"⚠️ Errore di autenticazione Amazon: {err_auth}")
         return []
 
-    # 1. Ricerca diretta per ASIN / Link prodotto tramite GetItems ufficiale
+    # 1. Ricerca diretta per ASIN / Link prodotto tramite GetItems
     if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
         asin_code = asin_match.group(1)
         res_api = ottieni_dettaglio_asin_api(asin_code, token, partner_tag)
@@ -213,7 +226,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
-    # 2. Ricerca catalogo prodotti tramite SearchItems ufficiale
+    # 2. Ricerca catalogo tramite SearchItems
     api_url = "https://webservices.amazon.it/paapi5/searchitems"
     headers = {
         "Authorization": f"Bearer {token}",
@@ -266,11 +279,11 @@ def ottieni_offerte_avanzate(
         else:
             try:
                 err_data = resp.json()
-                err_msg = err_data.get("Errors", [{}])[0].get("Message", "Errore chiamata PA-API")
-                st.warning(f"Risposta Amazon API: {err_msg}")
+                err_msg = err_data.get("Errors", [{}])[0].get("Message", resp.text)
+                st.warning(f"Risposta Amazon API ({resp.status_code}): {err_msg}")
             except Exception:
-                pass
+                st.warning(f"Risposta Amazon API ({resp.status_code}): {resp.text}")
     except Exception as e:
-        st.error(f"Errore di connessione API Amazon: {str(e)}")
+        st.error(f"Errore chiamata SearchItems: {str(e)}")
 
     return []
