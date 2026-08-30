@@ -220,11 +220,11 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
 
     soup = BeautifulSoup(html, "html.parser")
 
-    # 1. Titolo
+    # 1. Titolo del prodotto
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo (Con controllo IVA inclusa)
+    # 2. Prezzo Effettivo (BuyBox / Acquisto Singolo)
     price_val = 0.0
     price_box = soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay") or \
                 soup.select_one("#corePrice_feature_div .priceToPay") or \
@@ -261,7 +261,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                     price_val = val
                     break
 
-    # Rilevamento e correzione automatica prezzi scorporati di IVA (es. 163,11 -> 199,00)
+    # Riconoscimento eventuale prezzo B2B/IVA esclusa
     page_text_lower = soup.get_text(" ", strip=True).lower()
     if "iva esclusa" in page_text_lower or "prezzo senza iva" in page_text_lower or "escl. iva" in page_text_lower:
         if price_val > 0 and price_val < 180 and "236" in page_text_lower:
@@ -275,7 +275,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_price and price_val < min_price: return []
     if max_price and price_val > max_price: return []
 
-    # 3. Prezzo Barrato / Listino Consigliato
+    # 3. Prezzo Barrato / Consigliato
     old_price_val = price_val
     basis_box = soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice") or \
                 soup.select_one("#corePrice_desktop .basisPrice") or \
@@ -324,41 +324,49 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione e Prime (Verifica PRIORITARIA della gratuità / Prime)
+    # 5. Spedizione e Prime (Ispezione mirata del BuyBox destro tra "Acquista nuovo" e "Aggiungi al carrello")
     costo_sped = 0.0
     is_prime = False
     is_free = False
 
-    # Controllo globale delle diciture di spedizione gratuita su tutta la pagina e nel box consegna
-    full_html_lower = str(soup).lower()
-    full_text_lower = soup.get_text(" ", strip=True).lower()
+    # Identificazione della scheda laterale destra di acquisto (BuyBox)
+    buybox_right = soup.select_one("#desktop_buybox") or \
+                   soup.select_one("#buybox") or \
+                   soup.select_one("#buyBoxAccordion") or \
+                   soup.select_one("#newAccordionRow")
 
-    frasi_gratis_esplicite = [
+    buybox_text = buybox_right.get_text(" ", strip=True).lower() if buybox_right else page_text_lower
+    buybox_html = str(buybox_right).lower() if buybox_right else str(soup).lower()
+
+    # Controllo presenze badge grafico o icona Prime nella BuyBox
+    has_prime_in_buybox = bool(
+        (buybox_right and buybox_right.select_one(".a-icon-prime")) or
+        (buybox_right and buybox_right.select_one("i.a-icon-prime")) or
+        (buybox_right and buybox_right.select_one("img[alt*='prime' i]")) or
+        (buybox_right and buybox_right.select_one("#primeExclusivePricingMessage")) or
+        soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE .a-icon-prime") or
+        soup.select_one(".a-icon-prime")
+    )
+
+    # Diciture che identificano la consegna gratuita senza spese
+    frasi_gratuite = [
         "consegna senza costi aggiuntivi",
         "senza costi aggiuntivi",
         "consegna gratuita",
         "spedizione gratuita",
         "consegna gratis",
         "spedizione gratis",
-        "prime exclusive",
-        "iscriviti a prime per avere consegne"
+        "prime exclusive"
     ]
 
-    has_prime_badge = bool(
-        soup.select_one(".a-icon-prime") or 
-        soup.select_one("#primeExclusivePricingMessage") or 
-        soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE .a-icon-prime") or 
-        "prime" in full_text_lower
-    )
+    has_free_text_in_buybox = any(f in buybox_text for f in frasi_gratuite) or any(f in page_text_lower for f in frasi_gratuite)
 
-    is_explicit_free = any(f in full_text_lower for f in frasi_gratis_esplicite)
-
-    if is_explicit_free or has_prime_badge:
+    if has_free_text_in_buybox or has_prime_in_buybox:
         costo_sped = 0.0
         is_prime = True
         is_free = True
     else:
-        # Se non c'è Prime e non ci sono frasi gratuite, analizza SOLO il blocco spedizione
+        # Se non è presente Prime né la dicitura gratuita, analizza esclusivamente il blocco spedizione
         deliv_box = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
                     soup.select_one("#deliveryMessageMirId") or \
                     soup.select_one("#delivery-message")
