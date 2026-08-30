@@ -572,6 +572,16 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
+    /* BARRA DI PAGINAZIONE A SCHEDE */
+    .pagination-bar-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin: 10px 0 14px 0;
+        flex-wrap: wrap;
+    }
+
     .btn-back-to-top {
         display: inline-flex !important;
         align-items: center !important;
@@ -713,12 +723,16 @@ if "has_searched" not in st.session_state:
 if "item_count" not in st.session_state:
     st.session_state.item_count = 10
 
+if "current_page" not in st.session_state:
+    st.session_state.current_page = 1
+
 def trigger_ricerca(increment=False):
     st.session_state.has_searched = True
     if increment:
         st.session_state.item_count = st.session_state.get("item_count", 10) + 10
     else:
         st.session_state.item_count = 10
+        st.session_state.current_page = 1
 
     kw = st.session_state.get("cerca_keyword_input", "").strip()
     sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
@@ -737,6 +751,11 @@ def trigger_ricerca(increment=False):
         item_count=st.session_state.item_count
     )
     st.session_state.offerte = risultati if risultati else []
+    
+    # Se abbiamo aggiunto 10 elementi, spostiamo automaticamente la visualizzazione sull'ultima pagina caricata
+    if increment:
+        num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
+        st.session_state.current_page = num_pag_totali
 
 # Ancora posizionata in cima alla pagina
 st.markdown("""
@@ -887,14 +906,35 @@ with tab_cerca:
             trigger_ricerca(increment=True)
 
     if st.session_state.offerte:
-        st.write("")
-        for idx in range(0, len(st.session_state.offerte), 2):
+        tot_offerte = len(st.session_state.offerte)
+        tot_pagine = max(1, (tot_offerte + 9) // 10)
+
+        # Barra di selezione pagina (se presenti più di 10 prodotti)
+        if tot_pagine > 1:
+            st.markdown("<div style='margin-top: 6px;'></div>", unsafe_allow_html=True)
+            cols_pag = st.columns([1] * tot_pagine + [max(1, 10 - tot_pagine)])
+            for p_num in range(1, tot_pagine + 1):
+                with cols_pag[p_num - 1]:
+                    is_active = (st.session_state.current_page == p_num)
+                    btn_type = "primary" if is_active else "secondary"
+                    if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
+                        st.session_state.current_page = p_num
+                        st.rerun()
+
+        # Calcolo indice dei 10 prodotti per la pagina attiva
+        start_idx = (st.session_state.current_page - 1) * 10
+        end_idx = min(start_idx + 10, tot_offerte)
+        offerte_pagina = st.session_state.offerte[start_idx:end_idx]
+
+        st.markdown(f"<p style='font-size: 0.72rem; font-weight: 700; color: #0369a1; margin: 4px 0 2px 2px;'>Visualizzati {start_idx + 1}-{end_idx} di {tot_offerte} prodotti (Pagina {st.session_state.current_page} di {tot_pagine}):</p>", unsafe_allow_html=True)
+
+        for idx in range(0, len(offerte_pagina), 2):
             col_l, col_r = st.columns(2)
             with col_l:
-                render_product_card(st.session_state.offerte[idx], tab_key=f"cerca_{idx}")
-            if idx + 1 < len(st.session_state.offerte):
+                render_product_card(offerte_pagina[idx], tab_key=f"cerca_p{st.session_state.current_page}_{idx}")
+            if idx + 1 < len(offerte_pagina):
                 with col_r:
-                    render_product_card(st.session_state.offerte[idx + 1], tab_key=f"cerca_{idx + 1}")
+                    render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati.")
 
@@ -937,7 +977,7 @@ with tab_contatti:
                     else:
                         st.error(f"Errore di invio: {msg_err}")
 
-# ----------------- PULSANTE TORNA ALL'INIZIO (CROSS-DEVICE SCROLL) -----------------
+# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
 st.markdown("""
 <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 30px 0 15px 0;">
     <a href="#top_page" target="_self" onclick="(function(){
