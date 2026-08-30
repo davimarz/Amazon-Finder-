@@ -410,25 +410,27 @@ def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     return prodotti[:item_count]
 
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-     categorie_popolari = [
-        "bestseller informatica",
-        "bestseller casa",
-        "bestseller sport",
-        "bestseller elettronica",
-        "bestseller bellezza",
-        "bestseller cucina",
-        "offerte top",
-        "bestseller libri"
+     # Categorie e termini mirati alle occasioni "da non perdere" e offerte top
+     keywords_imperdibili = [
+        "offerte da non perdere",
+        "migliori sconti amazon",
+        "offerte lampo",
+        "elettronica in offerta",
+        "casa e cucina offerte",
+        "smartphone in offerta",
+        "articoli piu venduti",
+        "top sconti"
     ]
-     cat_scelte = random.sample(categorie_popolari, min(3, len(categorie_popolari)))
+     kw_scelte = random.sample(keywords_imperdibili, min(3, len(keywords_imperdibili)))
      tutti_prodotti = []
      asins_visti = set()
      
-     for cat in cat_scelte:
+     for kw in kw_scelte:
          risultati = ottieni_offerte_avanzate(
-            keyword=cat,
+            keyword=kw,
             sort_type="Numero di vendite",
             solo_spedizione_gratuita=False,
+            min_discount=10, # Cerca prodotti con sconti reali
             item_count=5
         )
          for p in risultati:
@@ -438,7 +440,7 @@ def ottieni_vetrina_casuale(partner_tag, item_count=10):
                  
      random.shuffle(tutti_prodotti)
      if not tutti_prodotti:
-         return ottieni_offerte_avanzate(keyword="bestseller", sort_type="Numero di vendite", item_count=item_count)
+         return ottieni_offerte_avanzate(keyword="offerte", sort_type="Recensioni", item_count=item_count)
          
      return tutti_prodotti[:item_count]
 
@@ -588,9 +590,9 @@ def ottieni_offerte_avanzate(
 
             voto_val = 4.5
             num_rev_val = 0
-            star_elem = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
-            if star_elem:
-                sm = RE_STAR.search(star_elem.get_text(" ", strip=True))
+            star_tag = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
+            if star_tag:
+                sm = RE_STAR.search(star_tag.get_text(" ", strip=True))
                 if sm:
                     try:
                         voto_val = float(sm.group(1).replace(",", "."))
