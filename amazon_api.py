@@ -212,17 +212,16 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo di Vendita (Acquisto singolo / BuyBox primario)
+    # 2. Prezzo Effettivo di Vendita (Acquisto singolo BuyBox)
     price_val = 0.0
     primary_selectors = [
         "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
         "#corePrice_feature_div .priceToPay span.a-offscreen",
         "#apex_desktop .priceToPay span.a-offscreen",
-        "#apex_desktop_newAccordionRow .priceToPay span.a-offscreen",
-        "#newAccordionRow #corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
+        "#desktop_buybox .priceToPay span.a-offscreen",
+        "#corePriceDisplay_desktop_feature_div span.a-price-whole",
         "#desktop_buybox #priceblock_ourprice",
-        "#desktop_buybox #priceblock_dealprice",
-        "#desktop_buybox .priceToPay span.a-offscreen"
+        "#desktop_buybox #priceblock_dealprice"
     ]
     for sel in primary_selectors:
         elem = soup.select_one(sel)
@@ -232,7 +231,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                 price_val = val
                 break
 
-    # Se non trovato nei contenitori mirati, tenta l'offscreen all'interno del modulo centrale
     if price_val <= 0.0:
         apex = soup.select_one("#apex_desktop") or soup.select_one("#corePriceDisplay_desktop_feature_div")
         if apex:
@@ -246,7 +244,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_price and price_val < min_price: return []
     if max_price and price_val > max_price: return []
 
-    # 3. Prezzo Barrato / Listino (Prezzo consigliato)
+    # 3. Prezzo Barrato / Consigliato (Prezzo di listino)
     old_price_val = price_val
     basis_selectors = [
         "#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen",
@@ -276,19 +274,17 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             sconto_val = int(d_match.group(1))
             sconto_str = f"-{sconto_val}%"
 
-    if not sconto_str and old_price_val > price_val > 0:
+    if sconto_val > 0 and (old_price_val <= price_val):
+        old_price_val = round(price_val / (1.0 - (sconto_val / 100.0)), 2)
+    elif not sconto_str and old_price_val > price_val:
         sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
         if sconto_val > 0:
             sconto_str = f"-{sconto_val}%"
 
-    # Ricostruzione coerente del prezzo consigliato iniziale in presenza di sconto percentuale certificato
-    if sconto_val > 0 and (old_price_val == price_val or old_price_val < price_val):
-        old_price_val = round(price_val / (1.0 - (sconto_val / 100.0)), 2)
-
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione (Rigorosamente circoscritta all'area di consegna)
+    # 5. Spedizione (Consegna e verifica Prime / Senza costi aggiuntivi)
     costo_sped = 0.0
     is_prime = False
     is_free = False
@@ -319,7 +315,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                         break
             is_free = (costo_sped == 0.0)
     else:
-        # Se il modulo di consegna non compare esplicitamente, assume Prime/Gratuito per default
         is_free = True
         costo_sped = 0.0
 
