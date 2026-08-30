@@ -30,8 +30,8 @@ RE_DIGITS = re.compile(r'[^\d]')
 
 SHIPPING_PATTERNS = [
     re.compile(r'(\d+[\.,]\d{2})\s*€\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna|invio|trasporto)', re.IGNORECASE),
-    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
-    re.compile(r'\+\s*€?\s*(\d+[\.,]\d{2})\s*(?:di\s*)?(?:spedizione|consegna)?', re.IGNORECASE),
+    re.compile(r'(?:consegna|spedizione|costo\s+consegna|costi?\s+di\s+spedizione|spese\s+di\s+spedizione)\s*(?:a|per|di|da|:)?\s*€?\s*(\d+[\.,]\d{2})\s*€?', re.IGNORECASE),
+    re.compile(r'\+\s*€?\s*(\d+[\.,]\d{2})', re.IGNORECASE),
     re.compile(r'€\s*(\d+[\.,]\d{2})\s*(?:di|per\s+(?:la)?)?\s*(?:spedizione|consegna)', re.IGNORECASE),
     re.compile(r'(?:eur|euro)\s*(\d+[\.,]\d{2})', re.IGNORECASE)
 ]
@@ -101,7 +101,7 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=3)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=4)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
@@ -158,7 +158,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
             if price_val > 0:
                 break
 
-    # 3. Prezzo Iniziale (Listino barrato)
+    # 3. Prezzo Iniziale
     old_price_val = price_val
     basis_tags = [
         soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen"),
@@ -258,6 +258,85 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag):
         "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
     }]
 
+def ottieni_dettaglio_asin_api(asin, token, partner_tag):
+    api_url = "https://webservices.amazon.it/paapi5/getitems"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json; charset=utf-8",
+        "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems"
+    }
+    payload = {
+        "ItemIds": [asin],
+        "PartnerTag": partner_tag,
+        "PartnerType": "Associates",
+        "Marketplace": "www.amazon.it",
+        "Resources": [
+            "ItemInfo.Title",
+            "Offers.Listings.Price",
+            "Offers.Listings.SavingBasis",
+            "Offers.Listings.DeliveryInfo.IsPrimeEligible",
+            "Offers.Listings.DeliveryInfo.IsFreeShippingEligible",
+            "Offers.Listings.DeliveryInfo.ShippingCharges",
+            "Images.Primary.Large",
+            "CustomerReviews.Count",
+            "CustomerReviews.StarRating"
+        ]
+    }
+    try:
+        resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+        if resp.status_code == 200:
+            items = resp.json().get("ItemsResult", {}).get("Items", [])
+            if items:
+                it = items[0]
+                title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
+                img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://via.placeholder.com/300")
+                link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
+
+                listings = it.get("Offers", {}).get("Listings", [])
+                price_val = 0.0
+                old_price_val = 0.0
+                costo_sped = 0.0
+                is_prime = False
+                is_free = False
+
+                if listings:
+                    first = listings[0]
+                    price_val = float(first.get("Price", {}).get("Amount", 0.0))
+                    old_price_val = float(first.get("SavingBasis", {}).get("Amount", price_val))
+                    delivery = first.get("DeliveryInfo", {})
+                    is_prime = delivery.get("IsPrimeEligible", False)
+                    charges = delivery.get("ShippingCharges", [])
+                    if charges:
+                        costo_sped = float(charges[0].get("Amount", 0.0))
+                    is_free = (costo_sped == 0.0) and (is_prime or delivery.get("IsFreeShippingEligible", False))
+
+                sconto_val = 0
+                if old_price_val > price_val > 0:
+                    sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
+
+                voto = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.5))
+                recensioni = int(it.get("CustomerReviews", {}).get("Count", 0))
+
+                return [{
+                    "asin": asin,
+                    "titolo": title,
+                    "immagine_url": img,
+                    "prezzo_iniziale": old_price_val,
+                    "prezzo_finale": price_val,
+                    "sconto": f"-{sconto_val}%" if sconto_val > 0 else "",
+                    "sconto_val": sconto_val,
+                    "is_prime": is_prime,
+                    "is_sped_gratis": is_free,
+                    "costo_spedizione": costo_sped,
+                    "voto_medio": voto,
+                    "num_recensioni": recensioni,
+                    "vendite_mensili": recensioni,
+                    "link_affiliato": link
+                }]
+    except Exception:
+        pass
+    return []
+
 def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
     if sort_type == "Prezzo minimo":
         prodotti.sort(key=lambda x: x["prezzo_finale"])
@@ -282,10 +361,18 @@ def ottieni_offerte_avanzate(
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     clean_keyword = keyword.strip()
     
-    # Riconoscimento prioritario se viene incollato un link o un ASIN esatto
+    # 1. Se viene fornito un link o un ASIN diretto
     asin_match = RE_ASIN.search(clean_keyword)
     if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
         asin_code = asin_match.group(1)
+        token = get_creators_access_token()
+        if token:
+            res_api = ottieni_dettaglio_asin_api(asin_code, token, partner_tag)
+            if res_api:
+                if solo_spedizione_gratuita and res_api[0]["costo_spedizione"] > 0:
+                    return []
+                return res_api
+
         res_dp = _ottieni_prodotto_singolo_dp(asin_code, partner_tag)
         if res_dp:
             if solo_spedizione_gratuita and res_dp[0]["costo_spedizione"] > 0:
@@ -295,7 +382,7 @@ def ottieni_offerte_avanzate(
     query_str = clean_keyword if clean_keyword else "offerte"
     token = get_creators_access_token()
 
-    # 1. Chiamata PA-API5 Ufficiale
+    # 2. Ricerca Multi-prodotto PA-API5
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {
@@ -382,7 +469,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 2. Fallback Scraper Multi-prodotto
+    # 3. Fallback Scraper Multi-prodotto
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     urls_to_try = [
@@ -430,6 +517,9 @@ def ottieni_offerte_avanzate(
             sconto_val = 0
             if prezzo_iniziale > prezzo_prodotto > 0:
                 sconto_val = int(round(((prezzo_iniziale - prezzo_prodotto) / prezzo_iniziale) * 100))
+
+            if min_discount > 0 and sconto_val < min_discount:
+                continue
 
             # Spedizione
             costo_sped = 0.0
