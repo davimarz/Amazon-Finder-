@@ -284,7 +284,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione (Consegna e verifica Prime / Senza costi aggiuntivi)
+    # 5. Spedizione (Riconoscimento Prime / Consegna senza costi)
     costo_sped = 0.0
     is_prime = False
     is_free = False
@@ -295,16 +295,21 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                 soup.select_one("#desktop_buybox #delivery-message") or \
                 soup.select_one("#deliveryBlockMessage")
 
+    has_prime_badge = bool(
+        soup.select_one("#desktop_buybox .a-icon-prime") or 
+        soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE .a-icon-prime") or 
+        soup.select_one(".a-icon-prime") or 
+        soup.select_one("#primeExclusivePricingMessage")
+    )
+
     if deliv_box:
         deliv_text = deliv_box.get_text(" ", strip=True).replace("\xa0", " ")
         deliv_lower = deliv_text.lower()
 
         frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
-        has_prime_badge = bool(soup.select_one("#desktop_buybox .a-icon-prime") or soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE .a-icon-prime") or soup.select_one("#primeExclusivePricingMessage"))
-
         if any(f in deliv_lower for f in frasi_gratis) or "prime" in deliv_lower or has_prime_badge:
             costo_sped = 0.0
-            is_prime = bool("prime" in deliv_lower or has_prime_badge)
+            is_prime = True
             is_free = True
         else:
             for pat in SHIPPING_PATTERNS:
@@ -313,8 +318,10 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                     costo_sped = parse_price(m.group(1))
                     if costo_sped > 0:
                         break
+            is_prime = False
             is_free = (costo_sped == 0.0)
     else:
+        is_prime = has_prime_badge
         is_free = True
         costo_sped = 0.0
 
@@ -502,9 +509,11 @@ def ottieni_offerte_avanzate(
             deliv_lower = deliv_text.lower()
             
             frasi_gratis = ("senza costi aggiuntivi", "consegna gratuita", "spedizione gratuita", "consegna gratis", "spedizione gratis")
-            if any(f in deliv_lower for f in frasi_gratis) or "prime" in deliv_lower or it.select_one(".a-icon-prime"):
+            has_prime = bool("prime" in deliv_lower or it.select_one(".a-icon-prime"))
+            
+            if any(f in deliv_lower for f in frasi_gratis) or has_prime:
                 costo_sped = 0.0
-                is_prime = bool("prime" in deliv_lower or it.select_one(".a-icon-prime"))
+                is_prime = True
                 is_free = True
             else:
                 for pat in SHIPPING_PATTERNS:
