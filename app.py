@@ -30,6 +30,10 @@ st.markdown("""
         box-sizing: border-box !important;
     }
 
+    html {
+        scroll-behavior: smooth !important;
+    }
+
     .stApp {
         background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
         background-attachment: fixed !important;
@@ -568,29 +572,29 @@ st.markdown("""
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
 
-    /* PULSANTE TORNA IN CIMA ALLA PAGINA */
     .btn-back-to-top {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 6px !important;
-        padding: 7px 20px !important;
+        gap: 8px !important;
+        padding: 8px 24px !important;
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         text-decoration: none !important;
         border-radius: 8px !important;
         font-weight: 800 !important;
-        font-size: 0.80rem !important;
-        box-shadow: 0 3px 10px rgba(2, 132, 199, 0.35) !important;
+        font-size: 0.82rem !important;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
         cursor: pointer !important;
         transition: all 0.2s ease-in-out !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
     }
 
     .btn-back-to-top:hover {
         background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%) !important;
         transform: translateY(-2px) !important;
-        box-shadow: 0 5px 14px rgba(2, 132, 199, 0.45) !important;
+        box-shadow: 0 6px 16px rgba(2, 132, 199, 0.45) !important;
+        color: #ffffff !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -734,8 +738,10 @@ def trigger_ricerca(increment=False):
     )
     st.session_state.offerte = risultati if risultati else []
 
+# Ancora posizionata in cima alla pagina
 st.markdown("""
-<div class="hero-container" id="top_page">
+<div id="top_page" style="position: absolute; top: 0; left: 0; height: 1px; width: 1px;"></div>
+<div class="hero-container">
     <div class="hero-title-main">Scala dei Turchi</div>
     <div class="hero-subtitle-box">
         <span class="hero-subtitle-text">Offerte Amazon</span>
@@ -931,11 +937,21 @@ with tab_contatti:
                     else:
                         st.error(f"Errore di invio: {msg_err}")
 
-# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
+# ----------------- PULSANTE TORNA ALL'INIZIO (CROSS-DEVICE SCROLL) -----------------
 st.markdown("""
-<div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 25px 0 15px 0;">
-    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'}); document.querySelector('.stApp').scrollIntoView({behavior: 'smooth'});" class="btn-back-to-top">
+<div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 30px 0 15px 0;">
+    <a href="#top_page" target="_self" onclick="(function(){
+        try {
+            const stContainer = window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid=\\'stAppViewContainer\\']');
+            if(stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
+        } catch(e) {}
+        try {
+            const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
+            if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+        } catch(e) {}
+        try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
+    })()" class="btn-back-to-top">
         ⬆️ Torna all'inizio
-    </button>
+    </a>
 </div>
 """, unsafe_allow_html=True)
