@@ -53,11 +53,16 @@ def _fetch_html(url, timeout=7):
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
     }
+    cookies = {
+        "lc-acbit": "it_IT",
+        "i18n-prefs": "EUR",
+        "sp-cdn": "L5Z9:IT"
+    }
 
     if HAS_CURL:
         try:
             s = c_requests.Session(impersonate="chrome120")
-            r = s.get(url, headers=headers, timeout=timeout)
+            r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
             if r.status_code == 200 and r.text and len(r.text) > 1500 and "Robot Check" not in r.text:
                 return r.text
         except Exception:
@@ -65,7 +70,7 @@ def _fetch_html(url, timeout=7):
 
     try:
         s = requests.Session()
-        r = s.get(url, headers=headers, timeout=timeout)
+        r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
         if r.status_code == 200 and r.text and len(r.text) > 1500 and "Robot Check" not in r.text:
             return r.text
     except Exception:
@@ -82,6 +87,14 @@ def parse_price(text):
         frac = m.group(2)
         try:
             val = float(f"{whole}.{frac}")
+            return val if val > 0 else 0.0
+        except ValueError:
+            pass
+    # Controllo per prezzi senza centesimi (es. "€ 199" o "199 €")
+    m_int = re.search(r'(\d{1,3}(?:\.\d{3})*|\d+)\s*€', cleaned) or re.search(r'€\s*(\d{1,3}(?:\.\d{3})*|\d+)', cleaned)
+    if m_int:
+        try:
+            val = float(m_int.group(1).replace(".", ""))
             return val if val > 0 else 0.0
         except ValueError:
             pass
@@ -212,32 +225,45 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo (Isolato rigorosamente nel box d'acquisto attivo)
+    # 2. Prezzo Effettivo (Prezzo finale al consumo con IVA)
     price_val = 0.0
-    primary_selectors = [
-        "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
-        "#corePriceDisplay_desktop_feature_div .reinventPriceSavingsPercentageMargin span.a-offscreen",
-        "#corePrice_feature_div .priceToPay span.a-offscreen",
-        "#apex_desktop .priceToPay span.a-offscreen",
-        "#apex_desktop_newAccordionRow .priceToPay span.a-offscreen",
-        "#desktop_buybox .priceToPay span.a-offscreen",
-        "#desktop_buybox #priceblock_ourprice",
-        "#desktop_buybox #priceblock_dealprice"
-    ]
-    for sel in primary_selectors:
-        elem = soup.select_one(sel)
-        if elem:
-            val = parse_price(elem.get_text(strip=True))
-            if val > 0:
-                price_val = val
-                break
+    
+    # Tentativo primario: blocco centrale con separazione intero + centesimi
+    price_box = soup.select_one("#corePriceDisplay_desktop_feature_div .priceToPay") or \
+                soup.select_one("#corePrice_feature_div .priceToPay") or \
+                soup.select_one("#apex_desktop .priceToPay")
+    if price_box:
+        whole = price_box.select_one(".a-price-whole")
+        frac = price_box.select_one(".a-price-fraction")
+        if whole:
+            w_text = whole.get_text(strip=True).replace(".", "").replace(",", "")
+            f_text = frac.get_text(strip=True) if frac else "00"
+            try:
+                price_val = float(f"{w_text}.{f_text}")
+            except ValueError:
+                pass
+        if price_val <= 0.0:
+            off_span = price_box.select_one(".a-offscreen")
+            if off_span:
+                price_val = parse_price(off_span.get_text(strip=True))
 
+    # Tentativi secondari su selettori specifici BuyBox
     if price_val <= 0.0:
-        apex = soup.select_one("#apex_desktop") or soup.select_one("#corePriceDisplay_desktop_feature_div")
-        if apex:
-            off_tag = apex.select_one(".priceToPay .a-offscreen") or apex.select_one(".a-price .a-offscreen")
-            if off_tag:
-                price_val = parse_price(off_tag.get_text(strip=True))
+        selectors = [
+            "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
+            "#corePrice_feature_div .priceToPay span.a-offscreen",
+            "#apex_desktop .priceToPay span.a-offscreen",
+            "#desktop_buybox .priceToPay span.a-offscreen",
+            "#desktop_buybox #priceblock_ourprice",
+            "#desktop_buybox #priceblock_dealprice"
+        ]
+        for sel in selectors:
+            elem = soup.select_one(sel)
+            if elem:
+                val = parse_price(elem.get_text(strip=True))
+                if val > 0:
+                    price_val = val
+                    break
 
     if price_val <= 0.0:
         return []
@@ -247,21 +273,29 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
 
     # 3. Prezzo Barrato / Listino Consigliato
     old_price_val = price_val
-    basis_selectors = [
-        "#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen",
-        "#corePriceDisplay_desktop_feature_div span[data-a-strike='true'] span.a-offscreen",
-        "#corePrice_desktop .basisPrice span.a-offscreen",
-        "#apex_desktop .basisPrice span.a-offscreen",
-        "#apex_desktop .a-text-price span.a-offscreen",
-        "#apex_desktop span[data-a-strike='true'] span.a-offscreen"
-    ]
-    for b_sel in basis_selectors:
-        b_elem = soup.select_one(b_sel)
-        if b_elem:
-            b_val = parse_price(b_elem.get_text(strip=True))
+    basis_box = soup.select_one("#corePriceDisplay_desktop_feature_div .basisPrice") or \
+                soup.select_one("#corePrice_desktop .basisPrice") or \
+                soup.select_one("#apex_desktop .basisPrice")
+    if basis_box:
+        b_off = basis_box.select_one(".a-offscreen")
+        if b_off:
+            b_val = parse_price(b_off.get_text(strip=True))
             if b_val > price_val:
                 old_price_val = b_val
-                break
+
+    if old_price_val <= price_val:
+        basis_selectors = [
+            "#corePriceDisplay_desktop_feature_div span[data-a-strike='true'] span.a-offscreen",
+            "#apex_desktop span[data-a-strike='true'] span.a-offscreen",
+            "#apex_desktop .a-text-price span.a-offscreen"
+        ]
+        for b_sel in basis_selectors:
+            b_elem = soup.select_one(b_sel)
+            if b_elem:
+                b_val = parse_price(b_elem.get_text(strip=True))
+                if b_val > price_val:
+                    old_price_val = b_val
+                    break
 
     # 4. Sconto Percentuale
     sconto_str = ""
@@ -276,7 +310,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             sconto_str = f"-{sconto_val}%"
 
     if sconto_val > 0:
-        # Se lo sconto è estratto e il prezzo vecchio manca o non coincide, calcola il listino reale esatto
         if old_price_val <= price_val:
             old_price_val = round(price_val / (1.0 - (sconto_val / 100.0)), 2)
     elif old_price_val > price_val:
@@ -287,7 +320,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione e Prime (Blocco Consegna Esclusivo)
+    # 5. Spedizione e Prime
     costo_sped = 0.0
     is_prime = False
     is_free = False
