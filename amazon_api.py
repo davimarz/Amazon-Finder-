@@ -233,8 +233,8 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if price_val <= 0.0:
         return []
 
-    if min_price and price_val < min_price: return []
-    if max_price and price_val > max_price: return []
+    if min_price and price_val < min_price: return None
+    if max_price and price_val > max_price: return None
 
     old_price_val = price_val
     basis_tags = [
@@ -398,7 +398,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 3. Parser Diretto della Scheda Risultati di Ricerca (1 sola richiesta veloce, senza blocchi)
+    # 3. Parser Diretto della Scheda Risultati di Ricerca
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "price-asc-rank")
     urls_to_try = [
@@ -428,13 +428,15 @@ def ottieni_offerte_avanzate(
                 continue
 
             # Titolo
-            title_tag = it.find("h2")
+            title_tag = it.find("h2") or it.find("span", {"class": re.compile(r"a-text-normal")})
             if not title_tag:
                 continue
             titolo = title_tag.get_text(strip=True)
 
             # Prezzo
-            p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or it.select_one("span.a-price-whole")
+            p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or \
+                     it.select_one("span.a-price-whole") or \
+                     it.select_one(".a-color-price")
             prezzo_prodotto = parse_price(p_elem.get_text(strip=True)) if p_elem else 0.0
             if prezzo_prodotto <= 0.0:
                 continue
@@ -477,13 +479,13 @@ def ottieni_offerte_avanzate(
                 continue
 
             # Immagine
-            img_tag = it.find("img", {"class": "s-image"})
+            img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
             img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
 
             # Voto e Recensioni
             voto_val = 4.5
             num_rev_val = 0
-            star_elem = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")})
+            star_elem = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
             if star_elem:
                 sm = RE_STAR.search(star_elem.get_text(" ", strip=True))
                 if sm:
@@ -492,7 +494,7 @@ def ottieni_offerte_avanzate(
                     except ValueError:
                         pass
 
-            rev_elem = it.find("span", {"class": "s-underline-text"})
+            rev_elem = it.find("span", {"class": "s-underline-text"}) or it.find("span", {"aria-label": re.compile(r"\d+")})
             if rev_elem:
                 cleaned_digs = RE_DIGITS.sub("", rev_elem.get_text(strip=True))
                 if cleaned_digs:
