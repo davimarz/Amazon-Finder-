@@ -132,36 +132,37 @@ st.markdown("""
     .hero-author-tag strong { color: #0369a1; }
 
     /* =========================================================================
-       SCHEDA DI RICERCA COMPATTA: AZZERAMENTO TOTALE SPAZI TRA GLI ELEMENTI
+       RIQUADRI VERDI COMPATTI (RICERCA E FILTRI)
        ========================================================================= */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) {
+    div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
-        border-radius: 8px !important;
-        padding: 4px !important;
-        margin-bottom: 6px !important;
+        border-radius: 10px !important;
+        padding: 4px 6px !important;
+        margin-bottom: 5px !important;
         box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15) !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) [data-testid="stVerticalBlock"] {
+    /* Azzeramento spazi interni di tutti i container */
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
         gap: 0px !important;
         row-gap: 0px !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) [data-testid="stVerticalBlock"] > div {
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] > div {
         margin: 0px !important;
         padding: 0px !important;
         gap: 0px !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stTextInput"] {
+    /* Input Ricerca */
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stTextInput"] {
         margin: 0px 0px 2px 0px !important;
         padding: 0px !important;
     }
 
-    /* Input Ricerca */
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-baseweb="input"] {
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"] {
         background-color: #ffffff !important;
         border: 1px solid #86efac !important;
         border-radius: 5px !important;
@@ -172,11 +173,11 @@ st.markdown("""
         box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08) !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-baseweb="input"]:focus-within {
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"]:focus-within {
         border-color: #059669 !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-baseweb="input"] input {
+    div[data-testid="stVerticalBlockBorderWrapper"] div[data-baseweb="input"] input {
         color: #0f172a !important;
         font-weight: 600 !important;
         font-size: 0.76rem !important;
@@ -184,7 +185,7 @@ st.markdown("""
         height: 26px !important;
     }
 
-    /* Pulsante 1: Cerca (Incolonnato a filo - Blu) */
+    /* Pulsante Cerca (Incolonnato - Blu) */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button,
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:first-of-type button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
@@ -210,7 +211,7 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Pulsante 2: + Altri 10 (Incolonnato a filo - Verde) */
+    /* Pulsante + Altri 10 (Incolonnato - Verde) */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button,
     div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
@@ -236,20 +237,21 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button:hover,
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button:hover {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        border-color: #34d399 !important;
-    }
-
     /* =========================================================================
-       FILTRI E SCHEDE PRODOTTO
+       ELEMENTI DENTRO LA SCHEDA FILTRI
        ========================================================================= */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
         gap: 1px !important;
-        margin: 2px 0 1px 0 !important;
+        margin: 1px 0 2px 0 !important;
+    }
+
+    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
+        color: #064e3b !important;
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 2px !important;
     }
 
     div[data-testid="stRadio"] > div {
@@ -261,50 +263,44 @@ st.markdown("""
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] {
-        background: rgba(255, 255, 255, 0.85) !important;
-        padding: 2px 3px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        padding: 2px 4px !important;
         border-radius: 5px !important;
-        border: 1px solid #bae6fd !important;
+        border: 1px solid #86efac !important;
         margin: 0 !important;
         flex: 1 1 0% !important;
         min-width: 0 !important;
         text-align: center !important;
         justify-content: center !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] div {
-        color: #0f172a !important;
+        color: #064e3b !important;
         font-size: 0.68rem !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         white-space: nowrap !important;
     }
 
     div[data-testid="stCheckbox"] {
-        background: rgba(255, 255, 255, 0.85) !important;
-        padding: 2px 6px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        padding: 3px 6px !important;
         border-radius: 5px !important;
-        border: 1px solid #bae6fd !important;
+        border: 1px solid #86efac !important;
         min-height: 24px !important;
-        margin: 1px 0 4px 0 !important;
+        margin: 3px 0 1px 0 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     }
 
     div[data-testid="stCheckbox"] label p {
         font-size: 0.72rem !important;
         font-weight: 800 !important;
-        color: #059669 !important;
+        color: #065f46 !important;
     }
 
-    /* Schede Prodotto */
-    div[data-testid="stVerticalBlockBorderWrapper"]:not(:has(div[data-testid="stTextInput"])) {
-        background-color: #dcfce7 !important;
-        background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
-        border: 2px solid #34d399 !important;
-        border-radius: 12px !important;
-        padding: 8px !important;
-        margin-bottom: 8px !important;
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
-    }
-
+    /* =========================================================================
+       SCHEDE PRODOTTO
+       ========================================================================= */
     .product-img-wrapper-full {
         width: 100%;
         height: 135px;
@@ -692,7 +688,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Scheda di Ricerca con Casella, Cerca e Altri 10 perfettamente incolonnati e aderenti
+    # 1. Riquadro Scheda di Ricerca (Casella, Cerca, Altri 10)
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -705,33 +701,35 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
-    st.radio(
-        "🏷️ Ordinamento:",
-        list(SORT_MAPPINGS.keys()),
-        index=0,
-        horizontal=True,
-        key="cerca_radio_sort",
-        on_change=trigger_ricerca,
-        args=(False,)
-    )
+    # 2. Riquadro Scheda Filtri (Ordinamento, Sconto, Spedizione)
+    with st.container(border=True):
+        st.radio(
+            "🏷️ Ordinamento:",
+            list(SORT_MAPPINGS.keys()),
+            index=0,
+            horizontal=True,
+            key="cerca_radio_sort",
+            on_change=trigger_ricerca,
+            args=(False,)
+        )
 
-    st.radio(
-        "🔥 Sconto:",
-        list(OPZIONI_SCONTO.keys()),
-        index=0,
-        horizontal=True,
-        key="cerca_radio_disc",
-        on_change=trigger_ricerca,
-        args=(False,)
-    )
+        st.radio(
+            "🔥 Sconto:",
+            list(OPZIONI_SCONTO.keys()),
+            index=0,
+            horizontal=True,
+            key="cerca_radio_disc",
+            on_change=trigger_ricerca,
+            args=(False,)
+        )
 
-    st.checkbox(
-        "🚚 Spedizione gratuita / Prime",
-        value=False,
-        key="cerca_check_sped_gratis",
-        on_change=trigger_ricerca,
-        args=(False,)
-    )
+        st.checkbox(
+            "🚚 Spedizione gratuita / Prime",
+            value=False,
+            key="cerca_check_sped_gratis",
+            on_change=trigger_ricerca,
+            args=(False,)
+        )
 
     if btn_cerca_submit:
         with st.spinner("Ricerca in corso..."):
