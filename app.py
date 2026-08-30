@@ -671,7 +671,6 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
-            # Spedizione esatta
             costo_s = float(p.get("costo_spedizione", 0.0))
             if costo_s > 0.0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
