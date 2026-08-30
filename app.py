@@ -1,5 +1,7 @@
 import streamlit as st
 import smtplib
+import sqlite3
+from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
@@ -541,6 +543,38 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ----------------- GESTIONE LIMITE 1 INVIO AL GIORNO -----------------
+def init_rate_limit_db():
+    conn = sqlite3.connect("rate_limit.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS invii_contatti (
+            email TEXT,
+            data_invio TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def verifica_puo_inviare(email):
+    init_rate_limit_db()
+    today_str = date.today().isoformat()
+    conn = sqlite3.connect("rate_limit.db")
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))
+    count = c.fetchone()[0]
+    conn.close()
+    return count == 0
+
+def registra_invio_completato(email):
+    init_rate_limit_db()
+    today_str = date.today().isoformat()
+    conn = sqlite3.connect("rate_limit.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))
+    conn.commit()
+    conn.close()
+
 def invia_email_smtp_diretta(nome, telefono, email, note):
     destinatario = "davimarz.social@gmail.com"
     email_cfg = st.secrets.get("email", {})
@@ -548,12 +582,12 @@ def invia_email_smtp_diretta(nome, telefono, email, note):
     app_pwd = email_cfg.get("app_password", "").replace(" ", "")
 
     if not app_pwd:
-        return False, "Password per le app non configurata nei Secrets."
+        return False, "Password per le app non configurata nei Secrets di Streamlit."
 
     msg = MIMEMultipart()
     msg['From'] = f"Scala dei Turchi <{sender}>"
     msg['To'] = destinatario
-    msg['Subject'] = f"Nuovo Messaggio da {nome} - Scala dei Turchi"
+    msg['Subject'] = f"🔴 [SCALA DEI TURCHI - SITO] Messaggio da {nome}"
 
     corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
 
@@ -629,7 +663,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3 Schede Affiancate
 tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
@@ -713,7 +746,6 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # 1. Riquadro Scheda di Ricerca
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -726,7 +758,6 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
-    # 2. Riquadro Scheda Filtri
     with st.container(border=True):
         st.radio(
             "🏷️ Ordinamento:",
@@ -803,10 +834,13 @@ with tab_contatti:
             if btn_send_form:
                 if not nome_val.strip() or not email_val.strip() or not note_val.strip():
                     st.error("Compila tutti i campi obbligatori contrassegnati da (*).")
+                elif not verifica_puo_inviare(email_val.strip()):
+                    st.warning("Hai già inviato una richiesta oggi con questa email. Per evitare sovraccarichi, è consentito un solo messaggio al giorno per utente. Riprova domani!")
                 else:
                     with st.spinner("Invio messaggio in corso..."):
                         ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
                     if ok:
-                        st.success("Messaggio inviato con successo a davimarz.social@gmail.com!")
+                        registra_invio_completato(email_val.strip())
+                        st.success("Messaggio inviato con successo! Il nostro team lo prenderà in carico.")
                     else:
                         st.error(f"Errore di invio: {msg_err}")
