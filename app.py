@@ -132,40 +132,36 @@ st.markdown("""
     .hero-author-tag strong { color: #0369a1; }
 
     /* =========================================================================
-       SCHEDA RICERCA COMPATTA (AZZERAMENTO TOTALE DEGLI SPAZI)
+       SCHEDA DI RICERCA COMPATTA: AZZERAMENTO TOTALE SPAZI TRA GLI ELEMENTI
        ========================================================================= */
-    .search-card-block [data-testid="stVerticalBlockBorderWrapper"] {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
-        border-radius: 10px !important;
+        border-radius: 8px !important;
         padding: 4px !important;
         margin-bottom: 6px !important;
-        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.16) !important;
+        box-shadow: 0 3px 10px rgba(16, 185, 129, 0.15) !important;
     }
 
-    .search-card-block div[data-testid="stVerticalBlock"] {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) [data-testid="stVerticalBlock"] {
         gap: 0px !important;
+        row-gap: 0px !important;
     }
 
-    .search-card-block div[data-testid="stVerticalBlock"] > div {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) [data-testid="stVerticalBlock"] > div {
         margin: 0px !important;
         padding: 0px !important;
         gap: 0px !important;
     }
 
-    .search-card-block div[data-testid="stTextInput"] {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stTextInput"] {
         margin: 0px 0px 2px 0px !important;
         padding: 0px !important;
     }
 
-    .search-card-block div[data-testid="stButton"] {
-        margin: 0px !important;
-        padding: 0px !important;
-    }
-
     /* Input Ricerca */
-    .search-card-block div[data-baseweb="input"] {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-baseweb="input"] {
         background-color: #ffffff !important;
         border: 1px solid #86efac !important;
         border-radius: 5px !important;
@@ -173,23 +169,24 @@ st.markdown("""
         height: 28px !important;
         padding: 0 !important;
         margin: 0 !important;
-        box-shadow: 0 1px 2px rgba(16, 185, 129, 0.06) !important;
+        box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08) !important;
     }
 
-    .search-card-block div[data-baseweb="input"]:focus-within {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-baseweb="input"]:focus-within {
         border-color: #059669 !important;
     }
 
-    .search-card-block div[data-baseweb="input"] input {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-baseweb="input"] input {
         color: #0f172a !important;
         font-weight: 600 !important;
         font-size: 0.76rem !important;
-        padding: 0 6px !important;
+        padding: 0 8px !important;
         height: 26px !important;
     }
 
-    /* Pulsante Cerca */
-    .search-btn-container div[data-testid="stButton"] button {
+    /* Pulsante 1: Cerca (Incolonnato a filo - Blu) */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:first-of-type button {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border: 1px solid #0284c7 !important;
@@ -201,18 +198,21 @@ st.markdown("""
         width: 100% !important;
         padding: 0 !important;
         margin: 0 0 2px 0 !important;
-        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25) !important;
+        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3) !important;
     }
 
-    .search-btn-container div[data-testid="stButton"] button p {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button p,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:first-of-type button p {
+        color: #ffffff !important;
+        font-weight: 900 !important;
         font-size: 0.78rem !important;
         line-height: 1 !important;
         margin: 0 !important;
-        color: #ffffff !important;
     }
 
-    /* Pulsante Altri 10 */
-    .load-more-btn-container div[data-testid="stButton"] button {
+    /* Pulsante 2: + Altri 10 (Incolonnato a filo - Verde) */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button {
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
         border: 1px solid #10b981 !important;
@@ -224,18 +224,26 @@ st.markdown("""
         width: 100% !important;
         padding: 0 !important;
         margin: 0 !important;
-        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2) !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25) !important;
     }
 
-    .load-more-btn-container div[data-testid="stButton"] button p {
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button p,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button p {
+        color: #ffffff !important;
+        font-weight: 900 !important;
         font-size: 0.78rem !important;
         line-height: 1 !important;
         margin: 0 !important;
-        color: #ffffff !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button:hover,
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stButton"]:last-of-type button:hover {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        border-color: #34d399 !important;
     }
 
     /* =========================================================================
-       FILTRI E CARD PRODOTTO
+       FILTRI E SCHEDE PRODOTTO
        ========================================================================= */
     div[data-testid="stRadio"] {
         display: flex !important;
@@ -287,7 +295,7 @@ st.markdown("""
     }
 
     /* Schede Prodotto */
-    .product-card-block [data-testid="stVerticalBlockBorderWrapper"] {
+    div[data-testid="stVerticalBlockBorderWrapper"]:not(:has(div[data-testid="stTextInput"])) {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
@@ -599,7 +607,6 @@ tab_cerca, tab_preferiti = st.tabs([
 ])
 
 def render_product_card(p, tab_key="main"):
-    st.markdown('<div class="product-card-block">', unsafe_allow_html=True)
     with st.container(border=True):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
         is_fav = p["asin"] in st.session_state.preferiti_asin
@@ -683,11 +690,9 @@ def render_product_card(p, tab_key="main"):
             f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa'>{svg_wa}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb'>{svg_fb}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail'>{svg_gmail}</a><a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig'>{svg_ig}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg'>{svg_tg}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy'>{svg_copy}</button></div>",
             unsafe_allow_html=True
         )
-    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_cerca:
-    # Scheda di Ricerca compatta con elementi attaccati a zero spazi
-    st.markdown('<div class="search-card-block">', unsafe_allow_html=True)
+    # Scheda di Ricerca con Casella, Cerca e Altri 10 perfettamente incolonnati e aderenti
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -697,15 +702,8 @@ with tab_cerca:
             on_change=trigger_ricerca,
             args=(False,)
         )
-        
-        st.markdown('<div class="search-btn-container">', unsafe_allow_html=True)
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown('<div class="load-more-btn-container">', unsafe_allow_html=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
     st.radio(
         "🏷️ Ordinamento:",
@@ -765,3 +763,6 @@ with tab_preferiti:
             col_l, col_r = st.columns(2)
             with col_l:
                 render_product_card(lista_preferiti[idx], tab_key=f"fav_{idx}")
+            if idx + 1 < len(lista_preferiti):
+                with col_r:
+                    render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
