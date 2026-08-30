@@ -27,7 +27,7 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.35rem 0.45rem 1rem 0.45rem !important;
+        padding: 0.30rem 0.35rem 0.80rem 0.35rem !important;
         max-width: 100% !important;
     }
 
@@ -38,7 +38,7 @@ st.markdown("""
         border-radius: 8px !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
         gap: 4px !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 4px !important;
         display: flex !important;
         width: 100% !important;
     }
@@ -74,7 +74,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         width: 100%;
-        margin: 0 auto 4px auto;
+        margin: 0 auto 2px auto;
         text-align: center;
     }
 
@@ -125,13 +125,13 @@ st.markdown("""
         font-size: 0.70rem;
         color: #334155;
         font-weight: 600;
-        margin: 0 0 6px 0;
+        margin: 0 0 4px 0;
         line-height: 1;
     }
 
     .hero-author-tag strong { color: #0369a1; }
 
-    /* Spaziature verticali */
+    /* Riduzione spaziature verticali interne Streamlit */
     div[data-testid="stVerticalBlock"] > div {
         gap: 2px !important;
     }
@@ -145,27 +145,27 @@ st.markdown("""
         line-height: 1.1 !important;
     }
 
-    /* Riquadro Scheda di Ricerca e Scheda Prodotto */
+    /* Riquadro Scheda di Ricerca e Scheda Prodotto Ultra-Compatto */
     [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
-        border-radius: 12px !important;
-        padding: 8px !important;
-        margin-bottom: 8px !important;
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.18), 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+        border-radius: 10px !important;
+        padding: 4px 5px !important;
+        margin-bottom: 4px !important;
+        box-shadow: 0 3px 12px rgba(16, 185, 129, 0.16), 0 1px 3px rgba(0, 0, 0, 0.04) !important;
     }
 
-    /* Input Ricerca */
+    /* Input Ricerca Compresso */
     div[data-baseweb="input"] {
         background-color: #ffffff !important;
         border: 1px solid #86efac !important;
-        border-radius: 6px !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        border-radius: 5px !important;
+        min-height: 26px !important;
+        height: 26px !important;
         padding: 0 !important;
         margin-bottom: 0 !important;
-        box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08) !important;
+        box-shadow: 0 1px 2px rgba(16, 185, 129, 0.06) !important;
     }
 
     div[data-baseweb="input"]:focus-within {
@@ -175,27 +175,33 @@ st.markdown("""
     div[data-baseweb="input"] input {
         color: #0f172a !important;
         font-weight: 600 !important;
-        font-size: 0.78rem !important;
-        padding: 2px 8px !important;
+        font-size: 0.74rem !important;
+        padding: 0 6px !important;
+        height: 24px !important;
     }
 
-    /* Riga con i due pulsanti affiancati */
+    /* Riga con i due pulsanti affiancati e attaccati */
+    .buttons-row-aligned {
+        margin-top: 2px !important;
+    }
+
     .buttons-row-aligned [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 3px !important;
         width: 100% !important;
-        margin-top: 2px !important;
+        margin: 0 !important;
     }
 
     .buttons-row-aligned [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
         flex: 1 1 50% !important;
         min-width: 0 !important;
+        padding: 0 !important;
     }
 
-    /* Pulsante Cerca */
+    /* Pulsante Cerca Compresso */
     .search-btn-container {
         display: flex !important;
         justify-content: center !important;
@@ -210,17 +216,23 @@ st.markdown("""
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
         color: #ffffff !important;
         border: 1px solid #0284c7 !important;
-        border-radius: 6px !important;
+        border-radius: 5px !important;
         font-weight: 900 !important;
-        font-size: 0.80rem !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        font-size: 0.75rem !important;
+        min-height: 24px !important;
+        height: 24px !important;
         width: 100% !important;
         padding: 0 !important;
-        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.3) !important;
+        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.25) !important;
     }
 
-    /* Pulsante Carica Altri 10 */
+    .search-btn-container div[data-testid="stButton"] button p {
+        font-size: 0.75rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    /* Pulsante Carica Altri 10 Compresso */
     .load-more-btn-container {
         display: flex !important;
         justify-content: center !important;
@@ -235,14 +247,20 @@ st.markdown("""
         background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
         color: #ffffff !important;
         border: 1px solid #10b981 !important;
-        border-radius: 6px !important;
+        border-radius: 5px !important;
         font-weight: 900 !important;
-        font-size: 0.80rem !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        font-size: 0.75rem !important;
+        min-height: 24px !important;
+        height: 24px !important;
         width: 100% !important;
-        padding: 0 4px !important;
-        box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25) !important;
+        padding: 0 2px !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2) !important;
+    }
+
+    .load-more-btn-container div[data-testid="stButton"] button p {
+        font-size: 0.75rem !important;
+        line-height: 1 !important;
+        margin: 0 !important;
     }
 
     .load-more-btn-container div[data-testid="stButton"] button:hover {
@@ -255,20 +273,20 @@ st.markdown("""
         display: flex !important;
         flex-direction: column !important;
         gap: 1px !important;
-        margin: 2px 0 !important;
+        margin: 1px 0 !important;
     }
 
     div[data-testid="stRadio"] > div {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        gap: 3px !important;
+        gap: 2px !important;
         width: 100% !important;
     }
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] {
         background: rgba(255, 255, 255, 0.85) !important;
-        padding: 3px 4px !important;
+        padding: 2px 3px !important;
         border-radius: 5px !important;
         border: 1px solid #bae6fd !important;
         margin: 0 !important;
@@ -280,7 +298,7 @@ st.markdown("""
 
     div[data-testid="stRadio"] label[data-baseweb="radio"] div {
         color: #0f172a !important;
-        font-size: 0.70rem !important;
+        font-size: 0.68rem !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
     }
@@ -288,15 +306,15 @@ st.markdown("""
     /* Checkbox */
     div[data-testid="stCheckbox"] {
         background: rgba(255, 255, 255, 0.85) !important;
-        padding: 3px 8px !important;
-        border-radius: 6px !important;
+        padding: 2px 6px !important;
+        border-radius: 5px !important;
         border: 1px solid #bae6fd !important;
-        min-height: 26px !important;
-        margin: 2px 0 6px 0 !important;
+        min-height: 24px !important;
+        margin: 1px 0 4px 0 !important;
     }
 
     div[data-testid="stCheckbox"] label p {
-        font-size: 0.74rem !important;
+        font-size: 0.72rem !important;
         font-weight: 800 !important;
         color: #059669 !important;
     }
@@ -691,7 +709,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
-    # Scheda di Ricerca compatta
+    # Scheda di Ricerca Super-Compatta con spazi interni azzerati
     with st.container(border=True):
         st.text_input(
             "Cerca:",
