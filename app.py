@@ -631,16 +631,14 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
-            # Gestione univoca del badge di spedizione
+            # Spedizione esatta
             costo_s = float(p.get("costo_spedizione", 0.0))
             if costo_s > 0.0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
             elif p.get("is_prime"):
                 ship_html = "<span class='shipping-badge-prime'>prime</span>"
-            elif p.get("is_sped_gratis"):
-                ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
             else:
-                ship_html = "<span class='shipping-badge-paid'>📦 Sped. da verificare</span>"
+                ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
 
             st.markdown(f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>", unsafe_allow_html=True)
             st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
@@ -676,6 +674,7 @@ def render_product_card(p, tab_key="main"):
         )
 
 with tab_cerca:
+    # 1. Riquadro Scheda di Ricerca
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -688,6 +687,7 @@ with tab_cerca:
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
 
+    # 2. Riquadro Scheda Filtri
     with st.container(border=True):
         st.radio(
             "🏷️ Ordinamento:",
