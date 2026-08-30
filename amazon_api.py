@@ -208,18 +208,19 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
 
     soup = BeautifulSoup(html, "html.parser")
 
-    # 1. Titolo del prodotto
+    # 1. Titolo
     t_tag = soup.select_one("#productTitle")
     titolo = t_tag.get_text(strip=True) if t_tag else "Prodotto Amazon"
 
-    # 2. Prezzo Effettivo di Vendita (Acquisto singolo BuyBox)
+    # 2. Prezzo Effettivo (Isolato rigorosamente nel box d'acquisto attivo)
     price_val = 0.0
     primary_selectors = [
         "#corePriceDisplay_desktop_feature_div .priceToPay span.a-offscreen",
+        "#corePriceDisplay_desktop_feature_div .reinventPriceSavingsPercentageMargin span.a-offscreen",
         "#corePrice_feature_div .priceToPay span.a-offscreen",
         "#apex_desktop .priceToPay span.a-offscreen",
+        "#apex_desktop_newAccordionRow .priceToPay span.a-offscreen",
         "#desktop_buybox .priceToPay span.a-offscreen",
-        "#corePriceDisplay_desktop_feature_div span.a-price-whole",
         "#desktop_buybox #priceblock_ourprice",
         "#desktop_buybox #priceblock_dealprice"
     ]
@@ -244,7 +245,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_price and price_val < min_price: return []
     if max_price and price_val > max_price: return []
 
-    # 3. Prezzo Barrato / Consigliato (Prezzo di listino)
+    # 3. Prezzo Barrato / Listino Consigliato
     old_price_val = price_val
     basis_selectors = [
         "#corePriceDisplay_desktop_feature_div .basisPrice span.a-offscreen",
@@ -274,9 +275,11 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             sconto_val = int(d_match.group(1))
             sconto_str = f"-{sconto_val}%"
 
-    if sconto_val > 0 and (old_price_val <= price_val):
-        old_price_val = round(price_val / (1.0 - (sconto_val / 100.0)), 2)
-    elif not sconto_str and old_price_val > price_val:
+    if sconto_val > 0:
+        # Se lo sconto è estratto e il prezzo vecchio manca o non coincide, calcola il listino reale esatto
+        if old_price_val <= price_val:
+            old_price_val = round(price_val / (1.0 - (sconto_val / 100.0)), 2)
+    elif old_price_val > price_val:
         sconto_val = int(round(((old_price_val - price_val) / old_price_val) * 100))
         if sconto_val > 0:
             sconto_str = f"-{sconto_val}%"
@@ -284,7 +287,7 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
     if min_discount > 0 and sconto_val < min_discount: return []
     if max_discount < 100 and sconto_val > max_discount: return []
 
-    # 5. Spedizione (Riconoscimento Prime / Consegna senza costi)
+    # 5. Spedizione e Prime (Blocco Consegna Esclusivo)
     costo_sped = 0.0
     is_prime = False
     is_free = False
@@ -468,13 +471,11 @@ def ottieni_offerte_avanzate(
             if not asin or asin in asins_visti:
                 continue
 
-            # Titolo
             title_tag = it.find("h2") or it.find("span", {"class": re.compile(r"a-text-normal")})
             if not title_tag:
                 continue
             titolo = title_tag.get_text(strip=True)
 
-            # Prezzo
             p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or \
                      it.select_one("span.a-price-whole") or \
                      it.select_one(".a-color-price")
@@ -487,7 +488,6 @@ def ottieni_offerte_avanzate(
             if max_price and prezzo_prodotto > max_price:
                 continue
 
-            # Prezzo Barrato / Listino
             basis_elem = it.select_one("span.a-price[data-a-strike='true'] span.a-offscreen") or it.select_one("span.a-text-price span.a-offscreen")
             prezzo_iniziale = parse_price(basis_elem.get_text(strip=True)) if basis_elem else prezzo_prodotto
             if prezzo_iniziale < prezzo_prodotto:
@@ -502,7 +502,6 @@ def ottieni_offerte_avanzate(
             if max_discount < 100 and sconto_val > max_discount:
                 continue
 
-            # Spedizione
             costo_sped = 0.0
             deliv_elem = it.select_one(".s-delivery-instructions-style") or it
             deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ")
@@ -528,11 +527,9 @@ def ottieni_offerte_avanzate(
             if solo_spedizione_gratuita and costo_sped > 0:
                 continue
 
-            # Immagine
             img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
             img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
 
-            # Voto e Recensioni
             voto_val = 4.5
             num_rev_val = 0
             star_elem = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
