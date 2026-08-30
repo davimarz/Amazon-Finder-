@@ -461,33 +461,50 @@ st.markdown("""
         display: inline-block !important;
     }
 
+    /* BADGE PRIME CON COLORI UFFICIALI E LOGHETTO */
     .shipping-badge-prime {
-        background: #00a8e8;
-        color: #fff;
-        font-size: 0.65rem;
-        font-weight: 900;
-        padding: 1px 4px;
-        border-radius: 3px;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: linear-gradient(135deg, #00a8e8 0%, #007eb9 100%) !important;
+        color: #ffffff !important;
+        font-size: 0.70rem !important;
+        font-weight: 900 !important;
+        font-style: italic !important;
+        letter-spacing: 0.5px !important;
+        padding: 2px 7px !important;
+        border-radius: 4px !important;
+        box-shadow: 0 1px 3px rgba(0, 168, 232, 0.35) !important;
+        line-height: 1 !important;
+        text-transform: lowercase !important;
+    }
+
+    .shipping-badge-prime::before {
+        content: "✓ " !important;
+        font-style: normal !important;
+        font-weight: 900 !important;
+        color: #ff9900 !important;
+        margin-right: 2px !important;
     }
 
     .shipping-badge-free {
         background: rgba(255, 255, 255, 0.95);
         color: #065f46;
         border: 1px solid #6ee7b7;
-        padding: 1px 4px;
-        border-radius: 3px;
-        font-size: 0.65rem;
-        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 800;
     }
 
     .shipping-badge-paid {
         background: rgba(255, 255, 255, 0.95);
         color: #92400e;
         border: 1px solid #fde68a;
-        padding: 1px 4px;
-        border-radius: 3px;
-        font-size: 0.65rem;
-        font-weight: 700;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 800;
     }
 
     .feedback-container {
@@ -704,7 +721,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 3 Schede Affiancate
 tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔍 Cerca Prodotto", 
     f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
@@ -746,11 +762,12 @@ def render_product_card(p, tab_key="main"):
             old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
             prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
 
+            # Logica Spedizione: Badge Prime con Logo/Colori o Tariffa
             costo_s = float(p.get("costo_spedizione", 0.0))
-            if costo_s > 0.0:
-                ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
-            elif p.get("is_prime"):
+            if p.get("is_prime") or (p.get("is_sped_gratis") and costo_s == 0.0):
                 ship_html = "<span class='shipping-badge-prime'>prime</span>"
+            elif costo_s > 0.0:
+                ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
             else:
                 ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
 
