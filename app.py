@@ -131,35 +131,37 @@ st.markdown("""
 
     .hero-author-tag strong { color: #0369a1; }
 
-    /* Riduzione azzerata degli spazi verticali */
-    div[data-testid="stVerticalBlock"] > div {
-        gap: 0px !important;
-    }
-
-    div[data-testid="stMarkdownContainer"] p,
-    label[data-testid="stWidgetLabel"] p {
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        font-size: 0.72rem !important;
-        margin: 0 !important;
-        line-height: 1.1 !important;
-    }
-
-    /* Riquadro Scheda di Ricerca Aderente (Spazi Zero) */
+    /* =========================================================================
+       SCHEDA RICERCA COMPATTA (AZZERAMENTO TOTALE DEGLI SPAZI)
+       ========================================================================= */
     .search-card-block [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
         border-radius: 10px !important;
-        padding: 3px !important;
-        margin-bottom: 4px !important;
+        padding: 4px !important;
+        margin-bottom: 6px !important;
         box-shadow: 0 3px 12px rgba(16, 185, 129, 0.16) !important;
     }
 
-    .search-card-block div[data-testid="stVerticalBlock"] > div {
+    .search-card-block div[data-testid="stVerticalBlock"] {
         gap: 0px !important;
-        padding: 0px !important;
+    }
+
+    .search-card-block div[data-testid="stVerticalBlock"] > div {
         margin: 0px !important;
+        padding: 0px !important;
+        gap: 0px !important;
+    }
+
+    .search-card-block div[data-testid="stTextInput"] {
+        margin: 0px 0px 2px 0px !important;
+        padding: 0px !important;
+    }
+
+    .search-card-block div[data-testid="stButton"] {
+        margin: 0px !important;
+        padding: 0px !important;
     }
 
     /* Input Ricerca */
@@ -167,10 +169,10 @@ st.markdown("""
         background-color: #ffffff !important;
         border: 1px solid #86efac !important;
         border-radius: 5px !important;
-        min-height: 26px !important;
-        height: 26px !important;
+        min-height: 28px !important;
+        height: 28px !important;
         padding: 0 !important;
-        margin: 0 0 2px 0 !important;
+        margin: 0 !important;
         box-shadow: 0 1px 2px rgba(16, 185, 129, 0.06) !important;
     }
 
@@ -181,25 +183,9 @@ st.markdown("""
     .search-card-block div[data-baseweb="input"] input {
         color: #0f172a !important;
         font-weight: 600 !important;
-        font-size: 0.74rem !important;
+        font-size: 0.76rem !important;
         padding: 0 6px !important;
-        height: 24px !important;
-    }
-
-    /* Contenitori Pulsanti Incolonnati al 100% */
-    .search-btn-container,
-    .load-more-btn-container {
-        display: flex !important;
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
-
-    .search-btn-container div[data-testid="stButton"],
-    .load-more-btn-container div[data-testid="stButton"] {
-        width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
+        height: 26px !important;
     }
 
     /* Pulsante Cerca */
@@ -209,9 +195,9 @@ st.markdown("""
         border: 1px solid #0284c7 !important;
         border-radius: 5px !important;
         font-weight: 900 !important;
-        font-size: 0.75rem !important;
-        min-height: 24px !important;
-        height: 24px !important;
+        font-size: 0.78rem !important;
+        min-height: 28px !important;
+        height: 28px !important;
         width: 100% !important;
         padding: 0 !important;
         margin: 0 0 2px 0 !important;
@@ -219,9 +205,10 @@ st.markdown("""
     }
 
     .search-btn-container div[data-testid="stButton"] button p {
-        font-size: 0.75rem !important;
+        font-size: 0.78rem !important;
         line-height: 1 !important;
         margin: 0 !important;
+        color: #ffffff !important;
     }
 
     /* Pulsante Altri 10 */
@@ -231,9 +218,9 @@ st.markdown("""
         border: 1px solid #10b981 !important;
         border-radius: 5px !important;
         font-weight: 900 !important;
-        font-size: 0.75rem !important;
-        min-height: 24px !important;
-        height: 24px !important;
+        font-size: 0.78rem !important;
+        min-height: 28px !important;
+        height: 28px !important;
         width: 100% !important;
         padding: 0 !important;
         margin: 0 !important;
@@ -241,17 +228,15 @@ st.markdown("""
     }
 
     .load-more-btn-container div[data-testid="stButton"] button p {
-        font-size: 0.75rem !important;
+        font-size: 0.78rem !important;
         line-height: 1 !important;
         margin: 0 !important;
+        color: #ffffff !important;
     }
 
-    .load-more-btn-container div[data-testid="stButton"] button:hover {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        border-color: #34d399 !important;
-    }
-
-    /* Radio filtri inline */
+    /* =========================================================================
+       FILTRI E CARD PRODOTTO
+       ========================================================================= */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
@@ -286,7 +271,6 @@ st.markdown("""
         white-space: nowrap !important;
     }
 
-    /* Checkbox */
     div[data-testid="stCheckbox"] {
         background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 6px !important;
@@ -303,7 +287,7 @@ st.markdown("""
     }
 
     /* Schede Prodotto */
-    [data-testid="stVerticalBlockBorderWrapper"] {
+    .product-card-block [data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #dcfce7 !important;
         background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 50%, #bbf7d0 100%) !important;
         border: 2px solid #34d399 !important;
@@ -333,7 +317,6 @@ st.markdown("""
         object-fit: contain;
     }
 
-    /* Riga Titolo + Stellina Preferiti */
     .title-star-row [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -368,7 +351,6 @@ st.markdown("""
         overflow: hidden;
     }
 
-    /* Stellina Preferiti */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         border: 1px solid #047857 !important;
@@ -434,7 +416,6 @@ st.markdown("""
         flex-wrap: wrap !important;
     }
 
-    /* Prezzi e Sconti Grandi */
     .deal-price-final {
         font-size: 2.10rem !important;
         font-weight: 900 !important;
@@ -618,6 +599,7 @@ tab_cerca, tab_preferiti = st.tabs([
 ])
 
 def render_product_card(p, tab_key="main"):
+    st.markdown('<div class="product-card-block">', unsafe_allow_html=True)
     with st.container(border=True):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
         is_fav = p["asin"] in st.session_state.preferiti_asin
@@ -701,9 +683,10 @@ def render_product_card(p, tab_key="main"):
             f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa'>{svg_wa}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb'>{svg_fb}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail'>{svg_gmail}</a><a href='{ig_url}' target='_blank' class='share-icon-btn btn-ig'>{svg_ig}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg'>{svg_tg}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy'>{svg_copy}</button></div>",
             unsafe_allow_html=True
         )
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with tab_cerca:
-    # Scheda di Ricerca compatta a Colonna Unica senza spazi
+    # Scheda di Ricerca compatta con elementi attaccati a zero spazi
     st.markdown('<div class="search-card-block">', unsafe_allow_html=True)
     with st.container(border=True):
         st.text_input(
@@ -782,6 +765,3 @@ with tab_preferiti:
             col_l, col_r = st.columns(2)
             with col_l:
                 render_product_card(lista_preferiti[idx], tab_key=f"fav_{idx}")
-            if idx + 1 < len(lista_preferiti):
-                with col_r:
-                    render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
