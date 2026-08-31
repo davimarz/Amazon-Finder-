@@ -16,9 +16,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-SVG_GMAIL = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>'
-SVG_TG = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.18.847-1.12 5.075-1.597 7.214-.202.906-.596 1.209-.974 1.239-.822.065-1.446-.533-2.242-1.055-1.246-.816-1.95-1.324-3.161-2.122-1.4-.923-.493-1.432.305-2.261.209-.217 3.843-3.521 3.914-3.823.009-.038.017-.18-.067-.255-.084-.075-.208-.05-.298-.029-.127.029-2.155 1.371-6.082 4.022-.575.396-1.096.589-1.562.579-.515-.011-1.506-.291-2.244-.531-.905-.295-1.624-.45-1.562-.951.032-.261.393-.529 1.08-.804 4.234-1.844 7.059-3.06 8.475-3.649 4.037-1.68 4.876-1.972 5.424-1.982.121-.002.391.028.566.17.148.12.189.282.208.396.019.114.043.37.024.571z"/></svg>'
-SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
+SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
 
 st.markdown("""
 <style>
@@ -544,47 +542,40 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    .c-actions-row {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 12px !important;
-        margin-top: 8px !important;
-        width: 100% !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-
-    .c-btn-item {
-        width: 34px !important;
-        height: 34px !important;
-        min-width: 34px !important;
-        max-width: 34px !important;
-        flex-shrink: 0 !important;
-        border-radius: 6px !important;
+    /* PULSANTE COPIA LINK DEDICATO E PROFESSIONALE */
+    .copy-link-btn {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
+        gap: 6px !important;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        color: #1e293b !important;
+        border: 1.5px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
+        padding: 4px 8px !important;
+        width: 100% !important;
+        min-height: 28px !important;
+        height: 28px !important;
+        margin-top: 6px !important;
         cursor: pointer !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.18) !important;
-        visibility: visible !important;
-        opacity: 1 !important;
+        transition: all 0.2s ease !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
     }
 
-    .c-btn-item svg {
-        width: 18px !important;
-        height: 18px !important;
+    .copy-link-btn:hover {
+        background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important;
+        color: #0f172a !important;
+        border-color: #94a3b8 !important;
+    }
+
+    .copy-link-btn svg {
+        width: 14px !important;
+        height: 14px !important;
         pointer-events: none !important;
-        display: block !important;
+        display: inline-block !important;
     }
-
-    .c-btn-gmail { background-color: #EA4335 !important; }
-    .c-btn-tg { background-color: #229ED9 !important; }
-    .c-btn-copy { background-color: #475569 !important; }
 
     .btn-back-to-top {
         display: inline-flex !important;
@@ -890,19 +881,13 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-        safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
-        share_msg = f"🔥 Offerta: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 {link}"
-        
-        gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
-        tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
+        copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link del prodotto copiato negli appunti! Ora puoi incollarlo e condividerlo dove preferisci.');}});"
         
         st.markdown(
             f"""
-            <div class='c-actions-row'>
-                <button type='button' onclick="window.open('{gmail_url}', '_blank')" class='c-btn-item c-btn-gmail' title='Gmail'>{SVG_GMAIL}</button>
-                <button type='button' onclick="window.open('{tg_url}', '_blank')" class='c-btn-item c-btn-tg' title='Telegram'>{SVG_TG}</button>
-                <button type='button' onclick="navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato!');}});" class='c-btn-item c-btn-copy' title='Copia Link'>{SVG_COPY}</button>
-            </div>
+            <button type='button' onclick="{copy_action}" class='copy-link-btn' title='Copia link del prodotto'>
+                {SVG_COPY} 📋 Copia link del prodotto e condividi
+            </button>
             """,
             unsafe_allow_html=True
         )
