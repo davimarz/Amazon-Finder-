@@ -547,22 +547,24 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* Stile universale e forzato per tutti i pulsanti social su mobile e desktop */
+    /* CONTENITORE PULSANTI SOCIAL - FORZATO PER MOBILE */
     .social-share-row-mobile {
         display: flex !important;
+        flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 8px !important;
         margin-top: 6px !important;
-        flex-wrap: wrap !important;
         visibility: visible !important;
         opacity: 1 !important;
     }
 
     .share-icon-btn {
-        width: 28px !important;
-        height: 28px !important;
-        min-width: 28px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+        flex-shrink: 0 !important;
         border-radius: 6px !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -575,7 +577,13 @@ st.markdown("""
         opacity: 1 !important;
     }
 
-    .share-icon-btn svg { width: 15px !important; height: 15px !important; fill: #ffffff !important; }
+    .share-icon-btn svg {
+        width: 16px !important;
+        height: 16px !important;
+        fill: #ffffff !important;
+        display: inline-block !important;
+    }
+
     .btn-wa { background-color: #25D366 !important; }
     .btn-fb { background-color: #1877F2 !important; }
     .btn-gmail { background-color: #EA4335 !important; }
@@ -900,7 +908,6 @@ def render_product_card(p, tab_key="main"):
         safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
         share_msg = f"🔥 Offerta: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 {link}"
         
-        # URL universali e compatibili con dispositivi mobili per WhatsApp e Facebook
         wa_url = f"https://wa.me/?text={urllib.parse.quote(share_msg)}"
         fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
         gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
