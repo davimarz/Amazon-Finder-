@@ -546,53 +546,33 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* DIMENSIONI E VISIBILITA' FORZATA PER MOBILE */
     .social-share-row-mobile {
         display: flex !important;
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
         gap: 8px !important;
-        margin-top: 8px !important;
-        width: 100% !important;
+        margin-top: 6px !important;
     }
 
     .share-icon-btn {
-        width: 32px !important;
-        height: 32px !important;
-        min-width: 32px !important;
-        max-width: 32px !important;
-        border-radius: 6px !important;
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        border-radius: 5px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         border: none !important;
         text-decoration: none !important;
         cursor: pointer !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
     }
 
-    .share-icon-btn svg {
-        width: 16px !important;
-        height: 16px !important;
-        fill: #ffffff !important;
-    }
-
+    .share-icon-btn svg { width: 15px !important; height: 15px !important; }
     .btn-wa { background-color: #25D366 !important; }
     .btn-fb { background-color: #1877F2 !important; }
     .btn-gmail { background-color: #EA4335 !important; }
     .btn-copy { background-color: #475569 !important; }
-
-    /* Responsive mobile */
-    @media (max-width: 768px) {
-        div[data-testid="stHorizontalBlock"] {
-            flex-direction: column !important;
-        }
-        div[data-testid="stHorizontalBlock"] > div {
-            width: 100% !important;
-            flex: 1 1 100% !important;
-        }
-    }
 
     .btn-back-to-top {
         display: inline-flex !important;
@@ -708,7 +688,7 @@ Messaggio / Note:
     msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=10) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:
             server.login(sender, app_pwd)
             server.sendmail(sender, [destinatario], msg.as_string())
         return True, "OK"
