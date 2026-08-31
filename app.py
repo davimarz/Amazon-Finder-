@@ -546,29 +546,38 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
+    /* PULSANTI SOCIAL ROBUSTI PER MOBILE E DESKTOP */
     .social-share-row-mobile {
         display: flex !important;
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 8px !important;
+        gap: 6px !important;
         margin-top: 6px !important;
+        width: 100% !important;
     }
 
     .share-icon-btn {
-        width: 30px !important;
-        height: 30px !important;
-        min-width: 30px !important;
-        border-radius: 5px !important;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        border-radius: 6px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         border: none !important;
         text-decoration: none !important;
         cursor: pointer !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
     }
 
-    .share-icon-btn svg { width: 15px !important; height: 15px !important; }
+    .share-icon-btn svg {
+        width: 16px !important;
+        height: 16px !important;
+        fill: #ffffff !important;
+        pointer-events: none !important;
+    }
+
     .btn-wa { background-color: #25D366 !important; }
     .btn-fb { background-color: #1877F2 !important; }
     .btn-gmail { background-color: #EA4335 !important; }
