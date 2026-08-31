@@ -547,30 +547,45 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
+    /* Ottimizzazione pulsanti social per mobile */
     .social-share-row-mobile {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 5px !important;
+        gap: 4px !important;
         margin-top: 4px !important;
+        flex-wrap: wrap !important;
     }
 
     .share-icon-btn {
-        width: 22px;
-        height: 22px;
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
         border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
         border: none;
+        cursor: pointer;
     }
 
-    .share-icon-btn svg { width: 12px; height: 12px; }
+    .share-icon-btn svg { width: 13px; height: 13px; }
     .btn-wa { background-color: #25D366; }
     .btn-fb { background-color: #1877F2; }
     .btn-gmail { background-color: #EA4335; }
     .btn-tg { background-color: #229ED9; }
     .btn-copy { background-color: #475569; }
+
+    /* Responsive per smartphone: forza le 3 colonne prodotto ad andare a capo se lo schermo è piccolo */
+    @media (max-width: 768px) {
+        div[data-testid="stHorizontalBlock"] {
+            flex-direction: column !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+    }
 
     .btn-back-to-top {
         display: inline-flex !important;
@@ -885,7 +900,7 @@ def render_product_card(p, tab_key="main"):
         copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato!');}});"
 
         st.markdown(
-            f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa'>{SVG_WA}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb'>{SVG_FB}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail'>{SVG_GMAIL}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg'>{SVG_TG}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy'>{SVG_COPY}</button></div>",
+            f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button></div>",
             unsafe_allow_html=True
         )
 
