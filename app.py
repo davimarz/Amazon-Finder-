@@ -16,8 +16,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>'
-
 st.markdown("""
 <style>
     #MainMenu, header, footer { visibility: hidden !important; height: 0 !important; }
@@ -542,39 +540,30 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* PULSANTE COPIA LINK DEDICATO E PROFESSIONALE */
-    .copy-link-btn {
-        display: inline-flex !important;
+    .single-share-action-btn {
+        display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 6px !important;
         background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
-        color: #1e293b !important;
-        border: 1.5px solid #cbd5e1 !important;
+        color: #0f172a !important;
+        border: 1.5px solid #94a3b8 !important;
         border-radius: 6px !important;
-        font-size: 0.74rem !important;
+        font-size: 0.72rem !important;
         font-weight: 800 !important;
-        padding: 4px 8px !important;
+        padding: 4px 6px !important;
         width: 100% !important;
         min-height: 28px !important;
         height: 28px !important;
-        margin-top: 6px !important;
+        margin-top: 5px !important;
         cursor: pointer !important;
-        transition: all 0.2s ease !important;
+        text-align: center !important;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+        transition: all 0.2s ease !important;
     }
 
-    .copy-link-btn:hover {
+    .single-share-action-btn:hover {
         background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%) !important;
-        color: #0f172a !important;
-        border-color: #94a3b8 !important;
-    }
-
-    .copy-link-btn svg {
-        width: 14px !important;
-        height: 14px !important;
-        pointer-events: none !important;
-        display: inline-block !important;
+        border-color: #64748b !important;
     }
 
     .btn-back-to-top {
@@ -863,6 +852,12 @@ def render_product_card(p, tab_key="main"):
 
             st.markdown(f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>", unsafe_allow_html=True)
             st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
+            
+            copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link del prodotto copiato negli appunti!');}});"
+            st.markdown(
+                f"<button type='button' onclick=\"{copy_action}\" class='single-share-action-btn' title='Copia link e condividi'>📋 Copia link del prodotto e condividi</button>",
+                unsafe_allow_html=True
+            )
 
         with col_fb:
             voto = p.get("voto_medio", 4.5)
@@ -880,17 +875,6 @@ def render_product_card(p, tab_key="main"):
                 f"<div class='feedback-container'><div class='feedback-stars-row'><span class='feedback-stars'>{stelle_icon}</span><span class='feedback-score-text'>{voto_str}</span><span class='feedback-subcount'>({num_val})</span></div>{''.join(bar_rows)}</div>",
                 unsafe_allow_html=True
             )
-
-        copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link del prodotto copiato negli appunti! Ora puoi incollarlo e condividerlo dove preferisci.');}});"
-        
-        st.markdown(
-            f"""
-            <button type='button' onclick="{copy_action}" class='copy-link-btn' title='Copia link del prodotto'>
-                {SVG_COPY} 📋 Copia link del prodotto e condividi
-            </button>
-            """,
-            unsafe_allow_html=True
-        )
 
 with tab_vetrina:
     st.markdown("""
