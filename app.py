@@ -547,36 +547,37 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* Ottimizzazione pulsanti social per mobile */
+    /* Pulsanti social ottimizzati anche per dispositivi mobili */
     .social-share-row-mobile {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 4px !important;
-        margin-top: 4px !important;
+        gap: 5px !important;
+        margin-top: 5px !important;
         flex-wrap: wrap !important;
     }
 
     .share-icon-btn {
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: none;
-        cursor: pointer;
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        border-radius: 5px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border: none !important;
+        text-decoration: none !important;
+        cursor: pointer !important;
     }
 
-    .share-icon-btn svg { width: 13px; height: 13px; }
-    .btn-wa { background-color: #25D366; }
-    .btn-fb { background-color: #1877F2; }
-    .btn-gmail { background-color: #EA4335; }
-    .btn-tg { background-color: #229ED9; }
-    .btn-copy { background-color: #475569; }
+    .share-icon-btn svg { width: 14px !important; height: 14px !important; }
+    .btn-wa { background-color: #25D366 !important; }
+    .btn-fb { background-color: #1877F2 !important; }
+    .btn-gmail { background-color: #EA4335 !important; }
+    .btn-tg { background-color: #229ED9 !important; }
+    .btn-copy { background-color: #475569 !important; }
 
-    /* Responsive per smartphone: forza le 3 colonne prodotto ad andare a capo se lo schermo è piccolo */
+    /* Responsive mobile per impilare correttamente le colonne della card */
     @media (max-width: 768px) {
         div[data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
