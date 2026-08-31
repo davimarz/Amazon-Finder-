@@ -547,37 +547,42 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* Pulsanti social ottimizzati anche per dispositivi mobili */
+    /* Stile universale e forzato per tutti i pulsanti social su mobile e desktop */
     .social-share-row-mobile {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 5px !important;
-        margin-top: 5px !important;
+        gap: 6px !important;
+        margin-top: 6px !important;
         flex-wrap: wrap !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     .share-icon-btn {
-        width: 26px !important;
-        height: 26px !important;
-        min-width: 26px !important;
-        border-radius: 5px !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        border-radius: 6px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         border: none !important;
         text-decoration: none !important;
         cursor: pointer !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.15) !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
-    .share-icon-btn svg { width: 14px !important; height: 14px !important; }
+    .share-icon-btn svg { width: 15px !important; height: 15px !important; fill: #ffffff !important; }
     .btn-wa { background-color: #25D366 !important; }
     .btn-fb { background-color: #1877F2 !important; }
     .btn-gmail { background-color: #EA4335 !important; }
     .btn-tg { background-color: #229ED9 !important; }
     .btn-copy { background-color: #475569 !important; }
 
-    /* Responsive mobile per impilare correttamente le colonne della card */
+    /* Responsive mobile */
     @media (max-width: 768px) {
         div[data-testid="stHorizontalBlock"] {
             flex-direction: column !important;
@@ -894,14 +899,16 @@ def render_product_card(p, tab_key="main"):
 
         safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
         share_msg = f"🔥 Offerta: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 {link}"
-        wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
+        
+        # URL universali e compatibili con dispositivi mobili per WhatsApp e Facebook
+        wa_url = f"https://wa.me/?text={urllib.parse.quote(share_msg)}"
         fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
         gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
         tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
         copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato!');}});"
 
         st.markdown(
-            f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a><a href='{fb_url}' target='_blank' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a><a href='{gmail_url}' target='_blank' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a><a href='{tg_url}' target='_blank' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button></div>",
+            f"<div class='social-share-row-mobile'><a href='{wa_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a><a href='{fb_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a><a href='{gmail_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a><a href='{tg_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a><button onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button></div>",
             unsafe_allow_html=True
         )
 
