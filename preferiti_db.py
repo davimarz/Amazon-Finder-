@@ -1,102 +1,82 @@
 import sqlite3
-import os
-import tempfile
 
-# Usa la directory temporanea scrivibile del container
-DB_DIR = tempfile.gettempdir()
-DB_FILE = os.path.join(DB_DIR, "preferiti_app.db")
-
-def _get_connection():
-    conn = sqlite3.connect(DB_FILE, check_same_thread=False, timeout=15)
-    return conn
-
-def init_db():
-    conn = _get_connection()
-    with conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS preferiti (
-                asin TEXT PRIMARY KEY,
-                titolo TEXT,
-                immagine_url TEXT,
-                prezzo_iniziale REAL,
-                prezzo_finale REAL,
-                sconto TEXT,
-                sconto_val INTEGER,
-                is_prime INTEGER,
-                is_sped_gratis INTEGER,
-                costo_spedizione REAL,
-                voto_medio REAL,
-                num_recensioni INTEGER,
-                link_affiliato TEXT,
-                data_salvataggio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-    conn.close()
-
-# Inizializzazione sicura
-init_db()
-
-def aggiungi_preferito(p):
-    init_db()
-    conn = _get_connection()
-    with conn:
-        conn.execute("""
-            INSERT OR REPLACE INTO preferiti (
-                asin, titolo, immagine_url, prezzo_iniziale, prezzo_finale,
-                sconto, sconto_val, is_prime, is_sped_gratis, costo_spedizione,
-                voto_medio, num_recensioni, link_affiliato
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            p["asin"],
-            p.get("titolo", ""),
-            p.get("immagine_url", ""),
-            float(p.get("prezzo_iniziale", 0.0) or 0.0),
-            float(p.get("prezzo_finale", 0.0) or 0.0),
-            p.get("sconto", ""),
-            int(p.get("sconto_val", 0) or 0),
-            1 if p.get("is_prime") else 0,
-            1 if p.get("is_sped_gratis") else 0,
-            float(p.get("costo_spedizione", 0.0) or 0.0),
-            float(p.get("voto_medio", 4.8) or 4.8),
-            int(p.get("num_recensioni", 765) or 765),
-            p.get("link_affiliato", "")
-        ))
-    conn.close()
-
-def rimuovi_preferito(asin):
-    init_db()
-    conn = _get_connection()
-    with conn:
-        conn.execute("DELETE FROM preferiti WHERE asin = ?", (asin,))
+def init_preferiti_db():
+    conn = sqlite3.connect("preferiti.db")
+    c = conn.cursor()
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS preferiti (
+            asin TEXT PRIMARY KEY,
+            titolo TEXT,
+            immagine_url TEXT,
+            prezzo_iniziale REAL,
+            prezzo_finale REAL,
+            sconto TEXT,
+            is_prime INTEGER,
+            is_sped_gratis INTEGER,
+            costo_spedizione REAL,
+            voto_medio REAL,
+            num_recensioni INTEGER,
+            link_affiliato TEXT
+        )
+    """)
+    conn.commit()
     conn.close()
 
 def ottieni_tutti_preferiti():
-    init_db()
-    conn = _get_connection()
-    conn.row_factory = sqlite3.Row
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM preferiti ORDER BY data_salvataggio DESC")
-        rows = cursor.fetchall()
-        preferiti = []
-        for r in rows:
-            preferiti.append({
-                "asin": r["asin"],
-                "titolo": r["titolo"],
-                "immagine_url": r["immagine_url"],
-                "prezzo_iniziale": r["prezzo_iniziale"],
-                "prezzo_finale": r["prezzo_finale"],
-                "sconto": r["sconto"],
-                "sconto_val": r["sconto_val"],
-                "is_prime": bool(r["is_prime"]),
-                "is_sped_gratis": bool(r["is_sped_gratis"]),
-                "costo_spedizione": r["costo_spedizione"],
-                "voto_medio": r["voto_medio"],
-                "num_recensioni": r["num_recensioni"],
-                "link_affiliato": r["link_affiliato"]
-            })
-        return preferiti
-    except Exception:
-        return []
-    finally:
-        conn.close()
+    init_preferiti_db()
+    conn = sqlite3.connect("preferiti.db")
+    c = conn.cursor()
+    c.execute("SELECT asin, titolo, immagine_url, prezzo_iniziale, prezzo_finale, sconto, is_prime, is_sped_gratis, costo_spedizione, voto_medio, num_recensioni, link_affiliato FROM preferiti")
+    rows = c.fetchall()
+    conn.close()
+    
+    preferiti = []
+    for r in rows:
+        preferiti.append({
+            "asin": r[0],
+            "titolo": r[1],
+            "immagine_url": r[2],
+            "prezzo_iniziale": r[3],
+            "prezzo_finale": r[4],
+            "sconto": r[5],
+            "is_prime": bool(r[6]),
+            "is_sped_gratis": bool(r[7]),
+            "costo_spedizione": r[8],
+            "voto_medio": r[9],
+            "num_recensioni": r[10],
+            "link_affiliato": r[11]
+        })
+    return preferiti
+
+def aggiungi_preferito(p):
+    init_preferiti_db()
+    conn = sqlite3.connect("preferiti.db")
+    c = conn.cursor()
+    c.execute("""
+        INSERT OR REPLACE INTO preferiti 
+        (asin, titolo, immagine_url, prezzo_iniziale, prezzo_finale, sconto, is_prime, is_sped_gratis, costo_spedizione, voto_medio, num_recensioni, link_affiliato)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        p["asin"],
+        p.get("titolo", ""),
+        p.get("immagine_url", ""),
+        p.get("prezzo_iniziale", 0.0),
+        p.get("prezzo_finale", 0.0),
+        p.get("sconto", ""),
+        1 if p.get("is_prime") else 0,
+        1 if p.get("is_sped_gratis") else 0,
+        p.get("costo_spedizione", 0.0),
+        p.get("voto_medio", 4.5),
+        p.get("num_recensioni", 0),
+        p.get("link_affiliato", "")
+    ))
+    conn.commit()
+    conn.close()
+
+def rimuovi_preferito(asin):
+    init_preferiti_db()
+    conn = sqlite3.connect("preferiti.db")
+    c = conn.cursor()
+    c.execute("DELETE FROM preferiti WHERE asin = ?", (asin,))
+    conn.commit()
+    conn.close()
