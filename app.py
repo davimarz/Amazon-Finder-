@@ -547,23 +547,22 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* RIGA SOCIAL SHARE CON TUTTI I PULSANTI */
     .social-share-row-mobile {
         display: flex !important;
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 4px !important;
+        gap: 5px !important;
         margin-top: 5px !important;
         width: 100% !important;
         flex-wrap: wrap !important;
     }
 
     .share-icon-btn {
-        width: 25px !important;
-        height: 25px !important;
-        min-width: 25px !important;
-        max-width: 25px !important;
+        width: 26px !important;
+        height: 26px !important;
+        min-width: 26px !important;
+        max-width: 26px !important;
         flex-shrink: 0 !important;
         border-radius: 5px !important;
         display: inline-flex !important;
@@ -618,7 +617,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ----------------- VALIDAZIONE DEI CAMPI CONTATTI -----------------
 EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
 
 def valida_campi_contatto(nome, telefono, email, note):
@@ -647,7 +645,6 @@ def valida_campi_contatto(nome, telefono, email, note):
 
     return True, "OK"
 
-# ----------------- GESTIONE LIMITE 1 INVIO AL GIORNO -----------------
 def init_rate_limit_db():
     conn = sqlite3.connect("rate_limit.db")
     c = conn.cursor()
@@ -712,44 +709,6 @@ Messaggio / Note:
     except Exception as e:
         return False, str(e)
 
-# ----------------- GESTIONE STATISTICHE VISITE -----------------
-def init_visite_db():
-    conn = sqlite3.connect("visite.db")
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS statistiche_visite (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data_visita TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def registra_visita():
-    init_visite_db()
-    oggi = date.today().isoformat()
-    if "visita_registrata" not in st.session_state:
-        st.session_state.visita_registrata = True
-        conn = sqlite3.connect("visite.db")
-        c = conn.cursor()
-        c.execute("INSERT INTO statistiche_visite (data_visita) VALUES (?)", (oggi,))
-        conn.commit()
-        conn.close()
-
-def ottieni_statistiche():
-    init_visite_db()
-    oggi = date.today().isoformat()
-    conn = sqlite3.connect("visite.db")
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM statistiche_visite WHERE data_visita = ?", (oggi,))
-    giornaliere = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM statistiche_visite")
-    totali = c.fetchone()[0]
-    conn.close()
-    return giornaliere, totali
-
-registra_visita()
-
 OPZIONI_SCONTO = {
     "Tutti": (0, 100),
     "0-20%": (0, 20),
@@ -806,12 +765,10 @@ def trigger_ricerca(increment=False):
         num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
         st.session_state.current_page = num_pag_totali
 
-# Caricamento iniziale dei prodotti Vetrina
 if not st.session_state.offerte_vetrina:
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     st.session_state.offerte_vetrina = ottieni_vetrina_casuale(partner_tag, item_count=10)
 
-# Ancora posizionata in cima alla pagina
 st.markdown("""
 <div id="top_page" style="position: absolute; top: 0; left: 0; height: 1px; width: 1px;"></div>
 <div class="hero-container">
@@ -824,7 +781,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 4 Schede
 tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔥 Offerte Vetrina",
     "🔍 Cerca Prodotto", 
@@ -1056,25 +1012,21 @@ with tab_contatti:
                     else:
                         st.error(f"Errore di invio: {msg_err}")
 
-# ----------------- STATISTICHE VISITE E PULSANTE TORNA ALL'INIZIO -----------------
-giornaliere, totali = ottieni_statistiche()
+# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
 st.markdown(
-    f"""
-    <div style="text-align: center; font-size: 0.74rem; font-weight: 700; color: #334155; margin: 20px 0 10px 0;">
-        📊 Visite oggi: <strong>{giornaliere}</strong> | Visite totali: <strong>{totali}</strong>
-    </div>
-    <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 10px 0 15px 0;">
-        <a href="#top_page" target="_self" onclick="(function(){{
-            try {{
+    """
+    <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 15px 0 20px 0;">
+        <a href="#top_page" target="_self" onclick="(function(){
+            try {
                 const stContainer = window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid=\\'stAppViewContainer\\']');
-                if(stContainer) {{ stContainer.scrollTo({{top: 0, behavior: 'smooth'}}); }}
-            }} catch(e) {{}}
-            try {{
+                if(stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
+            } catch(e) {}
+            try {
                 const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
-                if(el) {{ el.scrollIntoView({{behavior: 'smooth', block: 'start'}}); }}
-            }} catch(e) {{}}
-            try {{ window.scrollTo({{top: 0, behavior: 'smooth'}}); }} catch(e) {{}}
-        }})" class="btn-back-to-top">
+                if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+            } catch(e) {}
+            try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
+        })" class="btn-back-to-top">
             ⬆️ Torna all'inizio
         </a>
     </div>
