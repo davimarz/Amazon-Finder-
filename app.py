@@ -544,7 +544,6 @@ st.markdown("""
     .fb-bar-fill { height: 100%; background-color: #ff6e00; }
     .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
-    /* CONTENITORE PULSANTI AZIONI CONDIVISIONE */
     .c-actions-row {
         display: flex !important;
         flex-direction: row !important;
