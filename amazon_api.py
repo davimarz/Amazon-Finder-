@@ -225,7 +225,6 @@ def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    # Esegue una singola chiamata rapida e sicura per la vetrina
     return ottieni_offerte_avanzate(keyword="offerte lampo", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
 
 @st.cache_data(ttl=1800, show_spinner=False)
