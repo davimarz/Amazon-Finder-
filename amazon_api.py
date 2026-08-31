@@ -353,6 +353,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
+    # Tentativo 1: PA-API Ufficiale
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
@@ -372,6 +373,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
+    # Tentativo 2: Web Search con Fallback a Più Livelli
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
