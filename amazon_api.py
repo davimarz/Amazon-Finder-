@@ -53,7 +53,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0"
 ]
 
-def _fetch_html(url, timeout=7):
+def _fetch_html(url, timeout=6):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -133,7 +133,7 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=4)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=3)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
@@ -225,7 +225,7 @@ def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min
 
 def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=None, min_discount=0, max_discount=100, solo_spedizione_gratuita=False):
     url = f"https://www.amazon.it/dp/{asin}?th=1&psc=1"
-    html = _fetch_html(url, timeout=7)
+    html = _fetch_html(url, timeout=6)
     if not html:
         return []
 
@@ -273,11 +273,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
                     price_val = val
                     break
 
-    if 0 < price_val < 180 and "236" in page_text_lower:
-        val_with_tax = round(price_val * 1.22, 2)
-        if abs(val_with_tax - 199.0) < 1.5:
-            price_val = 199.0
-
     if price_val <= 0.0:
         return []
 
@@ -295,12 +290,6 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
             b_val = parse_price(b_off.get_text(strip=True))
             if b_val > price_val:
                 old_price_val = b_val
-
-    m_ref = re.search(r'prezzo\s+(?:più\s+basso\s+ultimi\s+30gg|mediano|consigliato|recente):\s*€?\s*(\d+[\.,]\d{2}|\d+)', page_text_lower)
-    if m_ref:
-        ref_val = parse_price(m_ref.group(1))
-        if ref_val > price_val:
-            old_price_val = ref_val
 
     sconto_str = ""
     sconto_val = 0
@@ -341,21 +330,8 @@ def _ottieni_prodotto_singolo_dp(asin, partner_tag, min_price=None, max_price=No
         is_prime = True
         is_free = True
     else:
-        deliv_elem = soup.select_one("#mir-layout-DELIVERY_BLOCK-slot-PRIMARY_DELIVERY_MESSAGE_LARGE") or \
-                     soup.select_one("#deliveryMessageMirId")
-        if deliv_elem:
-            deliv_snippet = deliv_elem.get_text(" ", strip=True)
-            for pat in SHIPPING_STRICT_PATTERNS:
-                m = pat.search(deliv_snippet)
-                if m:
-                    extracted_val = parse_price(m.group(1))
-                    if 0 < extracted_val < 30.0 and abs(extracted_val - old_price_val) > 1.0:
-                        costo_sped = extracted_val
-                        break
-            is_free = (costo_sped == 0.0)
-        else:
-            is_free = True
-            costo_sped = 0.0
+        is_free = True
+        costo_sped = 0.0
 
     if solo_spedizione_gratuita and costo_sped > 0:
         return []
@@ -409,8 +385,8 @@ def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
         prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
     return prodotti[:item_count]
 
+@st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-     # Categorie e termini mirati alle occasioni "da non perdere" e offerte top
      keywords_imperdibili = [
         "offerte da non perdere",
         "migliori sconti amazon",
@@ -421,7 +397,7 @@ def ottieni_vetrina_casuale(partner_tag, item_count=10):
         "articoli piu venduti",
         "top sconti"
     ]
-     kw_scelte = random.sample(keywords_imperdibili, min(3, len(keywords_imperdibili)))
+     kw_scelte = random.sample(keywords_imperdibili, min(2, len(keywords_imperdibili)))
      tutti_prodotti = []
      asins_visti = set()
      
@@ -430,7 +406,7 @@ def ottieni_vetrina_casuale(partner_tag, item_count=10):
             keyword=kw,
             sort_type="Numero di vendite",
             solo_spedizione_gratuita=False,
-            min_discount=10, # Cerca prodotti con sconti reali
+            min_discount=10,
             item_count=5
         )
          for p in risultati:
@@ -444,6 +420,7 @@ def ottieni_vetrina_casuale(partner_tag, item_count=10):
          
      return tutti_prodotti[:item_count]
 
+@st.cache_data(ttl=1800, show_spinner=False)
 def ottieni_offerte_avanzate(
     keyword="", 
     sort_type="Prezzo minimo", 
@@ -471,7 +448,7 @@ def ottieni_offerte_avanzate(
                 "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
             }
             try:
-                resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+                resp = requests.post(api_url, json=payload, headers=headers, timeout=3)
                 if resp.status_code == 200:
                     items = resp.json().get("ItemsResult", {}).get("Items", [])
                     if items:
@@ -494,7 +471,7 @@ def ottieni_offerte_avanzate(
         if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
         if max_price and max_price > 0: payload["MaxPrice"] = int(max_price * 100)
         try:
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+            resp = requests.post(api_url, json=payload, headers=headers, timeout=3)
             if resp.status_code == 200:
                 items = resp.json().get("SearchResult", {}).get("Items", [])
                 prodotti = [p for p in (parse_item_api_response(it, partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount) for it in items) if p]
@@ -513,7 +490,7 @@ def ottieni_offerte_avanzate(
     asins_visti = set()
 
     for base_url in urls_to_try:
-        html_text = _fetch_html(base_url, timeout=7)
+        html_text = _fetch_html(base_url, timeout=6)
         if not html_text:
             continue
 
@@ -562,37 +539,17 @@ def ottieni_offerte_avanzate(
                 continue
 
             costo_sped = 0.0
-            deliv_elem = it.select_one(".s-delivery-instructions-style") or it
-            deliv_text = deliv_elem.get_text(" ", strip=True).replace("\xa0", " ").lower()
-            
-            has_free_kw = any(f in deliv_text for f in FRASI_GRATIS) or bool("prime" in deliv_text or it.select_one(".a-icon-prime"))
-            
-            if has_free_kw:
-                costo_sped = 0.0
-                is_prime = True
-                is_free = True
-            else:
-                for pat in SHIPPING_STRICT_PATTERNS:
-                    m = pat.search(deliv_text)
-                    if m:
-                        c_val = parse_price(m.group(1))
-                        if 0 < c_val < 30.0:
-                            costo_sped = c_val
-                            break
-                is_prime = False
-                is_free = (costo_sped == 0.0)
-
-            if solo_spedizione_gratuita and costo_sped > 0:
-                continue
+            is_prime = True
+            is_free = True
 
             img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
             img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
 
             voto_val = 4.5
             num_rev_val = 0
-            star_tag = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
-            if star_tag:
-                sm = RE_STAR.search(star_tag.get_text(" ", strip=True))
+            star_elem = it.find("i", {"class": re.compile(r"a-icon-star|a-icon-star-small")}) or it.find("span", {"class": "a-icon-alt"})
+            if star_elem:
+                sm = RE_STAR.search(star_elem.get_text(" ", strip=True))
                 if sm:
                     try:
                         voto_val = float(sm.group(1).replace(",", "."))
