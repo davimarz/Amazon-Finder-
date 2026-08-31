@@ -29,32 +29,24 @@ RE_PRICE = re.compile(r'(\d{1,3}(?:\.\d{3})*|\d+)[,\.](\d{2})')
 RE_STAR = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
 RE_DIGITS = re.compile(r'[^\d]')
 
-FRASI_GRATIS = [
-    "consegna senza costi aggiuntivi",
-    "senza costi aggiuntivi",
-    "consegna gratuita",
-    "spedizione gratuita",
-    "consegna gratis",
-    "spedizione gratis",
-    "prime"
-]
-
 _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
-def _fetch_html(url, timeout=3):
+def _fetch_html(url, timeout=6):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
         "Accept-Encoding": "gzip, deflate, br",
         "DNT": "1",
-        "Connection": "keep-alive"
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
     }
     cookies = {
         "lc-acbit": "it_IT",
@@ -126,7 +118,7 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=2)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=4)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
@@ -223,74 +215,7 @@ def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
         prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
     return prodotti[:item_count]
 
-@st.cache_data(ttl=3600, show_spinner=False)
-def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    return ottieni_offerte_avanzate(keyword="offerte lampo", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
-
-@st.cache_data(ttl=1800, show_spinner=False)
-def ottieni_offerte_avanzate(
-    keyword="", 
-    sort_type="Prezzo minimo", 
-    solo_spedizione_gratuita=False, 
-    min_price=None, 
-    max_price=None, 
-    min_discount=0, 
-    max_discount=100, 
-    item_count=10,
-    categoria="",
-    sottocategoria=""
-):
-    partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
-    clean_keyword = keyword.strip()
-    asin_match = RE_ASIN.search(clean_keyword)
-    token = get_creators_access_token()
-
-    if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
-        asin_code = asin_match.group(1)
-        if token:
-            api_url = "https://webservices.amazon.it/paapi5/getitems"
-            headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems"}
-            payload = {
-                "ItemIds": [asin_code], "PartnerTag": partner_tag, "PartnerType": "Associates", "Marketplace": "www.amazon.it",
-                "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
-            }
-            try:
-                resp = requests.post(api_url, json=payload, headers=headers, timeout=2)
-                if resp.status_code == 200:
-                    items = resp.json().get("ItemsResult", {}).get("Items", [])
-                    if items:
-                        parsed = parse_item_api_response(items[0], partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount)
-                        if parsed: return [parsed]
-            except Exception:
-                pass
-        return []
-
-    query_str = clean_keyword if clean_keyword else "offerte del giorno"
-
-    if token:
-        api_url = "https://webservices.amazon.it/paapi5/searchitems"
-        headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
-        payload = {
-            "Keywords": query_str, "PartnerTag": partner_tag, "PartnerType": "Associates", "Marketplace": "www.amazon.it",
-            "ItemCount": min(item_count, 10), "SortBy": SORT_MAPPINGS.get(sort_type, "SalesRank"),
-            "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
-        }
-        if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
-        if max_price and max_price > 0: payload["MaxPrice"] = int(max_price * 100)
-        try:
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=2.5)
-            if resp.status_code == 200:
-                items = resp.json().get("SearchResult", {}).get("Items", [])
-                prodotti = [p for p in (parse_item_api_response(it, partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount) for it in items) if p]
-                if prodotti: return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
-        except Exception:
-            pass
-
-    query_encoded = urllib.parse.quote_plus(query_str)
-    sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
-    base_url = f"https://www.amazon.it/s?k={query_encoded}&s={sort_param}"
-
-    html_text = _fetch_html(base_url, timeout=3)
+def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
     if not html_text:
         return []
 
@@ -382,4 +307,95 @@ def ottieni_offerte_avanzate(
             "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
         })
 
-    return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
+    return prodotti
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def ottieni_vetrina_casuale(partner_tag, item_count=10):
+    return ottieni_offerte_avanzate(keyword="offerte lampo", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def ottieni_offerte_avanzate(
+    keyword="", 
+    sort_type="Prezzo minimo", 
+    solo_spedizione_gratuita=False, 
+    min_price=None, 
+    max_price=None, 
+    min_discount=0, 
+    max_discount=100, 
+    item_count=10,
+    categoria="",
+    sottocategoria=""
+):
+    partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
+    clean_keyword = keyword.strip()
+    asin_match = RE_ASIN.search(clean_keyword)
+    token = get_creators_access_token()
+
+    if asin_match and ("http" in clean_keyword or len(clean_keyword) == 10):
+        asin_code = asin_match.group(1)
+        if token:
+            api_url = "https://webservices.amazon.it/paapi5/getitems"
+            headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.GetItems"}
+            payload = {
+                "ItemIds": [asin_code], "PartnerTag": partner_tag, "PartnerType": "Associates", "Marketplace": "www.amazon.it",
+                "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
+            }
+            try:
+                resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+                if resp.status_code == 200:
+                    items = resp.json().get("ItemsResult", {}).get("Items", [])
+                    if items:
+                        parsed = parse_item_api_response(items[0], partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount)
+                        if parsed: return [parsed]
+            except Exception:
+                pass
+        return []
+
+    query_str = clean_keyword if clean_keyword else "offerte del giorno"
+
+    # Tentativo 1: PA-API Ufficiale
+    if token:
+        api_url = "https://webservices.amazon.it/paapi5/searchitems"
+        headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
+        payload = {
+            "Keywords": query_str, "PartnerTag": partner_tag, "PartnerType": "Associates", "Marketplace": "www.amazon.it",
+            "ItemCount": min(item_count, 10), "SortBy": SORT_MAPPINGS.get(sort_type, "SalesRank"),
+            "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
+        }
+        if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
+        if max_price and max_price > 0: payload["MaxPrice"] = int(max_price * 100)
+        try:
+            resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+            if resp.status_code == 200:
+                items = resp.json().get("SearchResult", {}).get("Items", [])
+                prodotti = [p for p in (parse_item_api_response(it, partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount) for it in items) if p]
+                if prodotti: return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
+        except Exception:
+            pass
+
+    # Tentativo 2: Web Search con Fallback a Più Livelli
+    query_encoded = urllib.parse.quote_plus(query_str)
+    sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
+
+    urls_da_testare = [
+        f"https://www.amazon.it/s?k={query_encoded}&s={sort_param}",
+        f"https://www.amazon.it/s?k={query_encoded}",
+        f"https://www.amazon.it/s?k={query_encoded}&rh=p_72%3A419121031"
+    ]
+
+    for u in urls_da_testare:
+        html_text = _fetch_html(u, timeout=5)
+        if html_text:
+            prodotti = _estrai_prodotti_da_html(html_text, partner_tag, min_price, max_price, min_discount, max_discount, item_count)
+            if prodotti:
+                return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
+
+    # Tentativo 3: Se i filtri di sconto erano troppo stretti e hanno azzerato i risultati, ritenta allargando i filtri di sconto
+    if min_discount > 0 or max_discount < 100:
+        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=5)
+        if html_relax:
+            prodotti_relax = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100, item_count=item_count)
+            if prodotti_relax:
+                return ordina_e_taglia_risultati(prodotti_relax, sort_type, item_count)
+
+    return []
