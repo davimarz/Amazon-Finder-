@@ -390,6 +390,7 @@ def ottieni_offerte_avanzate(
             if prodotti:
                 return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
 
+    # Tentativo 3: Se i filtri di sconto erano troppo stretti e hanno azzerato i risultati, ritenta allargando i filtri di sconto
     if min_discount > 0 or max_discount < 100:
         html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=5)
         if html_relax:
