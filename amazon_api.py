@@ -38,7 +38,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
-def _fetch_html(url, timeout=5):
+def _fetch_html(url, timeout=6):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -401,7 +401,7 @@ def ottieni_offerte_avanzate(
         if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
         if max_price and max_price > 0: payload["MaxPrice"] = int(max_price * 100)
         try:
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=3.5)
+            resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
             if resp.status_code == 200:
                 items = resp.json().get("SearchResult", {}).get("Items", [])
                 prodotti = [p for p in (parse_item_api_response(it, partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount) for it in items) if p]
@@ -419,7 +419,7 @@ def ottieni_offerte_avanzate(
     ]
 
     for u in urls_da_testare:
-        html_text = _fetch_html(u, timeout=4.5)
+        html_text = _fetch_html(u, timeout=6)
         if html_text:
             prodotti = _estrai_prodotti_da_html(html_text, partner_tag, min_price, max_price, min_discount, max_discount, item_count)
             if prodotti:
@@ -427,7 +427,7 @@ def ottieni_offerte_avanzate(
 
     # Tentativo 3: Rilassamento filtri di sconto se troppo restrittivi
     if min_discount > 0 or max_discount < 100:
-        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=4.5)
+        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=6)
         if html_relax:
             prodotti_relax = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100, item_count=item_count)
             if prodotti_relax:
