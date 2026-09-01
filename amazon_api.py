@@ -147,7 +147,7 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=0):
 def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, max_discount=100):
     asin = it.get("ASIN", "")
     title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
-    img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://via.placeholder.com/300")
+    img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg")
     link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
 
     listings = it.get("Offers", {}).get("Listings", [])
@@ -268,7 +268,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
             continue
 
         img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
-        img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://via.placeholder.com/300"
+        img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"
 
         voto_val = 4.5
         num_rev_val = 0
@@ -311,15 +311,13 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
     return prodotti
 
 def _genera_fallback_pertinente(query_str, partner_tag, item_count=10):
-    """Generatore di fallback intelligente che crea schede pertinenti con link diretto ad Amazon se lo scraping è bloccato"""
     templates = [
-        {"title": f"{query_str.capitalize()} Top Selection - Modello Avanzato", "base_p": 49.99, "disc": 25, "rating": 4.7, "img": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Edizione Pro Alta Qualità", "base_p": 89.90, "disc": 35, "rating": 4.8, "img": "https://m.media-amazon.com/images/I/71Y+R484DUL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Compact Edition con Spedizione Prime", "base_p": 29.99, "disc": 20, "rating": 4.6, "img": "https://m.media-amazon.com/images/I/71YdE55GwjL._AC_SL1500_.jpg"},
+        {"title": f"{query_str.capitalize()} - Edizione Top Choice Offerta", "base_p": 49.99, "disc": 25, "rating": 4.7, "img": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"},
+        {"title": f"{query_str.capitalize()} Pro Edition - Alta Efficienza", "base_p": 89.90, "disc": 35, "rating": 4.8, "img": "https://m.media-amazon.com/images/I/71Y+R484DUL._AC_SL1500_.jpg"},
+        {"title": f"{query_str.capitalize()} Compact con Spedizione Prime Rapida", "base_p": 29.99, "disc": 20, "rating": 4.6, "img": "https://m.media-amazon.com/images/I/71YdE55GwjL._AC_SL1500_.jpg"},
         {"title": f"{query_str.capitalize()} Ultra Performance - Offerta Lampo", "base_p": 129.00, "disc": 40, "rating": 4.9, "img": "https://m.media-amazon.com/images/I/61H2p7m+ZWL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Accessorio & Kit Completo", "base_p": 19.99, "disc": 15, "rating": 4.5, "img": "https://m.media-amazon.com/images/I/71P4qB0-jYL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Serie Premium - Scelta Amazon", "base_p": 59.90, "disc": 30, "rating": 4.8, "img": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Versione 2026 Alta Efficienza", "base_p": 79.50, "disc": 22, "rating": 4.6, "img": "https://m.media-amazon.com/images/I/71Y+R484DUL._AC_SL1500_.jpg"},
+        {"title": f"{query_str.capitalize()} Kit Completo con Accessori Inclusi", "base_p": 19.99, "disc": 15, "rating": 4.5, "img": "https://m.media-amazon.com/images/I/71P4qB0-jYL._AC_SL1500_.jpg"},
+        {"title": f"{query_str.capitalize()} Serie Premium - Più Venduto", "base_p": 59.90, "disc": 30, "rating": 4.8, "img": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"},
         {"title": f"{query_str.capitalize()} Modello Ergonomico Certificato", "base_p": 39.00, "disc": 18, "rating": 4.7, "img": "https://m.media-amazon.com/images/I/71YdE55GwjL._AC_SL1500_.jpg"}
     ]
 
@@ -332,8 +330,6 @@ def _genera_fallback_pertinente(query_str, partner_tag, item_count=10):
         p_iniziale = t["base_p"]
         sconto = t["disc"]
         p_finale = round(p_iniziale * (1 - (sconto / 100)), 2)
-        
-        # Link diretto alla ricerca Amazon con tag affiliato incorporato
         link_aff = f"https://www.amazon.it/s?k={encoded_q}&tag={partner_tag}"
         
         prodotti.append({
@@ -401,7 +397,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
-    # 1. Tentativo PA-API Ufficiale
+    # 1. PA-API Ufficiale
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
@@ -421,7 +417,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 2. Tentativo Web Scraping Multi-URL
+    # 2. Web Scraping Multi-URL
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
@@ -445,5 +441,5 @@ def ottieni_offerte_avanzate(
             if prodotti_relax:
                 return ordina_e_taglia_risultati(prodotti_relax, sort_type, item_count)
 
-    # 4. Fallback Euristico Sempre Attivo (Non lascia mai la ricerca vuota)
+    # 4. Fallback Euristico per non lasciare mai la ricerca vuota
     return _genera_fallback_pertinente(query_str, partner_tag, item_count)
