@@ -735,7 +735,7 @@ if "item_count" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-def trigger_ricerca(increment=False):
+def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
     if increment:
         st.session_state.item_count = st.session_state.get("item_count", 10) + 10
@@ -894,9 +894,9 @@ with tab_vetrina:
 
 with tab_cerca:
     with st.container(border=True):
-        st.text_input(
+        search_kw = st.text_input(
             "Cerca:",
-            placeholder="Cosa cerchi?...",
+            placeholder="Cosa cerchi? (es. cuffie, smartphone, macchina caffe)...",
             key="cerca_keyword_input",
             label_visibility="collapsed"
         )
@@ -927,12 +927,14 @@ with tab_cerca:
         )
 
     if btn_cerca_submit:
-        with st.spinner("Ricerca in corso..."):
-            trigger_ricerca(increment=False)
+        with st.spinner("Ricerca prodotti su Amazon in corso..."):
+            esegui_ricerca(increment=False)
+        st.rerun()
 
     if btn_altri_10:
-        with st.spinner("Caricamento altri 10 prodotti in corso..."):
-            trigger_ricerca(increment=True)
+        with st.spinner("Caricamento altri prodotti in corso..."):
+            esegui_ricerca(increment=True)
+        st.rerun()
 
     if st.session_state.offerte:
         tot_offerte = len(st.session_state.offerte)
@@ -963,7 +965,7 @@ with tab_cerca:
                 with col_r:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
     elif st.session_state.has_searched:
-        st.warning("Nessun prodotto trovato con i filtri selezionati.")
+        st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
 with tab_preferiti:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
