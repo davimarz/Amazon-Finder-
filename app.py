@@ -898,9 +898,7 @@ with tab_cerca:
             "Cerca:",
             placeholder="Cosa cerchi?...",
             key="cerca_keyword_input",
-            label_visibility="collapsed",
-            on_change=trigger_ricerca,
-            args=(False,)
+            label_visibility="collapsed"
         )
         btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
         btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
@@ -911,9 +909,7 @@ with tab_cerca:
             list(SORT_MAPPINGS.keys()),
             index=0,
             horizontal=True,
-            key="cerca_radio_sort",
-            on_change=trigger_ricerca,
-            args=(False,)
+            key="cerca_radio_sort"
         )
 
         st.radio(
@@ -921,17 +917,13 @@ with tab_cerca:
             list(OPZIONI_SCONTO.keys()),
             index=0,
             horizontal=True,
-            key="cerca_radio_disc",
-            on_change=trigger_ricerca,
-            args=(False,)
+            key="cerca_radio_disc"
         )
 
         st.checkbox(
             "🚚 Spedizione gratuita / Prime",
             value=False,
-            key="cerca_check_sped_gratis",
-            on_change=trigger_ricerca,
-            args=(False,)
+            key="cerca_check_sped_gratis"
         )
 
     if btn_cerca_submit:
