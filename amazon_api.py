@@ -38,7 +38,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
-def _fetch_html(url, timeout=6):
+def _fetch_html(url, timeout=7):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -55,6 +55,7 @@ def _fetch_html(url, timeout=6):
         "skin": "noskin"
     }
 
+    # Metodo 1: curl_cffi impersonando Chrome
     if HAS_CURL:
         try:
             s = c_requests.Session(impersonate="chrome120")
@@ -64,6 +65,7 @@ def _fetch_html(url, timeout=6):
         except Exception:
             pass
 
+    # Metodo 2: Sessione Requests standard
     try:
         s = requests.Session()
         r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
@@ -71,6 +73,7 @@ def _fetch_html(url, timeout=6):
             return r.text
     except Exception:
         pass
+
     return None
 
 def parse_price(text):
@@ -118,7 +121,7 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=3)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=4)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
@@ -313,6 +316,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
     prodotti = ottieni_offerte_avanzate(keyword="offerte del giorno", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
     if not prodotti:
+        # Fallback predefinito di sicurezza se la rete è temporaneamente irraggiungibile
         prodotti = [
             {
                 "asin": "B09G96TFF7",
@@ -389,7 +393,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
-    # Tentativo 1: PA-API Ufficiale
+    # 1. Tentativo PA-API ufficiale
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
@@ -409,7 +413,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # Tentativo 2: Web Search con Fallback dinamici
+    # 2. Tentativo Web Scraping Multi-URL
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
@@ -425,7 +429,7 @@ def ottieni_offerte_avanzate(
             if prodotti:
                 return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
 
-    # Tentativo 3: Rilassamento filtri di sconto se troppo restrittivi
+    # 3. Relax filtri
     if min_discount > 0 or max_discount < 100:
         html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=6)
         if html_relax:
