@@ -330,7 +330,7 @@ st.markdown("""
         border: 1px solid #86efac;
         border-radius: 6px;
         overflow: hidden;
-        padding: 2px;
+        padding: 3px;
         margin-bottom: 4px;
     }
 
@@ -338,6 +338,7 @@ st.markdown("""
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
+        display: block;
     }
 
     .title-star-row [data-testid="stHorizontalBlock"] {
@@ -788,6 +789,9 @@ tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "✉️ Contattaci per una richiesta o suggerimento"
 ])
 
+# Fallback SVG in base64 se un'immagine Amazon è momentaneamente non raggiungibile
+IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
+
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
@@ -795,8 +799,9 @@ def render_product_card(p, tab_key="main"):
         star_icon = "⭐" if is_fav else "☆"
 
         with col_left:
+            img_url = p.get('immagine_url') or IMG_FALLBACK_SVG
             st.markdown(
-                f"<div class='product-img-wrapper-full'><img src='{p.get('immagine_url', '')}' alt='p'></div>",
+                f"<div class='product-img-wrapper-full'><img src='{img_url}' referrerpolicy='no-referrer' loading='lazy' onerror=\"this.onerror=null;this.src='{IMG_FALLBACK_SVG}';\" alt='Prodotto'></div>",
                 unsafe_allow_html=True
             )
 
