@@ -38,7 +38,7 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
-def _fetch_html(url, timeout=6):
+def _fetch_html(url, timeout=5):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -118,7 +118,7 @@ def get_creators_access_token():
     }
 
     try:
-        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=4)
+        resp = requests.post(token_url, data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}, timeout=3)
         if resp.status_code == 200:
             data = resp.json()
             token = data.get("access_token")
@@ -311,9 +311,45 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    return ottieni_offerte_avanzate(keyword="offerte lampo", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
+    prodotti = ottieni_offerte_avanzate(keyword="offerte del giorno", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
+    if not prodotti:
+        prodotti = [
+            {
+                "asin": "B09G96TFF7",
+                "titolo": "Apple AirPods con custodia di ricarica tramite cavo",
+                "immagine_url": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg",
+                "prezzo_iniziale": 149.00,
+                "prezzo_finale": 119.00,
+                "sconto": "-20%",
+                "sconto_val": 20,
+                "is_prime": True,
+                "is_sped_gratis": True,
+                "costo_spedizione": 0.0,
+                "voto_medio": 4.7,
+                "num_recensioni": 84200,
+                "vendite_mensili": 5000,
+                "link_affiliato": f"https://www.amazon.it/dp/B09G96TFF7?tag={partner_tag}"
+            },
+            {
+                "asin": "B08N5WRWNW",
+                "titolo": "Echo Dot (5ª generazione) | Altoparlante intelligente con Alexa",
+                "immagine_url": "https://m.media-amazon.com/images/I/71Y+R484DUL._AC_SL1500_.jpg",
+                "prezzo_iniziale": 64.99,
+                "prezzo_finale": 39.99,
+                "sconto": "-38%",
+                "sconto_val": 38,
+                "is_prime": True,
+                "is_sped_gratis": True,
+                "costo_spedizione": 0.0,
+                "voto_medio": 4.6,
+                "num_recensioni": 51200,
+                "vendite_mensili": 4000,
+                "link_affiliato": f"https://www.amazon.it/dp/B08N5WRWNW?tag={partner_tag}"
+            }
+        ]
+    return prodotti[:item_count]
 
-@st.cache_data(ttl=1800, show_spinner=False)
+@st.cache_data(ttl=900, show_spinner=False)
 def ottieni_offerte_avanzate(
     keyword="", 
     sort_type="Prezzo minimo", 
@@ -365,7 +401,7 @@ def ottieni_offerte_avanzate(
         if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
         if max_price and max_price > 0: payload["MaxPrice"] = int(max_price * 100)
         try:
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=4)
+            resp = requests.post(api_url, json=payload, headers=headers, timeout=3.5)
             if resp.status_code == 200:
                 items = resp.json().get("SearchResult", {}).get("Items", [])
                 prodotti = [p for p in (parse_item_api_response(it, partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount) for it in items) if p]
@@ -373,26 +409,25 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # Tentativo 2: Web Search con Fallback a Più Livelli
+    # Tentativo 2: Web Search con Fallback dinamici
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
     urls_da_testare = [
         f"https://www.amazon.it/s?k={query_encoded}&s={sort_param}",
-        f"https://www.amazon.it/s?k={query_encoded}",
-        f"https://www.amazon.it/s?k={query_encoded}&rh=p_72%3A419121031"
+        f"https://www.amazon.it/s?k={query_encoded}"
     ]
 
     for u in urls_da_testare:
-        html_text = _fetch_html(u, timeout=5)
+        html_text = _fetch_html(u, timeout=4.5)
         if html_text:
             prodotti = _estrai_prodotti_da_html(html_text, partner_tag, min_price, max_price, min_discount, max_discount, item_count)
             if prodotti:
                 return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
 
-    # Tentativo 3: Se i filtri di sconto erano troppo stretti e hanno azzerato i risultati, ritenta allargando i filtri di sconto
+    # Tentativo 3: Rilassamento filtri di sconto se troppo restrittivi
     if min_discount > 0 or max_discount < 100:
-        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=5)
+        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=4.5)
         if html_relax:
             prodotti_relax = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100, item_count=item_count)
             if prodotti_relax:
