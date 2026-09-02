@@ -8,14 +8,7 @@ from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
-
-from amazon_api import (
-    MAX_RESULTS,
-    SORT_MAPPINGS,
-    get_partner_tag,
-    ottieni_offerte_avanzate,
-    ottieni_vetrina_casuale,
-)
+import amazon_api as amazon_api
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -23,6 +16,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Costanti e mapping da amazon_api con fallback sicuri
+MAX_RESULTS = getattr(amazon_api, "MAX_RESULTS", 50)
+SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
+    "Prezzo minimo": "Price:LowToHigh",
+    "Popolarità": "Featured",
+    "Recensioni": "AvgCustomerReviews",
+})
+get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "")
+ottieni_offerte_avanzate = getattr(amazon_api, "ottieni_offerte_avanzate", lambda **kw: [])
+ottieni_vetrina_casuale = getattr(amazon_api, "ottieni_vetrina_casuale", lambda **kw: [])
 
 # ----------------- INIZIALIZZAZIONE STATO -----------------
 st.session_state.setdefault("current_tab", "vetrina")
@@ -517,12 +521,6 @@ st.markdown("""
         border: 1px solid #a7f3d0;
     }
 
-    .feedback-title {
-        font-size: 0.72rem;
-        font-weight: 700;
-        margin-bottom: 1px;
-    }
-
     .feedback-stars-row {
         display: flex;
         align-items: center;
@@ -532,18 +530,6 @@ st.markdown("""
     .feedback-stars { color: #ff6e00; font-size: 0.75rem; }
     .feedback-score-text { font-size: 0.68rem; font-weight: 600; }
     .feedback-subcount { font-size: 0.62rem; color: #565959; margin-bottom: 2px; }
-
-    .fb-row {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        margin-bottom: 1px;
-    }
-
-    .fb-label { width: 22px; color: #007185; font-size: 0.60rem; }
-    .fb-bar-bg { flex: 1; height: 6px; background-color: #f1f5f9; border-radius: 2px; overflow: hidden; }
-    .fb-bar-fill { height: 100%; background-color: #ff6e00; }
-    .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
     .social-share-row-mobile {
         display: flex !important;
@@ -800,7 +786,7 @@ def esegui_ricerca(increment=False):
             st.session_state["current_page"] = max(1, (len(prodotti_unici) + 9) // 10)
         else:
             st.session_state["offerte"] = vecchi_risultati
-            st.session_state["search_notice"] = "Non sono disponibili altri prodotti verificabili per questa ricerca."
+            st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."
     else:
         st.session_state["offerte"] = prodotti_unici
 
@@ -993,7 +979,6 @@ def render_product_card(p, tab_key="main"):
                 )
             st.markdown(feedback_html, unsafe_allow_html=True)
 
-
 # RENDER DEL CONTENUTO DELLE SCHEDE
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
@@ -1107,10 +1092,10 @@ elif active_tab == "privacy":
     <div style='font-size:.78rem;line-height:1.55;color:#334155;padding:4px 6px;'>
     <p><strong>Titolare e contatti.</strong> I dati inviati tramite il modulo di contatto sono gestiti dal responsabile del sito Scala dei Turchi. Per richieste relative ai dati personali puoi utilizzare l'indirizzo <strong>davimarz.social@gmail.com</strong>.</p>
     <p><strong>Dati trattati.</strong> Il modulo raccoglie nome e cognome, numero di telefono, indirizzo email e contenuto del messaggio esclusivamente per ricevere e gestire la richiesta inviata.</p>
-    <p><strong>Finalità e conservazione.</strong> I dati vengono utilizzati per rispondere alla richiesta e conservati solo per il tempo necessario alla sua gestione e agli eventuali obblighi applicabili. Non vengono utilizzati per profilazione pubblicitaria.</p>
-    <p><strong>Destinatari.</strong> I dati possono transitare attraverso i servizi tecnici necessari all'hosting e all'invio email. Non vengono venduti.</p>
+    <p><strong>Finalità e conservazione.</strong> I dati vengono utilizzati per rispondere alla richiesta e conservati solo per il tempo necessario alla sua gestione. Non vengono utilizzati per profilazione pubblicitaria.</p>
+    <p><strong>Destinatari.</strong> I dati possono transitare attraverso i servizi tecnici necessari all'hosting e all'invio email. Non vengono ceduti a terzi.</p>
     <p><strong>Diritti.</strong> Puoi chiedere informazioni, accesso, rettifica o cancellazione dei dati scrivendo all'indirizzo sopra indicato.</p>
-    <p><strong>Affiliazione Amazon.</strong> I pulsanti verso Amazon possono contenere link a pagamento con il tracking ID del Programma di Affiliazione Amazon.</p>
+    <p><strong>Affiliazione Amazon.</strong> I pulsanti verso Amazon contengono link affiliati con il tracking ID del Programma di Affiliazione Amazon.</p>
     </div>
     """, unsafe_allow_html=True)
     st.button("← Torna alla vetrina", key="privacy_back", on_click=set_tab, args=("vetrina",))
