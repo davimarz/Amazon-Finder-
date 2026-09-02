@@ -47,23 +47,19 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    /* BARRA DI NAVIGAZIONE TAB NATIVA SINCRONIZZATA */
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) {
+    /* BARRA DI NAVIGAZIONE TAB ROBUSTA E SINCRONIZZATA */
+    .nav-bar-container [data-testid="stHorizontalBlock"] {
         background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
-        margin-bottom: 4px !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) > div {
-        display: flex !important;
-        flex-direction: row !important;
         gap: 4px !important;
+        margin-bottom: 4px !important;
+        display: flex !important;
         width: 100% !important;
     }
 
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label {
+    .nav-bar-container button {
         flex: 1 1 0% !important;
         color: #0369a1 !important;
         font-weight: 800 !important;
@@ -77,28 +73,24 @@ st.markdown("""
         text-align: center !important;
         justify-content: center !important;
         white-space: nowrap !important;
-        cursor: pointer !important;
-        margin: 0 !important;
+        box-shadow: none !important;
     }
 
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label:has(input:checked) {
+    .nav-bar-container button:hover {
+        background: rgba(224, 242, 254, 0.9) !important;
+        border-color: #0284c7 !important;
+    }
+
+    .nav-bar-container button[kind="primary"] {
         color: #ffffff !important;
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         border-color: #0284c7 !important;
         box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
     }
 
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label:has(input:checked) div,
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label:has(input:checked) p {
+    .nav-bar-container button[kind="primary"] p {
         color: #ffffff !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) input {
-        display: none !important;
-    }
-
-    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) div[data-testid="stWidgetLabel"] {
-        display: none !important;
+        font-weight: 900 !important;
     }
 
     .tab-content-panel {
@@ -280,21 +272,21 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) {
+    div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: column !important;
         gap: 1px !important;
         margin: 1px 0 2px 0 !important;
     }
 
-    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) label[data-testid="stWidgetLabel"] p {
+    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #064e3b !important;
         font-size: 0.74rem !important;
         font-weight: 800 !important;
         margin-bottom: 2px !important;
     }
 
-    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) > div {
+    div[data-testid="stRadio"] > div {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -302,7 +294,7 @@ st.markdown("""
         width: 100% !important;
     }
 
-    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) label[data-baseweb="radio"] {
+    div[data-testid="stRadio"] label[data-baseweb="radio"] {
         background: #ffffff !important;
         padding: 2px 4px !important;
         border-radius: 5px !important;
@@ -315,7 +307,7 @@ st.markdown("""
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
 
-    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) label[data-baseweb="radio"] div {
+    div[data-testid="stRadio"] label[data-baseweb="radio"] div {
         color: #064e3b !important;
         font-size: 0.68rem !important;
         font-weight: 700 !important;
@@ -754,22 +746,20 @@ if "item_count" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-TAB_VETRINA = "🔥 Offerte Vetrina"
-TAB_CERCA = "🔍 Cerca Prodotto"
-TAB_PREFERITI = "⭐ Preferiti"
-TAB_CONTATTI = "✉️ Contattaci"
-
-# Inizializzazione univoca della navigazione principale
-if "app_nav_tabs_radio" not in st.session_state:
-    st.session_state.app_nav_tabs_radio = TAB_VETRINA
+# Stato fisso e nativo per il controllo della scheda corrente
+if "current_tab" not in st.session_state:
+    st.session_state.current_tab = "vetrina"
 
 if "scroll_to_top_flag" not in st.session_state:
     st.session_state.scroll_to_top_flag = False
 
+def set_tab(tab_name):
+    st.session_state.current_tab = tab_name
+
 def esegui_ricerca(increment=False):
+    # Fissa in modo inamovibile la scheda su 'cerca' prima dell'esecuzione
+    st.session_state.current_tab = "cerca"
     st.session_state.has_searched = True
-    # Blocca la scheda attiva direttamente sulla chiave del widget
-    st.session_state.app_nav_tabs_radio = TAB_CERCA
 
     vecchi_risultati = st.session_state.get("offerte", [])
     
@@ -846,22 +836,22 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# Opzioni fisse senza conteggio variabile nel testo del radio per evitare reset di Streamlit
-tab_options = [
-    TAB_VETRINA,
-    TAB_CERCA,
-    TAB_PREFERITI,
-    TAB_CONTATTI
-]
-
-# Il widget radio legge e scrive direttamente su st.session_state.app_nav_tabs_radio
-selected_nav = st.radio(
-    "Navigazione principale",
-    options=tab_options,
-    horizontal=True,
-    label_visibility="collapsed",
-    key="app_nav_tabs_radio"
-)
+# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Comportamento garantito al 100%)
+st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
+col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
+with col_tab1:
+    is_t1 = st.session_state.current_tab == "vetrina"
+    st.button("🔥 Offerte Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)
+with col_tab2:
+    is_t2 = st.session_state.current_tab == "cerca"
+    st.button("🔍 Cerca Prodotto", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)
+with col_tab3:
+    is_t3 = st.session_state.current_tab == "preferiti"
+    st.button(f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})", key="nav_btn_preferiti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("preferiti",), use_container_width=True)
+with col_tab4:
+    is_t4 = st.session_state.current_tab == "contatti"
+    st.button("✉️ Contattaci", key="nav_btn_contatti", type="primary" if is_t4 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
@@ -955,7 +945,7 @@ def render_product_card(p, tab_key="main"):
 
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
-if selected_nav == TAB_VETRINA:
+if st.session_state.current_tab == "vetrina":
     st.markdown("""
         <p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 2px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>
         <p style='font-size: 0.74rem; font-weight: 600; color: #334155; margin: 0 0 10px 2px; font-style: italic;'>*I prodotti che vengono visualizzati in questa pagina hanno un prezzo che poi andrà a variare in base alle misure, colori, taglie.*</p>
@@ -972,7 +962,7 @@ if selected_nav == TAB_VETRINA:
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
-elif selected_nav == TAB_CERCA:
+elif st.session_state.current_tab == "cerca":
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -1021,7 +1011,7 @@ elif selected_nav == TAB_CERCA:
                     btn_type = "primary" if is_active else "secondary"
                     if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state.current_page = p_num
-                        st.session_state.app_nav_tabs_radio = TAB_CERCA
+                        st.session_state.current_tab = "cerca"
                         st.session_state.scroll_to_top_flag = True
                         st.rerun()
 
@@ -1045,7 +1035,7 @@ elif selected_nav == TAB_CERCA:
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
-elif selected_nav == TAB_PREFERITI:
+elif st.session_state.current_tab == "preferiti":
     lista_preferiti = list(st.session_state.preferiti_asin.values())
     if not lista_preferiti:
         st.info("Nessun prodotto nei preferiti (☆).")
@@ -1059,7 +1049,7 @@ elif selected_nav == TAB_PREFERITI:
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
 
-elif selected_nav == TAB_CONTATTI:
+elif st.session_state.current_tab == "contatti":
     with st.container(border=True):
         st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento (Tutti i campi sono obbligatori):</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
