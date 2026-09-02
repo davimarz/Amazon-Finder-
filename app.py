@@ -759,16 +759,16 @@ TAB_CERCA = "🔍 Cerca Prodotto"
 TAB_PREFERITI = "⭐ Preferiti"
 TAB_CONTATTI = "✉️ Contattaci"
 
-if "selected_tab" not in st.session_state:
-    st.session_state.selected_tab = TAB_VETRINA
+# Inizializzazione univoca della navigazione principale
+if "app_nav_tabs_radio" not in st.session_state:
+    st.session_state.app_nav_tabs_radio = TAB_VETRINA
 
 if "scroll_to_top_flag" not in st.session_state:
     st.session_state.scroll_to_top_flag = False
 
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
-    # Vincola la navigazione alla scheda Cerca
-    st.session_state.selected_tab = TAB_CERCA
+    # Blocca la scheda attiva direttamente sulla chiave del widget
     st.session_state.app_nav_tabs_radio = TAB_CERCA
 
     vecchi_risultati = st.session_state.get("offerte", [])
@@ -846,22 +846,15 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-pref_label = f"{TAB_PREFERITI} ({len(st.session_state.preferiti_asin)})"
+# Opzioni fisse senza conteggio variabile nel testo del radio per evitare reset di Streamlit
 tab_options = [
     TAB_VETRINA,
     TAB_CERCA,
-    pref_label,
+    TAB_PREFERITI,
     TAB_CONTATTI
 ]
 
-if "app_nav_tabs_radio" not in st.session_state:
-    st.session_state.app_nav_tabs_radio = st.session_state.selected_tab
-else:
-    if st.session_state.selected_tab == TAB_CERCA:
-        st.session_state.app_nav_tabs_radio = TAB_CERCA
-    elif st.session_state.selected_tab == TAB_PREFERITI:
-        st.session_state.app_nav_tabs_radio = pref_label
-
+# Il widget radio legge e scrive direttamente su st.session_state.app_nav_tabs_radio
 selected_nav = st.radio(
     "Navigazione principale",
     options=tab_options,
@@ -869,11 +862,6 @@ selected_nav = st.radio(
     label_visibility="collapsed",
     key="app_nav_tabs_radio"
 )
-
-if TAB_PREFERITI in selected_nav:
-    st.session_state.selected_tab = TAB_PREFERITI
-else:
-    st.session_state.selected_tab = selected_nav
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
@@ -967,7 +955,7 @@ def render_product_card(p, tab_key="main"):
 
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
-if st.session_state.selected_tab == TAB_VETRINA:
+if selected_nav == TAB_VETRINA:
     st.markdown("""
         <p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 2px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>
         <p style='font-size: 0.74rem; font-weight: 600; color: #334155; margin: 0 0 10px 2px; font-style: italic;'>*I prodotti che vengono visualizzati in questa pagina hanno un prezzo che poi andrà a variare in base alle misure, colori, taglie.*</p>
@@ -984,9 +972,9 @@ if st.session_state.selected_tab == TAB_VETRINA:
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
-elif st.session_state.selected_tab == TAB_CERCA:
+elif selected_nav == TAB_CERCA:
     with st.container(border=True):
-        search_kw = st.text_input(
+        st.text_input(
             "Cerca:",
             placeholder="Cosa cerchi? (es. cuffie, smartphone, macchina caffe)...",
             key="cerca_keyword_input",
@@ -1033,7 +1021,6 @@ elif st.session_state.selected_tab == TAB_CERCA:
                     btn_type = "primary" if is_active else "secondary"
                     if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state.current_page = p_num
-                        st.session_state.selected_tab = TAB_CERCA
                         st.session_state.app_nav_tabs_radio = TAB_CERCA
                         st.session_state.scroll_to_top_flag = True
                         st.rerun()
@@ -1058,7 +1045,7 @@ elif st.session_state.selected_tab == TAB_CERCA:
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
-elif st.session_state.selected_tab == TAB_PREFERITI:
+elif selected_nav == TAB_PREFERITI:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
     if not lista_preferiti:
         st.info("Nessun prodotto nei preferiti (☆).")
@@ -1072,7 +1059,7 @@ elif st.session_state.selected_tab == TAB_PREFERITI:
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
 
-elif st.session_state.selected_tab == TAB_CONTATTI:
+elif selected_nav == TAB_CONTATTI:
     with st.container(border=True):
         st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento (Tutti i campi sono obbligatori):</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
