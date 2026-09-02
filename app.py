@@ -734,8 +734,10 @@ if "preferiti_asin" not in st.session_state:
 if "offerte" not in st.session_state:
     st.session_state.offerte = []
 
-if "offerte_vetrina" not in st.session_state:
-    st.session_state.offerte_vetrina = []
+# Rigenerazione casuale delle offerte della vetrina ad ogni refresh
+if "offerte_vetrina" not in st.session_state or not st.session_state.offerte_vetrina:
+    partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
+    st.session_state.offerte_vetrina = ottieni_vetrina_casuale(partner_tag, item_count=10)
 
 if "has_searched" not in st.session_state:
     st.session_state.has_searched = False
@@ -746,115 +748,9 @@ if "item_count" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-# Stato fisso e nativo per il controllo della scheda corrente
-if "current_tab" not in st.session_state:
-    st.session_state.current_tab = "vetrina"
-
-if "scroll_to_top_flag" not in st.session_state:
-    st.session_state.scroll_to_top_flag = False
-
-def set_tab(tab_name):
-    st.session_state.current_tab = tab_name
-
-def esegui_ricerca(increment=False):
-    # Fissa in modo inamovibile la scheda su 'cerca' prima dell'esecuzione
-    st.session_state.current_tab = "cerca"
-    st.session_state.has_searched = True
-
-    vecchi_risultati = st.session_state.get("offerte", [])
-    
-    if increment:
-        target_count = st.session_state.get("item_count", 10) + 10
-    else:
-        target_count = 10
-        st.session_state.item_count = 10
-        st.session_state.current_page = 1
-
-    kw = st.session_state.get("cerca_keyword_input", "").strip()
-    sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
-    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")
-    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))
-    free_ship = st.session_state.get("cerca_check_sped_gratis", False)
-
-    risultati = ottieni_offerte_avanzate(
-        keyword=kw,
-        sort_type=sort_t,
-        solo_spedizione_gratuita=free_ship,
-        min_price=None,
-        max_price=None,
-        min_discount=min_d,
-        max_discount=max_d,
-        item_count=target_count
-    )
-
-    if increment:
-        if risultati and len(risultati) > len(vecchi_risultati):
-            st.session_state.offerte = risultati
-            st.session_state.item_count = len(risultati)
-            num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
-            st.session_state.current_page = num_pag_totali
-        else:
-            st.session_state.offerte = vecchi_risultati
-            st.warning("⚠️ Raggiunto il limite massimo di richieste o di prodotti disponibili per questa ricerca. I prodotti precedenti rimangono visibili.")
-    else:
-        st.session_state.offerte = risultati if risultati else []
-        st.session_state.item_count = len(st.session_state.offerte) if st.session_state.offerte else 10
-
-    st.session_state.scroll_to_top_flag = True
-
-if not st.session_state.offerte_vetrina:
-    partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
-    st.session_state.offerte_vetrina = ottieni_vetrina_casuale(partner_tag, item_count=10)
-
-st.markdown("""
-<div id="top_page" style="position: absolute; top: 0; left: 0; height: 1px; width: 1px;"></div>
-<div class="hero-container">
-    <div class="hero-title-main">Scala dei Turchi</div>
-    <div class="hero-subtitle-box">
-        <span class="hero-subtitle-text">Offerte Amazon</span>
-        <span class="ai-badge">AI</span>
-    </div>
-    <div class="hero-author-tag">Realizzato da <strong>Davide Marziano</strong></div>
-</div>
-""", unsafe_allow_html=True)
-
-if st.session_state.get("scroll_to_top_flag", False):
-    st.session_state.scroll_to_top_flag = False
-    st.markdown("""
-    <script>
-        setTimeout(function() {
-            try {
-                const stContainer = window.parent.document.querySelector('[data-testid="stAppViewContainer"]') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid="stAppViewContainer"]');
-                if (stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
-            } catch(e) {}
-            try {
-                const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
-                if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-            } catch(e) {}
-            try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-        }, 50);
-    </script>
-    """, unsafe_allow_html=True)
-
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Comportamento garantito al 100%)
-st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
-col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
-with col_tab1:
-    is_t1 = st.session_state.current_tab == "vetrina"
-    st.button("🔥 Offerte Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)
-with col_tab2:
-    is_t2 = st.session_state.current_tab == "cerca"
-    st.button("🔍 Cerca Prodotto", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)
-with col_tab3:
-    is_t3 = st.session_state.current_tab == "preferiti"
-    st.button(f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})", key="nav_btn_preferiti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("preferiti",), use_container_width=True)
-with col_tab4:
-    is_t4 = st.session_state.current_tab == "contatti"
-    st.button("✉️ Contattaci", key="nav_btn_contatti", type="primary" if is_t4 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
+# RENDER DELLA CARD PRODOTTO
 def render_product_card(p, tab_key="main"):
     with st.container(border=True):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
@@ -943,6 +839,7 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
+# RENDER DEL CONTENUTO DELLE SCHEDE
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
 if st.session_state.current_tab == "vetrina":
