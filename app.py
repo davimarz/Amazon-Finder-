@@ -789,7 +789,6 @@ tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "✉️ Contattaci per una richiesta o suggerimento"
 ])
 
-# Fallback SVG in base64 se un'immagine Amazon è momentaneamente non raggiungibile
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
 def render_product_card(p, tab_key="main"):
@@ -969,6 +968,15 @@ with tab_cerca:
             if idx + 1 < len(offerte_pagina):
                 with col_r:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
+
+        # PULSANTE +10 IN FONDO ALLA PAGINA DI RICERCA
+        st.markdown("<div style='margin-top: 10px; margin-bottom: 5px;'></div>", unsafe_allow_html=True)
+        btn_altri_10_bottom = st.button("➕ Altri 10", key="btn_altri_10_bottom", use_container_width=True)
+        if btn_altri_10_bottom:
+            with st.spinner("Caricamento altri prodotti in corso..."):
+                esegui_ricerca(increment=True)
+            st.rerun()
+
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
