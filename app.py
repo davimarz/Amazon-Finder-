@@ -403,9 +403,11 @@ st.markdown("""
         overflow: hidden;
     }
 
-    /* PULSANTE STELLA PREFERITI CON SFONDO BLU SCURO VISIBILE E COORDINATO */
-    div[data-testid="stButton"] button[key^="fav_"] {
+    /* FORZATURA TOTALE: PULSANTE STELLA PREFERITI IN BLU SCURO INTENSO IDENTICO A 'TORNA ALL'INIZIO' */
+    div.title-star-row div[data-testid="stButton"] button,
+    div[data-testid="stButton"] button[key*="fav_"] {
         background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+        background-color: #0284c7 !important;
         border: 1.5px solid #0369a1 !important;
         border-radius: 5px !important;
         min-height: 22px !important;
@@ -417,23 +419,24 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.4) !important;
+        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.45) !important;
         margin-left: auto !important;
-        transition: all 0.15s ease-in-out !important;
         cursor: pointer !important;
     }
 
-    div[data-testid="stButton"] button[key^="fav_"] p {
+    div.title-star-row div[data-testid="stButton"] button p,
+    div[data-testid="stButton"] button[key*="fav_"] p {
         font-size: 0.82rem !important;
         line-height: 1 !important;
         margin: 0 !important;
         padding: 0 !important;
-        color: #fef08a !important; /* Stella in giallo dorato brillante */
+        color: #fef08a !important; /* Stella in oro brillante */
         font-weight: 900 !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
     }
 
-    div[data-testid="stButton"] button[key^="fav_"]:hover {
+    div.title-star-row div[data-testid="stButton"] button:hover,
+    div[data-testid="stButton"] button[key*="fav_"]:hover {
         background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%) !important;
         border-color: #ffffff !important;
         transform: scale(1.15) !important;
@@ -829,7 +832,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione protetta tramite variabile locale)
+# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione sicura tramite variabile locale)
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
 with col_tab1:
@@ -1041,8 +1044,8 @@ elif active_tab == "preferiti":
                 ⭐ Preferiti Condivisi della Community
             </p>
             <p style="font-size: 0.74rem; color: #334155; margin: 0; line-height: 1.4;">
-                I preferiti visualizzati in questa sezione sono quelli salvati da tutti gli utenti che navigano in maniera anonima sul sito e <strong>vengono cancellati automaticamente dopo 24 ore</strong>.<br>
-                Se invece desideri memorizzare i tuoi preferiti all'interno del tuo profilo personale senza perderli, è necessario registrarsi. La registrazione è del tutto gratuita.
+                I preferiti visualizzati in questa sezione sono gli elenchi di tutti i prodotti salvati da tutti gli utenti che abbiano navigato sul sito e <strong>verranno cancellati automaticamente ogni 24 ore</strong>.<br>
+                Se invece desideri memorizzare stabilmente i tuoi preferiti all'interno del tuo profilo personale, è necessario registrarsi. La registrazione è del tutto gratuita.
             </p>
         </div>
     """, unsafe_allow_html=True)
