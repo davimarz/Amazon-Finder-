@@ -1,4 +1,3 @@
-import logging
 import random
 import re
 import time
@@ -23,20 +22,20 @@ CREATORS_API_BASE = "https://creatorsapi.amazon/catalog/v1"
 DEFAULT_EU_TOKEN_URL = "https://api.amazon.co.uk/auth/o2/token"
 CACHE_TTL_SECONDS = 120
 MAX_CREATORS_PAGES = 10
-MAX_RESULTS = 50  # Esportata esplicitamente per risolvere l'ImportError in app.py
 
-# Valori supportati da SearchItems / sortBy.
+# Valori ufficialmente supportati da SearchItems / sortBy.
 SORT_MAPPINGS = {
     "Prezzo minimo": "Price:LowToHigh",
     "Popolarità": "Featured",
     "Recensioni": "AvgCustomerReviews",
 }
 
-# Parametri del sito Amazon usati come fallback.
+# Parametri del sito Amazon usati solo come fallback se la Creators API non è disponibile.
 SORT_FALLBACK_MAP = {
     "Prezzo minimo": "price-asc-rank",
     "Popolarità": "exact-aware-popularity-rank",
     "Recensioni": "review-rank",
+    # Compatibilità con eventuale stato Streamlit creato da versioni precedenti.
     "Numero di vendite": "exact-aware-popularity-rank",
 }
 
@@ -68,6 +67,7 @@ KEYWORDS_VETRINA = [
 ]
 
 
+# ------------------------- CONFIGURAZIONE AMAZON -------------------------
 def _amazon_secrets() -> Dict[str, Any]:
     try:
         return dict(st.secrets.get("amazon_api", {}))
@@ -76,12 +76,12 @@ def _amazon_secrets() -> Dict[str, Any]:
 
 
 def get_partner_tag() -> str:
-    """Restituisce il tracking ID configurato."""
+    """Restituisce il tracking ID configurato. Non usa ID affiliati hardcoded."""
     return str(_amazon_secrets().get("partner_tag", "")).strip()
 
 
 def build_affiliate_link(asin: str, partner_tag: Optional[str] = None) -> str:
-    """Costruisce sempre un link Amazon.it pulito con tracking ID."""
+    """Costruisce sempre un link Amazon.it pulito contenente il tracking ID."""
     asin_clean = (asin or "").strip().upper()
     tag = (partner_tag or get_partner_tag()).strip()
     if not asin_clean or len(asin_clean) != 10 or not tag:
@@ -177,6 +177,7 @@ def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict
     return None
 
 
+# ------------------------------ PARSING ----------------------------------
 def parse_price(text: Any) -> float:
     if text is None:
         return 0.0
@@ -267,12 +268,12 @@ def _api_item_to_product(
         "immagine_url": str(image_url or ""),
         "prezzo_iniziale": float(old_price),
         "prezzo_finale": float(price),
-        "prezzo_verificato": True,
         "sconto": f"-{discount_value}%" if discount_value > 0 else "",
         "sconto_val": discount_value,
         "is_prime": is_prime,
         "is_sped_gratis": None,
         "costo_spedizione": None,
+        # Creators API attuale non espone il dettaglio recensioni come risorsa di output.
         "voto_medio": None,
         "num_recensioni": None,
         "link_affiliato": build_affiliate_link(asin, partner_tag),
@@ -307,6 +308,7 @@ def _filter_product(
     return True
 
 
+# ------------------------- FALLBACK HTML ---------------------------------
 def _fetch_html(url: str, timeout: int = 6) -> Optional[str]:
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
@@ -475,7 +477,6 @@ def _extract_products_from_html(
             "immagine_url": image_url,
             "prezzo_iniziale": float(old_price),
             "prezzo_finale": float(price),
-            "prezzo_verificato": True,
             "sconto": f"-{discount_value}%" if discount_value > 0 else "",
             "sconto_val": discount_value,
             "is_prime": is_prime,
@@ -503,16 +504,19 @@ def _extract_products_from_html(
     return products
 
 
-def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen_asins: set[str], seen_titles: set[str]) -> None:
+# Alias mantenuto per compatibilità con eventuali import esterni del vecchio nome.
+_estrai_prodotti_da_html = _extract_products_from_html
+
+
+def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen: set[str]) -> None:
     for product in source:
         asin = str(product.get("asin", "")).strip().upper()
-        clean_title = re.sub(r'[^a-zA-Z0-9]', '', str(product.get("titolo", "")).lower())[:50]
-        if asin and (asin not in seen_asins) and (clean_title not in seen_titles):
-            seen_asins.add(asin)
-            seen_titles.add(clean_title)
+        if asin and asin not in seen:
+            seen.add(asin)
             target.append(product)
 
 
+# --------------------------- CREATORS API --------------------------------
 def _get_item_from_creators_api(
     asin: str,
     partner_tag: str,
@@ -580,8 +584,7 @@ def _search_creators_api(
     )
 
     collected: List[Dict[str, Any]] = []
-    seen_asins: set[str] = set()
-    seen_titles: set[str] = set()
+    seen: set[str] = set()
 
     for page in range(1, MAX_CREATORS_PAGES + 1):
         payload: Dict[str, Any] = {
@@ -609,10 +612,12 @@ def _search_creators_api(
         if min_discount > 0:
             payload["minSavingPercent"] = min(99, int(min_discount))
         if solo_spedizione_gratuita:
+            # Il filtro ufficiale Prime garantisce almeno un'offerta Prime-eligible per item.
             payload["deliveryFlags"] = ["Prime"]
 
         data = _creators_api_call("searchItems", payload)
         if data is None:
+            # Segnala al chiamante di usare lo scraping di fallback.
             return None if not collected else collected
 
         items = data.get("searchResult", {}).get("items", []) or []
@@ -631,10 +636,11 @@ def _search_creators_api(
             if _filter_product(product, min_price, max_price, min_discount, max_discount):
                 parsed_page.append(product)
 
-        _append_unique(collected, parsed_page, seen_asins, seen_titles)
+        _append_unique(collected, parsed_page, seen)
         if len(collected) >= item_count:
             break
 
+        # Se Amazon restituisce meno di 10 risultati, non ci sono altre pagine utili.
         if len(items) < 10:
             break
 
@@ -656,9 +662,9 @@ def _search_html_fallback(
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
     collected: List[Dict[str, Any]] = []
-    seen_asins: set[str] = set()
-    seen_titles: set[str] = set()
+    seen: set[str] = set()
 
+    # Una pagina Amazon contiene normalmente più di 10 risultati. Il ciclo si ferma appena basta.
     max_pages = min(10, max(1, (item_count + 9) // 10 + 2))
     for page in range(1, max_pages + 1):
         url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&s={sort_param}"
@@ -678,18 +684,22 @@ def _search_html_fallback(
             max_discount=max_discount,
             require_free_or_prime=solo_spedizione_gratuita,
         )
-        _append_unique(collected, products, seen_asins, seen_titles)
+        _append_unique(collected, products, seen)
 
         if len(collected) >= item_count:
             break
 
+    # Mantiene l'ordine Amazon per Popolarità/Recensioni. Prezzo minimo viene ordinato anche localmente.
     if sort_type == "Prezzo minimo":
         collected.sort(key=lambda product: float(product.get("prezzo_finale") or 0.0))
 
     return collected[:item_count]
 
 
+# ----------------------------- API PUBBLICA ------------------------------
 def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int = 10) -> List[Dict[str, Any]]:
+    # partner_tag è mantenuto nella firma per compatibilità, ma il valore configurato nei Secrets
+    # resta la fonte primaria. Se fornito esplicitamente viene usato solo se i Secrets non lo contengono.
     configured_tag = get_partner_tag() or str(partner_tag or "").strip()
     if not configured_tag:
         return []
@@ -732,19 +742,20 @@ def ottieni_offerte_avanzate(
     sottocategoria: str = "",
     _partner_tag_override: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    del categoria, sottocategoria
+    del categoria, sottocategoria  # mantenuti per compatibilità futura con l'interfaccia esistente
 
     partner_tag = get_partner_tag() or str(_partner_tag_override or "").strip()
     if not partner_tag:
         return []
 
-    item_count = max(1, min(int(item_count or 10), MAX_RESULTS))
+    item_count = max(1, min(int(item_count or 10), 100))
     min_discount = max(0, min(int(min_discount or 0), 100))
     max_discount = max(min_discount, min(int(max_discount or 100), 100))
 
     clean_keyword = (keyword or "").strip()
     asin_match = RE_ASIN.search(clean_keyword)
 
+    # Ricerca diretta per ASIN/URL: prima Creators API, poi fallback HTML.
     if asin_match and ("http" in clean_keyword.lower() or len(clean_keyword) == 10):
         asin = asin_match.group(1).upper()
         api_product = _get_item_from_creators_api(
@@ -791,6 +802,7 @@ def ottieni_offerte_avanzate(
     if api_products is not None:
         return api_products[:item_count]
 
+    # Fallback solo quando la Creators API non è utilizzabile; non vengono rilassati i filtri scelti.
     return _search_html_fallback(
         query,
         sort_type,
