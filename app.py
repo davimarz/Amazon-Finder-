@@ -2,11 +2,13 @@ import streamlit as st
 import smtplib
 import sqlite3
 import re
+import html
+import json
 from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
-from amazon_api import ottieni_offerte_avanzate, ottieni_vetrina_casuale, SORT_MAPPINGS, calcola_distribuzione_recensioni
+from amazon_api import ottieni_offerte_avanzate, ottieni_vetrina_casuale, SORT_MAPPINGS
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -24,8 +26,7 @@ st.session_state.setdefault("scroll_to_top_flag", False)
 st.session_state.setdefault("offerte", [])
 
 if "offerte_vetrina" not in st.session_state or not st.session_state.get("offerte_vetrina"):
-    partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
-    st.session_state["offerte_vetrina"] = ottieni_vetrina_casuale(partner_tag, item_count=10)
+    st.session_state["offerte_vetrina"] = ottieni_vetrina_casuale(item_count=10)
 
 active_tab = st.session_state.get("current_tab", "vetrina")
 
@@ -482,6 +483,16 @@ st.markdown("""
         font-weight: 800;
     }
 
+    .shipping-badge-unknown {
+        background: rgba(255, 255, 255, 0.95);
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 800;
+    }
+
     .feedback-container {
         background: #ffffff;
         border-radius: 6px;
@@ -795,73 +806,139 @@ def render_product_card(p, tab_key="main"):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
 
         with col_left:
-            img_url = p.get('immagine_url') or IMG_FALLBACK_SVG
+            img_url = str(p.get("immagine_url") or IMG_FALLBACK_SVG)
+            safe_img_url = html.escape(img_url, quote=True)
+            safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)
             st.markdown(
-                f"<div class='product-img-wrapper-full'><img src='{img_url}' referrerpolicy='no-referrer' loading='lazy' onerror=\"this.onerror=null;this.src='{IMG_FALLBACK_SVG}';\" alt='Prodotto'></div>",
-                unsafe_allow_html=True
+                f'<div class="product-img-wrapper-full"><img src="{safe_img_url}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src=\'{safe_fallback}\';" alt="Prodotto"></div>',
+                unsafe_allow_html=True,
             )
 
         with col_center:
-            titolo = p.get('titolo', 'Prodotto Amazon')
-            link = p.get('link_affiliato', '')
+            titolo = str(p.get("titolo") or "Prodotto Amazon")
+            link = str(p.get("link_affiliato") or "")
+            safe_title_html = html.escape(titolo)
+            safe_link_attr = html.escape(link, quote=True)
 
-            st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
-            
-            badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
-            old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
-            prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
+            st.markdown(f"<div class='deal-title'>{safe_title_html}</div>", unsafe_allow_html=True)
 
-            costo_s = float(p.get("costo_spedizione", 0.0))
-            if p.get("is_prime") or (p.get("is_sped_gratis") and costo_s == 0.0):
+            prezzo_finale = float(p.get("prezzo_finale") or 0.0)
+            prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)
+            sconto = html.escape(str(p.get("sconto") or ""))
+            badge_html = f"<span class='deal-badge'>{sconto}</span>" if sconto else ""
+            old_price_html = (
+                f"<span class='deal-price-old'>€{prezzo_iniziale:.2f}</span>"
+                if prezzo_iniziale > prezzo_finale
+                else ""
+            )
+            prices_sub_html = (
+                f"<div class='price-subgroup-left'>{badge_html}"
+                f"<span class='deal-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}</div>"
+            )
+
+            costo_raw = p.get("costo_spedizione")
+            try:
+                costo_s = float(costo_raw) if costo_raw is not None else None
+            except (TypeError, ValueError):
+                costo_s = None
+
+            if p.get("is_prime") is True:
                 ship_html = "<span class='shipping-badge-prime'>prime</span>"
-            elif costo_s > 0.0:
+            elif p.get("is_sped_gratis") is True:
+                ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
+            elif costo_s is not None and costo_s > 0:
                 ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
             else:
-                ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
+                ship_html = "<span class='shipping-badge-unknown'>🚚 Verifica</span>"
 
-            st.markdown(f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>", unsafe_allow_html=True)
-            st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
-            
-            safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
-            share_msg = f"🔥 Offerta: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 {link}"
-            
+            st.markdown(
+                f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>",
+                unsafe_allow_html=True,
+            )
+
+            if link:
+                st.markdown(
+                    f"<a href='{safe_link_attr}' target='_blank' rel='noopener noreferrer sponsored' class='buy-btn-action'>🛒 Acquista</a>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    "<span class='buy-btn-action' style='opacity:.55;cursor:not-allowed;'>🛒 Link non disponibile</span>",
+                    unsafe_allow_html=True,
+                )
+
+            safe_title_text = titolo.replace("\n", " ").strip()
+            share_msg = f"🔥 Offerta: {safe_title_text}\n💰 Prezzo: €{prezzo_finale:.2f}\n👉 {link}"
+
             wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
             fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
             ig_url = "https://www.instagram.com/"
             tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
             gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
-            copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato negli appunti!');}});"
+            copy_action = (
+                f"navigator.clipboard.writeText({json.dumps(link)}).then(function()"
+                "{alert('Link copiato negli appunti!');});"
+            )
+
+            wa_attr = html.escape(wa_url, quote=True)
+            fb_attr = html.escape(fb_url, quote=True)
+            ig_attr = html.escape(ig_url, quote=True)
+            tg_attr = html.escape(tg_url, quote=True)
+            gmail_attr = html.escape(gmail_url, quote=True)
+            copy_attr = html.escape(copy_action, quote=True)
 
             st.markdown(
                 f"""
                 <div class='social-share-row-mobile'>
-                    <a href='{wa_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a>
-                    <a href='{fb_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a>
-                    <a href='{ig_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-ig' title='Instagram'>{SVG_IG}</a>
-                    <a href='{tg_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a>
-                    <a href='{gmail_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a>
-                    <button type='button' onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button>
+                    <a href='{wa_attr}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a>
+                    <a href='{fb_attr}' target='_blank' rel='noopener noreferrer sponsored' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a>
+                    <a href='{ig_attr}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-ig' title='Instagram'>{SVG_IG}</a>
+                    <a href='{tg_attr}' target='_blank' rel='noopener noreferrer sponsored' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a>
+                    <a href='{gmail_attr}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a>
+                    <button type='button' onclick="{copy_attr}" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button>
                 </div>
                 """,
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
 
         with col_fb:
-            voto = p.get("voto_medio", 4.5)
-            num_val = p.get("num_recensioni", 0)
-            distrib = calcola_distribuzione_recensioni(voto, num_val)
-            voto_str = f"{voto:.1f}".replace(".", ",")
-            stelle_icon = "★" * int(voto) + "☆" * (5 - int(voto))
-            
-            bar_rows = []
-            for s in ["5", "4", "3", "2", "1"]:
-                pct = distrib.get(s, 0)
-                bar_rows.append(f"<div class='fb-row'><span class='fb-label'>{s}★</span><div class='fb-bar-bg'><div class='fb-bar-fill' style='width: {pct}%;'></div></div><span class='fb-pct'>{pct}%</span></div>")
+            voto_raw = p.get("voto_medio")
+            num_raw = p.get("num_recensioni")
 
-            st.markdown(
-                f"<div class='feedback-container'><div class='feedback-stars-row'><span class='feedback-stars'>{stelle_icon}</span><span class='feedback-score-text'>{voto_str}</span><span class='feedback-subcount'>({num_val})</span></div>{''.join(bar_rows)}</div>",
-                unsafe_allow_html=True
-            )
+            try:
+                voto = float(voto_raw) if voto_raw is not None else None
+            except (TypeError, ValueError):
+                voto = None
+            try:
+                num_val = int(num_raw) if num_raw is not None else None
+            except (TypeError, ValueError):
+                num_val = None
+
+            if voto is not None and 0 < voto <= 5:
+                voto_str = f"{voto:.1f}".replace(".", ",")
+                stelle_piene = max(0, min(5, int(round(voto))))
+                stelle_icon = "★" * stelle_piene + "☆" * (5 - stelle_piene)
+                count_html = f"<span class='feedback-subcount'>({num_val})</span>" if num_val is not None else ""
+                feedback_html = (
+                    "<div class='feedback-container'><div class='feedback-stars-row'>"
+                    f"<span class='feedback-stars'>{stelle_icon}</span>"
+                    f"<span class='feedback-score-text'>{voto_str}</span>{count_html}"
+                    "</div></div>"
+                )
+            elif num_val is not None:
+                feedback_html = (
+                    "<div class='feedback-container'><div class='feedback-stars-row'>"
+                    f"<span class='feedback-score-text'>{num_val} recensioni</span>"
+                    "</div></div>"
+                )
+            else:
+                feedback_html = (
+                    "<div class='feedback-container'><div class='feedback-stars-row'>"
+                    "<span class='feedback-score-text'>Recensioni: verifica su Amazon</span>"
+                    "</div></div>"
+                )
+
+            st.markdown(feedback_html, unsafe_allow_html=True)
 
 # RENDER DEL CONTENUTO DELLE SCHEDE
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
@@ -885,6 +962,10 @@ if active_tab == "vetrina":
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 elif active_tab == "cerca":
+    # Compatibilità con sessioni aperte prima del cambio etichetta "Numero di vendite" -> "Popolarità".
+    if st.session_state.get("cerca_radio_sort") == "Numero di vendite":
+        st.session_state["cerca_radio_sort"] = "Popolarità"
+
     with st.container(border=True):
         st.text_input(
             "Cerca:",
