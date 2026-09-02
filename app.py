@@ -768,14 +768,16 @@ def esegui_ricerca(increment=False):
     )
 
     if increment:
+        # Se la ricerca ha trovato nuovi prodotti in più rispetto a prima
         if risultati and len(risultati) > len(vecchi_risultati):
             st.session_state.offerte = risultati
             st.session_state.item_count = len(risultati)
             num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
             st.session_state.current_page = num_pag_totali
         else:
+            # Non azzerare la lista: conserva i prodotti già estratti e informa l'utente
             st.session_state.offerte = vecchi_risultati
-            st.toast("Hai raggiunto l'ultimo prodotto disponibile per questa ricerca!", icon="ℹ️")
+            st.warning("⚠️ Raggiunto il limite massimo di richieste o di prodotti disponibili per questa ricerca. I prodotti precedenti rimangono visibili.")
     else:
         st.session_state.offerte = risultati if risultati else []
         st.session_state.item_count = len(st.session_state.offerte) if st.session_state.offerte else 10
