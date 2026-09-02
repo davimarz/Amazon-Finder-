@@ -47,18 +47,23 @@ st.markdown("""
         max-width: 100% !important;
     }
 
-    div[data-baseweb="tab-list"] {
+    /* BARRA DI NAVIGAZIONE TAB NATIVA SINCRONIZZATA */
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) {
         background: rgba(255, 255, 255, 0.85) !important;
         padding: 2px 4px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
-        gap: 4px !important;
         margin-bottom: 4px !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) > div {
         display: flex !important;
+        flex-direction: row !important;
+        gap: 4px !important;
         width: 100% !important;
     }
 
-    button[data-baseweb="tab"] {
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label {
         flex: 1 1 0% !important;
         color: #0369a1 !important;
         font-weight: 800 !important;
@@ -72,16 +77,40 @@ st.markdown("""
         text-align: center !important;
         justify-content: center !important;
         white-space: nowrap !important;
+        cursor: pointer !important;
+        margin: 0 !important;
     }
 
-    button[data-baseweb="tab"][aria-selected="true"] {
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label:has(input:checked) {
         color: #ffffff !important;
         background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
         border-color: #0284c7 !important;
         box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
     }
 
-    div[data-baseweb="tab-highlight"] { display: none !important; }
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label:has(input:checked) div,
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) label:has(input:checked) p {
+        color: #ffffff !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) input {
+        display: none !important;
+    }
+
+    div[data-testid="stRadio"]:has(input[name="app_nav_tabs_radio"]) div[data-testid="stWidgetLabel"] {
+        display: none !important;
+    }
+
+    .tab-content-panel {
+        background: rgba(255, 255, 255, 0.60) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 2px solid rgba(255, 255, 255, 0.85) !important;
+        border-radius: 12px !important;
+        padding: 6px !important;
+        margin-top: 2px !important;
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
+    }
 
     .hero-container {
         display: flex;
@@ -145,17 +174,6 @@ st.markdown("""
     }
 
     .hero-author-tag strong { color: #0369a1; }
-
-    div[data-baseweb="tab-panel"] {
-        background: rgba(255, 255, 255, 0.60) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        border: 2px solid rgba(255, 255, 255, 0.85) !important;
-        border-radius: 12px !important;
-        padding: 6px !important;
-        margin-top: 2px !important;
-        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
-    }
 
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background-color: #ffffff !important;
@@ -262,21 +280,22 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    div[data-testid="stRadio"] {
+    /* Stile per i radio button interni alla ricerca */
+    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) {
         display: flex !important;
         flex-direction: column !important;
         gap: 1px !important;
         margin: 1px 0 2px 0 !important;
     }
 
-    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
+    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) label[data-testid="stWidgetLabel"] p {
         color: #064e3b !important;
         font-size: 0.74rem !important;
         font-weight: 800 !important;
         margin-bottom: 2px !important;
     }
 
-    div[data-testid="stRadio"] > div {
+    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) > div {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -284,7 +303,7 @@ st.markdown("""
         width: 100% !important;
     }
 
-    div[data-testid="stRadio"] label[data-baseweb="radio"] {
+    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) label[data-baseweb="radio"] {
         background: #ffffff !important;
         padding: 2px 4px !important;
         border-radius: 5px !important;
@@ -297,7 +316,7 @@ st.markdown("""
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
 
-    div[data-testid="stRadio"] label[data-baseweb="radio"] div {
+    div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) label[data-baseweb="radio"] div {
         color: #064e3b !important;
         font-size: 0.68rem !important;
         font-weight: 700 !important;
@@ -736,12 +755,20 @@ if "item_count" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-if "active_tab_target" not in st.session_state:
-    st.session_state.active_tab_target = None
+TAB_VETRINA = "🔥 Offerte Vetrina"
+TAB_CERCA = "🔍 Cerca Prodotto"
+TAB_PREFERITI = "⭐ Preferiti"
+TAB_CONTATTI = "✉️ Contattaci"
+
+if "selected_tab" not in st.session_state:
+    st.session_state.selected_tab = TAB_VETRINA
+
+if "scroll_to_top_flag" not in st.session_state:
+    st.session_state.scroll_to_top_flag = False
 
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
-    st.session_state.active_tab_target = "cerca"
+    st.session_state.selected_tab = TAB_CERCA
     vecchi_risultati = st.session_state.get("offerte", [])
     
     if increment:
@@ -797,18 +824,11 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Selezione automatica della scheda 'Cerca' e scroll in cima se richiesto
-if st.session_state.get("active_tab_target") == "cerca":
-    st.session_state.active_tab_target = None
+if st.session_state.get("scroll_to_top_flag", False):
+    st.session_state.scroll_to_top_flag = False
     st.markdown("""
     <script>
         setTimeout(function() {
-            try {
-                const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
-                if (tabs && tabs.length > 1) {
-                    tabs[1].click();
-                }
-            } catch(e) {}
             try {
                 const stContainer = window.parent.document.querySelector('[data-testid="stAppViewContainer"]') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid="stAppViewContainer"]');
                 if (stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
@@ -818,16 +838,40 @@ if st.session_state.get("active_tab_target") == "cerca":
                 if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
             } catch(e) {}
             try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-        }, 120);
+        }, 50);
     </script>
     """, unsafe_allow_html=True)
 
-tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
-    "🔥 Offerte Vetrina",
-    "🔍 Cerca Prodotto", 
-    f"⭐ Preferiti ({len(st.session_state.preferiti_asin)})",
-    "✉️ Contattaci per una richiesta o suggerimento"
-])
+tab_options = [
+    TAB_VETRINA,
+    TAB_CERCA,
+    f"{TAB_PREFERITI} ({len(st.session_state.preferiti_asin)})",
+    TAB_CONTATTI
+]
+
+# Normalizzazione dell'indice attivo
+cur_tab = st.session_state.selected_tab
+active_idx = 0
+if cur_tab == TAB_CERCA:
+    active_idx = 1
+elif TAB_PREFERITI in cur_tab:
+    active_idx = 2
+elif cur_tab == TAB_CONTATTI:
+    active_idx = 3
+
+selected_nav = st.radio(
+    "Navigazione principale",
+    options=tab_options,
+    index=active_idx,
+    horizontal=True,
+    label_visibility="collapsed",
+    key="app_nav_tabs_radio"
+)
+
+if TAB_PREFERITI in selected_nav:
+    st.session_state.selected_tab = TAB_PREFERITI
+else:
+    st.session_state.selected_tab = selected_nav
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
@@ -919,7 +963,10 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-with tab_vetrina:
+# RENDER DEL CONTENUTO DELLA SCHEDA ATTIVA
+st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
+
+if st.session_state.selected_tab == TAB_VETRINA:
     st.markdown("""
         <p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 2px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>
         <p style='font-size: 0.74rem; font-weight: 600; color: #334155; margin: 0 0 10px 2px; font-style: italic;'>*I prodotti che vengono visualizzati in questa pagina hanno un prezzo che poi andrà a variare in base alle misure, colori, taglie.*</p>
@@ -936,7 +983,7 @@ with tab_vetrina:
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
-with tab_cerca:
+elif st.session_state.selected_tab == TAB_CERCA:
     with st.container(border=True):
         search_kw = st.text_input(
             "Cerca:",
@@ -973,11 +1020,13 @@ with tab_cerca:
     if btn_cerca_submit:
         with st.spinner("Ricerca prodotti su Amazon in corso..."):
             esegui_ricerca(increment=False)
+        st.session_state.scroll_to_top_flag = True
         st.rerun()
 
     if btn_altri_10:
         with st.spinner("Caricamento altri prodotti in corso..."):
             esegui_ricerca(increment=True)
+        st.session_state.scroll_to_top_flag = True
         st.rerun()
 
     if st.session_state.offerte:
@@ -993,7 +1042,8 @@ with tab_cerca:
                     btn_type = "primary" if is_active else "secondary"
                     if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state.current_page = p_num
-                        st.session_state.active_tab_target = "cerca"
+                        st.session_state.selected_tab = TAB_CERCA
+                        st.session_state.scroll_to_top_flag = True
                         st.rerun()
 
         start_idx = (st.session_state.current_page - 1) * 10
@@ -1015,12 +1065,13 @@ with tab_cerca:
         if btn_altri_10_bottom:
             with st.spinner("Caricamento altri prodotti in corso..."):
                 esegui_ricerca(increment=True)
+            st.session_state.scroll_to_top_flag = True
             st.rerun()
 
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
-with tab_preferiti:
+elif st.session_state.selected_tab == TAB_PREFERITI:
     lista_preferiti = list(st.session_state.preferiti_asin.values())
     if not lista_preferiti:
         st.info("Nessun prodotto nei preferiti (☆).")
@@ -1034,7 +1085,7 @@ with tab_preferiti:
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
 
-with tab_contatti:
+elif st.session_state.selected_tab == TAB_CONTATTI:
     with st.container(border=True):
         st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento (Tutti i campi sono obbligatori):</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
@@ -1058,6 +1109,8 @@ with tab_contatti:
                         st.success("Messaggio inviato con successo a davimarz.social@gmail.com! Il nostro team lo prenderà in carico.")
                     else:
                         st.error(f"Errore di invio: {msg_err}")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ----------------- PULSANTE TORNA ALL'INIZIO -----------------
 st.markdown(
