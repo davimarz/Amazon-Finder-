@@ -741,9 +741,12 @@ if "scroll_to_top" not in st.session_state:
 
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
+    vecchi_risultati = st.session_state.get("offerte", [])
+    
     if increment:
-        st.session_state.item_count = st.session_state.get("item_count", 10) + 10
+        target_count = st.session_state.get("item_count", 10) + 10
     else:
+        target_count = 10
         st.session_state.item_count = 10
         st.session_state.current_page = 1
 
@@ -761,13 +764,21 @@ def esegui_ricerca(increment=False):
         max_price=None,
         min_discount=min_d,
         max_discount=max_d,
-        item_count=st.session_state.item_count
+        item_count=target_count
     )
-    st.session_state.offerte = risultati if risultati else []
-    
+
     if increment:
-        num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
-        st.session_state.current_page = num_pag_totali
+        if risultati and len(risultati) > len(vecchi_risultati):
+            st.session_state.offerte = risultati
+            st.session_state.item_count = len(risultati)
+            num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
+            st.session_state.current_page = num_pag_totali
+        else:
+            st.session_state.offerte = vecchi_risultati
+            st.toast("Hai raggiunto l'ultimo prodotto disponibile per questa ricerca!", icon="ℹ️")
+    else:
+        st.session_state.offerte = risultati if risultati else []
+        st.session_state.item_count = len(st.session_state.offerte) if st.session_state.offerte else 10
 
 if not st.session_state.offerte_vetrina:
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
@@ -785,7 +796,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Gestione scroll morbido verso l'alto se richiesto dal pulsante +10
 if st.session_state.get("scroll_to_top", False):
     st.session_state.scroll_to_top = False
     st.markdown("""
@@ -993,7 +1003,6 @@ with tab_cerca:
                 with col_r:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
 
-        # PULSANTE +10 IN FONDO ALLA PAGINA: carica i successivi, seleziona l'ultima pagina e scrolla in cima
         st.markdown("<div style='margin-top: 10px; margin-bottom: 5px;'></div>", unsafe_allow_html=True)
         btn_altri_10_bottom = st.button("➕ Altri 10", key="btn_altri_10_bottom", use_container_width=True)
         if btn_altri_10_bottom:
