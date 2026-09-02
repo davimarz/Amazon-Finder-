@@ -768,7 +768,10 @@ if "scroll_to_top_flag" not in st.session_state:
 
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
+    # Fissa in modo inamovibile la scheda attiva su "Cerca Prodotto"
     st.session_state.selected_tab = TAB_CERCA
+    st.session_state.app_nav_tabs_radio = TAB_CERCA
+
     vecchi_risultati = st.session_state.get("offerte", [])
     
     if increment:
@@ -842,27 +845,27 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
+pref_label = f"{TAB_PREFERITI} ({len(st.session_state.preferiti_asin)})"
 tab_options = [
     TAB_VETRINA,
     TAB_CERCA,
-    f"{TAB_PREFERITI} ({len(st.session_state.preferiti_asin)})",
+    pref_label,
     TAB_CONTATTI
 ]
 
-# Normalizzazione dell'indice attivo
-cur_tab = st.session_state.selected_tab
-active_idx = 0
-if cur_tab == TAB_CERCA:
-    active_idx = 1
-elif TAB_PREFERITI in cur_tab:
-    active_idx = 2
-elif cur_tab == TAB_CONTATTI:
-    active_idx = 3
+# Sincronizzazione precisa dello stato radio persistente
+if "app_nav_tabs_radio" not in st.session_state:
+    st.session_state.app_nav_tabs_radio = st.session_state.selected_tab
+else:
+    # Se il selected_tab è impostato a TAB_CERCA, forziamo il valore del widget
+    if st.session_state.selected_tab == TAB_CERCA:
+        st.session_state.app_nav_tabs_radio = TAB_CERCA
+    elif st.session_state.selected_tab == TAB_PREFERITI:
+        st.session_state.app_nav_tabs_radio = pref_label
 
 selected_nav = st.radio(
     "Navigazione principale",
     options=tab_options,
-    index=active_idx,
     horizontal=True,
     label_visibility="collapsed",
     key="app_nav_tabs_radio"
@@ -963,7 +966,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True
             )
 
-# RENDER DEL CONTENUTO DELLA SCHEDA ATTIVA
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
 if st.session_state.selected_tab == TAB_VETRINA:
@@ -1043,6 +1045,7 @@ elif st.session_state.selected_tab == TAB_CERCA:
                     if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state.current_page = p_num
                         st.session_state.selected_tab = TAB_CERCA
+                        st.session_state.app_nav_tabs_radio = TAB_CERCA
                         st.session_state.scroll_to_top_flag = True
                         st.rerun()
 
