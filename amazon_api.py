@@ -34,8 +34,18 @@ _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+]
+
+KEYWORDS_VETRINA = [
+    "offerte lampo tecnologia",
+    "offerte scarpe sneaker",
+    "smartwatch offerte del giorno",
+    "cuffie bluetooth offerta",
+    "elettrodomestici cucina sconti",
+    "accessori smartphone offerte",
+    "cura della persona sconti",
+    "abbigliamento sportivo offerte"
 ]
 
 def _fetch_html(url, timeout=7):
@@ -299,12 +309,36 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
 
     return prodotti
 
-@st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    prodotti = ottieni_offerte_avanzate(keyword="offerte scarpe elettronica", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
-    return prodotti[:item_count]
+    """
+    Funzione non cacheata: ad ogni chiamata sceglie una keyword casuale,
+    estrae un pool di offerte e restituisce prodotti ordinati e rimescolati a random.
+    """
+    kw_scelta = random.choice(KEYWORDS_VETRINA)
+    prodotti = ottieni_offerte_avanzate(
+        keyword=kw_scelta,
+        sort_type="Numero di vendite",
+        min_discount=5,
+        item_count=item_count * 2
+    )
+    if prodotti:
+        random.shuffle(prodotti)
+        return prodotti[:item_count]
 
-@st.cache_data(ttl=900, show_spinner=False)
+    # Fallback su keyword classica se la prima non restituisce dati
+    prodotti_fb = ottieni_offerte_avanzate(
+        keyword="offerte del giorno",
+        sort_type="Numero di vendite",
+        min_discount=0,
+        item_count=item_count * 2
+    )
+    if prodotti_fb:
+        random.shuffle(prodotti_fb)
+        return prodotti_fb[:item_count]
+
+    return []
+
+@st.cache_data(ttl=600, show_spinner=False)
 def ottieni_offerte_avanzate(
     keyword="", 
     sort_type="Prezzo minimo", 
@@ -350,7 +384,6 @@ def ottieni_offerte_avanzate(
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
-    # Sfoglia le pagine successive di Amazon per non fermarsi a 30 risultati
     for p_num in range(1, pagine_da_scaricare + 1):
         url_pag = f"https://www.amazon.it/s?k={query_encoded}&page={p_num}&s={sort_param}"
         html = _fetch_html(url_pag, timeout=6)
