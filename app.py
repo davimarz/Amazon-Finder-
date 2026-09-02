@@ -280,7 +280,6 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* Stile per i radio button interni alla ricerca */
     div[data-testid="stRadio"]:not(:has(input[name="app_nav_tabs_radio"])) {
         display: flex !important;
         flex-direction: column !important;
@@ -768,7 +767,7 @@ if "scroll_to_top_flag" not in st.session_state:
 
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
-    # Fissa in modo inamovibile la scheda attiva su "Cerca Prodotto"
+    # Vincola la navigazione alla scheda Cerca
     st.session_state.selected_tab = TAB_CERCA
     st.session_state.app_nav_tabs_radio = TAB_CERCA
 
@@ -810,6 +809,8 @@ def esegui_ricerca(increment=False):
     else:
         st.session_state.offerte = risultati if risultati else []
         st.session_state.item_count = len(st.session_state.offerte) if st.session_state.offerte else 10
+
+    st.session_state.scroll_to_top_flag = True
 
 if not st.session_state.offerte_vetrina:
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
@@ -853,11 +854,9 @@ tab_options = [
     TAB_CONTATTI
 ]
 
-# Sincronizzazione precisa dello stato radio persistente
 if "app_nav_tabs_radio" not in st.session_state:
     st.session_state.app_nav_tabs_radio = st.session_state.selected_tab
 else:
-    # Se il selected_tab è impostato a TAB_CERCA, forziamo il valore del widget
     if st.session_state.selected_tab == TAB_CERCA:
         st.session_state.app_nav_tabs_radio = TAB_CERCA
     elif st.session_state.selected_tab == TAB_PREFERITI:
@@ -991,10 +990,12 @@ elif st.session_state.selected_tab == TAB_CERCA:
             "Cerca:",
             placeholder="Cosa cerchi? (es. cuffie, smartphone, macchina caffe)...",
             key="cerca_keyword_input",
-            label_visibility="collapsed"
+            label_visibility="collapsed",
+            on_change=esegui_ricerca,
+            args=(False,)
         )
-        btn_cerca_submit = st.button("🔍 Cerca", key="btn_cerca_submit", use_container_width=True)
-        btn_altri_10 = st.button("➕ Altri 10", key="btn_altri_10_top", use_container_width=True)
+        st.button("🔍 Cerca", key="btn_cerca_submit", on_click=esegui_ricerca, args=(False,), use_container_width=True)
+        st.button("➕ Altri 10", key="btn_altri_10_top", on_click=esegui_ricerca, args=(True,), use_container_width=True)
 
     with st.container(border=True):
         st.radio(
@@ -1018,18 +1019,6 @@ elif st.session_state.selected_tab == TAB_CERCA:
             value=False,
             key="cerca_check_sped_gratis"
         )
-
-    if btn_cerca_submit:
-        with st.spinner("Ricerca prodotti su Amazon in corso..."):
-            esegui_ricerca(increment=False)
-        st.session_state.scroll_to_top_flag = True
-        st.rerun()
-
-    if btn_altri_10:
-        with st.spinner("Caricamento altri prodotti in corso..."):
-            esegui_ricerca(increment=True)
-        st.session_state.scroll_to_top_flag = True
-        st.rerun()
 
     if st.session_state.offerte:
         tot_offerte = len(st.session_state.offerte)
@@ -1064,12 +1053,7 @@ elif st.session_state.selected_tab == TAB_CERCA:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
 
         st.markdown("<div style='margin-top: 10px; margin-bottom: 5px;'></div>", unsafe_allow_html=True)
-        btn_altri_10_bottom = st.button("➕ Altri 10", key="btn_altri_10_bottom", use_container_width=True)
-        if btn_altri_10_bottom:
-            with st.spinner("Caricamento altri prodotti in corso..."):
-                esegui_ricerca(increment=True)
-            st.session_state.scroll_to_top_flag = True
-            st.rerun()
+        st.button("➕ Altri 10", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,), use_container_width=True)
 
     elif st.session_state.has_searched:
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
