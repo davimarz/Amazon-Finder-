@@ -736,11 +736,12 @@ if "item_count" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
-if "scroll_to_top" not in st.session_state:
-    st.session_state.scroll_to_top = False
+if "active_tab_target" not in st.session_state:
+    st.session_state.active_tab_target = None
 
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
+    st.session_state.active_tab_target = "cerca"
     vecchi_risultati = st.session_state.get("offerte", [])
     
     if increment:
@@ -768,14 +769,12 @@ def esegui_ricerca(increment=False):
     )
 
     if increment:
-        # Se la ricerca ha trovato nuovi prodotti in più rispetto a prima
         if risultati and len(risultati) > len(vecchi_risultati):
             st.session_state.offerte = risultati
             st.session_state.item_count = len(risultati)
             num_pag_totali = max(1, (len(st.session_state.offerte) + 9) // 10)
             st.session_state.current_page = num_pag_totali
         else:
-            # Non azzerare la lista: conserva i prodotti già estratti e informa l'utente
             st.session_state.offerte = vecchi_risultati
             st.warning("⚠️ Raggiunto il limite massimo di richieste o di prodotti disponibili per questa ricerca. I prodotti precedenti rimangono visibili.")
     else:
@@ -798,11 +797,18 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-if st.session_state.get("scroll_to_top", False):
-    st.session_state.scroll_to_top = False
+# Selezione automatica della scheda 'Cerca' e scroll in cima se richiesto
+if st.session_state.get("active_tab_target") == "cerca":
+    st.session_state.active_tab_target = None
     st.markdown("""
     <script>
         setTimeout(function() {
+            try {
+                const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
+                if (tabs && tabs.length > 1) {
+                    tabs[1].click();
+                }
+            } catch(e) {}
             try {
                 const stContainer = window.parent.document.querySelector('[data-testid="stAppViewContainer"]') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid="stAppViewContainer"]');
                 if (stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
@@ -812,7 +818,7 @@ if st.session_state.get("scroll_to_top", False):
                 if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
             } catch(e) {}
             try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-        }, 100);
+        }, 120);
     </script>
     """, unsafe_allow_html=True)
 
@@ -972,7 +978,6 @@ with tab_cerca:
     if btn_altri_10:
         with st.spinner("Caricamento altri prodotti in corso..."):
             esegui_ricerca(increment=True)
-        st.session_state.scroll_to_top = True
         st.rerun()
 
     if st.session_state.offerte:
@@ -988,7 +993,7 @@ with tab_cerca:
                     btn_type = "primary" if is_active else "secondary"
                     if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state.current_page = p_num
-                        st.session_state.scroll_to_top = True
+                        st.session_state.active_tab_target = "cerca"
                         st.rerun()
 
         start_idx = (st.session_state.current_page - 1) * 10
@@ -1010,7 +1015,6 @@ with tab_cerca:
         if btn_altri_10_bottom:
             with st.spinner("Caricamento altri prodotti in corso..."):
                 esegui_ricerca(increment=True)
-            st.session_state.scroll_to_top = True
             st.rerun()
 
     elif st.session_state.has_searched:
