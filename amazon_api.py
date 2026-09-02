@@ -34,6 +34,7 @@ _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
@@ -300,7 +301,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    prodotti = ottieni_offerte_avanzate(keyword="offerte del giorno", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
+    prodotti = ottieni_offerte_avanzate(keyword="offerte scarpe elettronica", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
     return prodotti[:item_count]
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -345,18 +346,16 @@ def ottieni_offerte_avanzate(
     prodotti_raccolti = []
     asins_totali = set()
 
-    # Calcola quante pagine Amazon bisogna sfogliare (ogni pagina Amazon contiene circa 20-30 prodotti)
     pagine_da_scaricare = max(1, (item_count + 15) // 20)
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
-    # Ciclo di paginazione reale: sfoglia page=1, page=2, page=3, ecc.
+    # Sfoglia le pagine successive di Amazon per non fermarsi a 30 risultati
     for p_num in range(1, pagine_da_scaricare + 1):
         url_pag = f"https://www.amazon.it/s?k={query_encoded}&page={p_num}&s={sort_param}"
         html = _fetch_html(url_pag, timeout=6)
         
         if not html:
-            # Fallback a URL senza sort se la pagina con sort viene bloccata
             url_pag_alt = f"https://www.amazon.it/s?k={query_encoded}&page={p_num}"
             html = _fetch_html(url_pag_alt, timeout=6)
 
@@ -370,14 +369,12 @@ def ottieni_offerte_avanzate(
         if len(prodotti_raccolti) >= item_count:
             break
 
-    # Se con i filtri di sconto non ha trovato nulla sulla prima pagina, prova senza filtro sconto
     if not prodotti_raccolti and (min_discount > 0 or max_discount < 100):
         url_relax = f"https://www.amazon.it/s?k={query_encoded}"
         html_relax = _fetch_html(url_relax, timeout=6)
         if html_relax:
             prodotti_raccolti = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100)
 
-    # Ordinamento finale
     if sort_type == "Prezzo minimo":
         prodotti_raccolti.sort(key=lambda x: x["prezzo_finale"])
     elif sort_type == "Numero di vendite":
