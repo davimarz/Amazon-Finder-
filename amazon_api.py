@@ -205,16 +205,7 @@ def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min
         "link_affiliato": link
     }
 
-def ordina_e_taglia_risultati(prodotti, sort_type, item_count):
-    if sort_type == "Prezzo minimo":
-        prodotti.sort(key=lambda x: x["prezzo_finale"])
-    elif sort_type == "Numero di vendite":
-        prodotti.sort(key=lambda x: (x.get("vendite_mensili", 0), x.get("num_recensioni", 0)), reverse=True)
-    elif sort_type == "Recensioni":
-        prodotti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
-    return prodotti[:item_count]
-
-def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=None, min_discount=0, max_discount=100, item_count=10):
+def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=None, min_discount=0, max_discount=100):
     if not html_text:
         return []
 
@@ -227,9 +218,6 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
     asins_visti = set()
 
     for it in items:
-        if len(prodotti) >= item_count:
-            break
-
         asin = it.get("data-asin", "").strip()
         if not asin or asin in asins_visti:
             continue
@@ -239,7 +227,6 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
             continue
         titolo = title_tag.get_text(strip=True)
 
-        # Estrazione Prezzo Reale
         p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or \
                  it.select_one("span.a-price-whole") or \
                  it.select_one(".a-color-price")
@@ -266,7 +253,6 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
         if max_discount < 100 and sconto_val > max_discount:
             continue
 
-        # Estrazione Immagine Coerente
         img_url = ""
         img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
         if img_tag and "src" in img_tag.attrs:
@@ -314,7 +300,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    prodotti = ottieni_offerte_avanzate(keyword="offerte scarpe elettronica", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
+    prodotti = ottieni_offerte_avanzate(keyword="offerte del giorno", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
     return prodotti[:item_count]
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -356,50 +342,47 @@ def ottieni_offerte_avanzate(
         return []
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
+    prodotti_raccolti = []
+    asins_totali = set()
 
-    # 1. Chiamata PA-API Ufficiale
-    if token:
-        api_url = "https://webservices.amazon.it/paapi5/searchitems"
-        headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
-        payload = {
-            "Keywords": query_str, "PartnerTag": partner_tag, "PartnerType": "Associates", "Marketplace": "www.amazon.it",
-            "ItemCount": min(item_count, 10), "SortBy": SORT_MAPPINGS.get(sort_type, "SalesRank"),
-            "Resources": ["ItemInfo.Title", "Offers.Listings.Price", "Offers.Listings.SavingBasis", "Offers.Listings.DeliveryInfo.IsPrimeEligible", "Offers.Listings.DeliveryInfo.IsFreeShippingEligible", "Offers.Listings.DeliveryInfo.ShippingCharges", "Offers.Summaries.LowestPrice", "Images.Primary.Large", "CustomerReviews.Count", "CustomerReviews.StarRating"]
-        }
-        if min_price and min_price > 0: payload["MinPrice"] = int(min_price * 100)
-        if max_price and max_price > 0: payload["MaxPrice"] = int(max_price * 100)
-        try:
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=3.5)
-            if resp.status_code == 200:
-                items = resp.json().get("SearchResult", {}).get("Items", [])
-                prodotti = [p for p in (parse_item_api_response(it, partner_tag, solo_spedizione_gratuita, min_price, max_price, min_discount, max_discount) for it in items) if p]
-                if prodotti: return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
-        except Exception:
-            pass
-
-    # 2. Web Scraping Multi-URL Reale
+    # Calcola quante pagine Amazon bisogna sfogliare (ogni pagina Amazon contiene circa 20-30 prodotti)
+    pagine_da_scaricare = max(1, (item_count + 15) // 20)
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
-    urls_da_testare = [
-        f"https://www.amazon.it/s?k={query_encoded}&s={sort_param}",
-        f"https://www.amazon.it/s?k={query_encoded}"
-    ]
+    # Ciclo di paginazione reale: sfoglia page=1, page=2, page=3, ecc.
+    for p_num in range(1, pagine_da_scaricare + 1):
+        url_pag = f"https://www.amazon.it/s?k={query_encoded}&page={p_num}&s={sort_param}"
+        html = _fetch_html(url_pag, timeout=6)
+        
+        if not html:
+            # Fallback a URL senza sort se la pagina con sort viene bloccata
+            url_pag_alt = f"https://www.amazon.it/s?k={query_encoded}&page={p_num}"
+            html = _fetch_html(url_pag_alt, timeout=6)
 
-    for u in urls_da_testare:
-        html_text = _fetch_html(u, timeout=6)
-        if html_text:
-            prodotti = _estrai_prodotti_da_html(html_text, partner_tag, min_price, max_price, min_discount, max_discount, item_count)
-            if prodotti:
-                return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
+        if html:
+            estratti = _estrai_prodotti_da_html(html, partner_tag, min_price, max_price, min_discount, max_discount)
+            for it in estratti:
+                if it["asin"] not in asins_totali:
+                    asins_totali.add(it["asin"])
+                    prodotti_raccolti.append(it)
+        
+        if len(prodotti_raccolti) >= item_count:
+            break
 
-    # 3. Rilassamento filtri
-    if min_discount > 0 or max_discount < 100:
-        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=6)
+    # Se con i filtri di sconto non ha trovato nulla sulla prima pagina, prova senza filtro sconto
+    if not prodotti_raccolti and (min_discount > 0 or max_discount < 100):
+        url_relax = f"https://www.amazon.it/s?k={query_encoded}"
+        html_relax = _fetch_html(url_relax, timeout=6)
         if html_relax:
-            prodotti_relax = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100, item_count=item_count)
-            if prodotti_relax:
-                return ordina_e_taglia_risultati(prodotti_relax, sort_type, item_count)
+            prodotti_raccolti = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100)
 
-    # 4. Se la ricerca live non trova nulla, non generare falsi orologi: restituisci vuoto per mostrare l'avviso coerente
-    return []
+    # Ordinamento finale
+    if sort_type == "Prezzo minimo":
+        prodotti_raccolti.sort(key=lambda x: x["prezzo_finale"])
+    elif sort_type == "Numero di vendite":
+        prodotti_raccolti.sort(key=lambda x: (x.get("vendite_mensili", 0), x.get("num_recensioni", 0)), reverse=True)
+    elif sort_type == "Recensioni":
+        prodotti_raccolti.sort(key=lambda x: (x["voto_medio"], x["num_recensioni"]), reverse=True)
+
+    return prodotti_raccolti[:item_count]
