@@ -4,7 +4,6 @@ import urllib.parse
 import re
 import time
 import random
-import hashlib
 from bs4 import BeautifulSoup
 
 try:
@@ -35,11 +34,10 @@ _TOKEN_CACHE = {"access_token": None, "expires_at": 0}
 USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 ]
 
-def _fetch_html(url, timeout=6):
+def _fetch_html(url, timeout=7):
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
@@ -147,7 +145,7 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=0):
 def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, max_discount=100):
     asin = it.get("ASIN", "")
     title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
-    img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg")
+    img = it.get("Images", {}).get("Primary", {}).get("Large", {}).get("URL", "")
     link = it.get("DetailPageURL", f"https://www.amazon.it/dp/{asin}?tag={partner_tag}")
 
     listings = it.get("Offers", {}).get("Listings", [])
@@ -241,6 +239,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
             continue
         titolo = title_tag.get_text(strip=True)
 
+        # Estrazione Prezzo Reale
         p_elem = it.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen") or \
                  it.select_one("span.a-price-whole") or \
                  it.select_one(".a-color-price")
@@ -267,8 +266,11 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
         if max_discount < 100 and sconto_val > max_discount:
             continue
 
+        # Estrazione Immagine Coerente
+        img_url = ""
         img_tag = it.find("img", {"class": "s-image"}) or it.find("img")
-        img_url = img_tag["src"] if (img_tag and "src" in img_tag.attrs) else "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"
+        if img_tag and "src" in img_tag.attrs:
+            img_url = img_tag["src"]
 
         voto_val = 4.5
         num_rev_val = 0
@@ -310,51 +312,9 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
 
     return prodotti
 
-def _genera_fallback_pertinente(query_str, partner_tag, item_count=10):
-    templates = [
-        {"title": f"{query_str.capitalize()} - Edizione Top Choice Offerta", "base_p": 49.99, "disc": 25, "rating": 4.7, "img": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Pro Edition - Alta Efficienza", "base_p": 89.90, "disc": 35, "rating": 4.8, "img": "https://m.media-amazon.com/images/I/71Y+R484DUL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Compact con Spedizione Prime Rapida", "base_p": 29.99, "disc": 20, "rating": 4.6, "img": "https://m.media-amazon.com/images/I/71YdE55GwjL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Ultra Performance - Offerta Lampo", "base_p": 129.00, "disc": 40, "rating": 4.9, "img": "https://m.media-amazon.com/images/I/61H2p7m+ZWL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Kit Completo con Accessori Inclusi", "base_p": 19.99, "disc": 15, "rating": 4.5, "img": "https://m.media-amazon.com/images/I/71P4qB0-jYL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Serie Premium - Più Venduto", "base_p": 59.90, "disc": 30, "rating": 4.8, "img": "https://m.media-amazon.com/images/I/61s8z3-yKPL._AC_SL1500_.jpg"},
-        {"title": f"{query_str.capitalize()} Modello Ergonomico Certificato", "base_p": 39.00, "disc": 18, "rating": 4.7, "img": "https://m.media-amazon.com/images/I/71YdE55GwjL._AC_SL1500_.jpg"}
-    ]
-
-    prodotti = []
-    encoded_q = urllib.parse.quote_plus(query_str)
-    
-    for i, t in enumerate(templates[:item_count]):
-        h = hashlib.md5(f"{query_str}_{i}".encode()).hexdigest().upper()
-        pseudo_asin = f"B0{h[:8]}"
-        p_iniziale = t["base_p"]
-        sconto = t["disc"]
-        p_finale = round(p_iniziale * (1 - (sconto / 100)), 2)
-        link_aff = f"https://www.amazon.it/s?k={encoded_q}&tag={partner_tag}"
-        
-        prodotti.append({
-            "asin": pseudo_asin,
-            "titolo": t["title"],
-            "immagine_url": t["img"],
-            "prezzo_iniziale": p_iniziale,
-            "prezzo_finale": p_finale,
-            "sconto": f"-{sconto}%",
-            "sconto_val": sconto,
-            "is_prime": True,
-            "is_sped_gratis": True,
-            "costo_spedizione": 0.0,
-            "voto_medio": t["rating"],
-            "num_recensioni": random.randint(340, 18200),
-            "vendite_mensili": random.randint(150, 4500),
-            "link_affiliato": link_aff
-        })
-    return prodotti
-
 @st.cache_data(ttl=3600, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    prodotti = ottieni_offerte_avanzate(keyword="offerte lampo", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
-    if not prodotti:
-        prodotti = _genera_fallback_pertinente("Offerte Top", partner_tag, item_count)
+    prodotti = ottieni_offerte_avanzate(keyword="offerte scarpe elettronica", sort_type="Numero di vendite", min_discount=10, item_count=item_count)
     return prodotti[:item_count]
 
 @st.cache_data(ttl=900, show_spinner=False)
@@ -397,7 +357,7 @@ def ottieni_offerte_avanzate(
 
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
 
-    # 1. PA-API Ufficiale
+    # 1. Chiamata PA-API Ufficiale
     if token:
         api_url = "https://webservices.amazon.it/paapi5/searchitems"
         headers = {"Authorization": f"Bearer {token}", "x-amz-target": "com.amazon.paapi5.v1.ProductAdvertisingAPIv1.SearchItems"}
@@ -417,7 +377,7 @@ def ottieni_offerte_avanzate(
         except Exception:
             pass
 
-    # 2. Web Scraping Multi-URL
+    # 2. Web Scraping Multi-URL Reale
     query_encoded = urllib.parse.quote_plus(query_str)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
 
@@ -427,19 +387,19 @@ def ottieni_offerte_avanzate(
     ]
 
     for u in urls_da_testare:
-        html_text = _fetch_html(u, timeout=5)
+        html_text = _fetch_html(u, timeout=6)
         if html_text:
             prodotti = _estrai_prodotti_da_html(html_text, partner_tag, min_price, max_price, min_discount, max_discount, item_count)
             if prodotti:
                 return ordina_e_taglia_risultati(prodotti, sort_type, item_count)
 
-    # 3. Relax filtri
+    # 3. Rilassamento filtri
     if min_discount > 0 or max_discount < 100:
-        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=5)
+        html_relax = _fetch_html(f"https://www.amazon.it/s?k={query_encoded}", timeout=6)
         if html_relax:
             prodotti_relax = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100, item_count=item_count)
             if prodotti_relax:
                 return ordina_e_taglia_risultati(prodotti_relax, sort_type, item_count)
 
-    # 4. Fallback Euristico per non lasciare mai la ricerca vuota
-    return _genera_fallback_pertinente(query_str, partner_tag, item_count)
+    # 4. Se la ricerca live non trova nulla, non generare falsi orologi: restituisci vuoto per mostrare l'avviso coerente
+    return []
