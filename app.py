@@ -721,7 +721,6 @@ def esegui_ricerca(increment=False):
         item_count=target_count
     )
 
-    # Deduplicazione a livello di Session State (ASIN univoci mantenendo l'ordine)
     prodotti_unici = []
     asins_visti = set()
     for p in (risultati or []):
