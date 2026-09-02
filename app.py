@@ -16,13 +16,24 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ----------------- INIZIALIZZAZIONE SICURA STATO -----------------
-st.session_state.setdefault("current_tab", "vetrina")
-st.session_state.setdefault("has_searched", False)
-st.session_state.setdefault("item_count", 10)
-st.session_state.setdefault("current_page", 1)
-st.session_state.setdefault("scroll_to_top_flag", False)
-st.session_state.setdefault("offerte", [])
+# ----------------- INIZIALIZZAZIONE SICURA SESSION STATE -----------------
+if "current_tab" not in st.session_state:
+    st.session_state["current_tab"] = "vetrina"
+
+if "has_searched" not in st.session_state:
+    st.session_state["has_searched"] = False
+
+if "item_count" not in st.session_state:
+    st.session_state["item_count"] = 10
+
+if "current_page" not in st.session_state:
+    st.session_state["current_page"] = 1
+
+if "scroll_to_top_flag" not in st.session_state:
+    st.session_state["scroll_to_top_flag"] = False
+
+if "offerte" not in st.session_state:
+    st.session_state["offerte"] = []
 
 if "preferiti_asin" not in st.session_state:
     salvati = ottieni_tutti_preferiti()
@@ -31,6 +42,9 @@ if "preferiti_asin" not in st.session_state:
 if "offerte_vetrina" not in st.session_state or not st.session_state.get("offerte_vetrina"):
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     st.session_state["offerte_vetrina"] = ottieni_vetrina_casuale(partner_tag, item_count=10)
+
+# Variabile locale protetta per prevenire AttributeError su session_state
+active_tab = st.session_state.get("current_tab", "vetrina")
 
 SVG_WA = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
 SVG_FB = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
@@ -779,14 +793,14 @@ def esegui_ricerca(increment=False):
         if risultati and len(risultati) > len(vecchi_risultati):
             st.session_state["offerte"] = risultati
             st.session_state["item_count"] = len(risultati)
-            num_pag_totali = max(1, (len(st.session_state["offerte"]) + 9) // 10)
+            num_pag_totali = max(1, (len(st.session_state.get("offerte", [])) + 9) // 10)
             st.session_state["current_page"] = num_pag_totali
         else:
             st.session_state["offerte"] = vecchi_risultati
             st.warning("⚠️ Raggiunto il limite massimo di richieste o di prodotti disponibili per questa ricerca. I prodotti precedenti rimangono visibili.")
     else:
         st.session_state["offerte"] = risultati if risultati else []
-        st.session_state["item_count"] = len(st.session_state["offerte"]) if st.session_state["offerte"] else 10
+        st.session_state["item_count"] = len(st.session_state.get("offerte", [])) if st.session_state.get("offerte") else 10
 
     st.session_state["scroll_to_top_flag"] = True
 
@@ -820,29 +834,120 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (ACCESSO SICURO CON .get)
-cur_tab_val = st.session_state.get("current_tab", "vetrina")
+# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Accesso protetto con variabile locale)
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
 with col_tab1:
-    is_t1 = (cur_tab_val == "vetrina")
+    is_t1 = (active_tab == "vetrina")
     st.button("🔥 Offerte Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)
 with col_tab2:
-    is_t2 = (cur_tab_val == "cerca")
+    is_t2 = (active_tab == "cerca")
     st.button("🔍 Cerca Prodotto", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)
 with col_tab3:
-    is_t3 = (cur_tab_val == "preferiti")
+    is_t3 = (active_tab == "preferiti")
     num_fav = len(st.session_state.get("preferiti_asin", {}))
     st.button(f"⭐ Preferiti ({num_fav})", key="nav_btn_preferiti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("preferiti",), use_container_width=True)
 with col_tab4:
-    is_t4 = (cur_tab_val == "contatti")
+    is_t4 = (active_tab == "contatti")
     st.button("✉️ Contattaci", key="nav_btn_contatti", type="primary" if is_t4 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# RENDER DELLA SCHEDA ATTIVA CON VALUTAZIONE PROTETTA
+IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
+
+def render_product_card(p, tab_key="main"):
+    with st.container(border=True):
+        col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
+        is_fav = p["asin"] in st.session_state.get("preferiti_asin", {})
+        star_icon = "⭐" if is_fav else "☆"
+
+        with col_left:
+            img_url = p.get('immagine_url') or IMG_FALLBACK_SVG
+            st.markdown(
+                f"<div class='product-img-wrapper-full'><img src='{img_url}' referrerpolicy='no-referrer' loading='lazy' onerror=\"this.onerror=null;this.src='{IMG_FALLBACK_SVG}';\" alt='Prodotto'></div>",
+                unsafe_allow_html=True
+            )
+
+        with col_center:
+            titolo = p.get('titolo', 'Prodotto Amazon')
+            link = p.get('link_affiliato', '')
+
+            st.markdown('<div class="title-star-row">', unsafe_allow_html=True)
+            c_titolo, c_star = st.columns([0.92, 0.08])
+            with c_titolo:
+                st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
+            with c_star:
+                if st.button(star_icon, key=f"fav_{tab_key}_{p['asin']}", help="Aggiungi/Rimuovi dai Preferiti"):
+                    fav_dict = st.session_state.get("preferiti_asin", {})
+                    if is_fav:
+                        rimuovi_preferito(p["asin"])
+                        fav_dict.pop(p["asin"], None)
+                    else:
+                        aggiungi_preferito(p)
+                        fav_dict[p["asin"]] = p
+                    st.session_state["preferiti_asin"] = fav_dict
+                    st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
+            old_price_html = f"<span class='deal-price-old'>€{p['prezzo_iniziale']:.2f}</span>" if p.get('prezzo_iniziale', 0.0) > p.get('prezzo_finale', 0.0) else ""
+            prices_sub_html = f"<div class='price-subgroup-left'>{badge_html}<span class='deal-price-final'>€{p['prezzo_finale']:.2f}</span>{old_price_html}</div>"
+
+            costo_s = float(p.get("costo_spedizione", 0.0))
+            if p.get("is_prime") or (p.get("is_sped_gratis") and costo_s == 0.0):
+                ship_html = "<span class='shipping-badge-prime'>prime</span>"
+            elif costo_s > 0.0:
+                ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
+            else:
+                ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
+
+            st.markdown(f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>", unsafe_allow_html=True)
+            st.markdown(f"<a href='{link}' target='_blank' class='buy-btn-action'>🛒 Acquista</a>", unsafe_allow_html=True)
+            
+            safe_title = titolo.replace("'", " ").replace('"', ' ').replace("\n", " ").strip()
+            share_msg = f"🔥 Offerta: {safe_title}\n💰 Prezzo: €{p['prezzo_finale']:.2f}\n👉 {link}"
+            
+            wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
+            fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
+            ig_url = "https://www.instagram.com/"
+            tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
+            gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
+            copy_action = f"navigator.clipboard.writeText('{link}').then(function(){{alert('Link copiato negli appunti!');}});"
+
+            st.markdown(
+                f"""
+                <div class='social-share-row-mobile'>
+                    <a href='{wa_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a>
+                    <a href='{fb_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a>
+                    <a href='{ig_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-ig' title='Instagram'>{SVG_IG}</a>
+                    <a href='{tg_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a>
+                    <a href='{gmail_url}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a>
+                    <button type='button' onclick=\"{copy_action}\" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+        with col_fb:
+            voto = p.get("voto_medio", 4.5)
+            num_val = p.get("num_recensioni", 0)
+            distrib = calcola_distribuzione_recensioni(voto, num_val)
+            voto_str = f"{voto:.1f}".replace(".", ",")
+            stelle_icon = "★" * int(voto) + "☆" * (5 - int(voto))
+            
+            bar_rows = []
+            for s in ["5", "4", "3", "2", "1"]:
+                pct = distrib.get(s, 0)
+                bar_rows.append(f"<div class='fb-row'><span class='fb-label'>{s}★</span><div class='fb-bar-bg'><div class='fb-bar-fill' style='width: {pct}%;'></div></div><span class='fb-pct'>{pct}%</span></div>")
+
+            st.markdown(
+                f"<div class='feedback-container'><div class='feedback-stars-row'><span class='feedback-stars'>{stelle_icon}</span><span class='feedback-score-text'>{voto_str}</span><span class='feedback-subcount'>({num_val})</span></div>{''.join(bar_rows)}</div>",
+                unsafe_allow_html=True
+            )
+
+# RENDER DEL CONTENUTO DELLE SCHEDE
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
-if cur_tab_val == "vetrina":
+if active_tab == "vetrina":
     st.markdown("""
         <p style='font-size: 0.85rem; font-weight: 800; color: #064e3b; margin: 4px 0 2px 2px;'>🔥 Offerte Vetrina Amazon Da Non Perdere:</p>
         <p style='font-size: 0.74rem; font-weight: 600; color: #334155; margin: 0 0 10px 2px; font-style: italic;'>*I prodotti che vengono visualizzati in questa pagina hanno un prezzo che poi andrà a variare in base alle misure, colori, taglie.*</p>
@@ -860,7 +965,7 @@ if cur_tab_val == "vetrina":
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
-elif cur_tab_val == "cerca":
+elif active_tab == "cerca":
     with st.container(border=True):
         st.text_input(
             "Cerca:",
@@ -934,7 +1039,7 @@ elif cur_tab_val == "cerca":
     elif st.session_state.get("has_searched", False):
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
-elif cur_tab_val == "preferiti":
+elif active_tab == "preferiti":
     lista_preferiti = list(st.session_state.get("preferiti_asin", {}).values())
     if not lista_preferiti:
         st.info("Nessun prodotto nei preferiti (☆).")
@@ -948,7 +1053,7 @@ elif cur_tab_val == "preferiti":
                 with col_r:
                     render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
 
-elif cur_tab_val == "contatti":
+elif active_tab == "contatti":
     with st.container(border=True):
         st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento (Tutti i campi sono obbligatori):</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
