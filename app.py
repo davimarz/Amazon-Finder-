@@ -771,7 +771,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione sicura tramite variabile locale)
+# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione protetta tramite variabile locale)
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
 with col_tab1:
@@ -806,7 +806,7 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
 
-            # Titolo visualizzato direttamente a larghezza intera senza pulsante stella
+            # Titolo visualizzato a larghezza piena senza pulsante
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
