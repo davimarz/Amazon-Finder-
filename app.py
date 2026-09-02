@@ -9,17 +9,13 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
 
-APP_BUILD = "2026.09.03-importsafe-v2"
-EXPECTED_API_MODULE_VERSION = "2026.09.03-price-getitems-v3"
-
-# Import del modulo intero: evita crash "cannot import name ..." quando
-# Streamlit Cloud mantiene temporaneamente file di versioni diverse durante un deploy.
-_AMAZON_IMPORT_ERROR = None
-try:
-    import amazon_api as _amazon_api
-except Exception as exc:
-    _amazon_api = None
-    _AMAZON_IMPORT_ERROR = exc
+from amazon_api import (
+    MAX_RESULTS,
+    SORT_MAPPINGS,
+    get_partner_tag,
+    ottieni_offerte_avanzate,
+    ottieni_vetrina_casuale,
+)
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -28,45 +24,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Controllo di compatibilità fra app.py e amazon_api.py. Se durante un deploy
-# vengono caricati file non allineati, mostriamo un errore leggibile invece di
-# lasciare Streamlit con un ImportError redatto.
-if _amazon_api is None:
-    st.error("Impossibile caricare amazon_api.py. Sostituisci insieme app.py e amazon_api.py e riavvia l'app.")
-    st.code(f"Tipo errore: {type(_AMAZON_IMPORT_ERROR).__name__}")
-    st.stop()
-
-_required_api_symbols = (
-    "get_partner_tag",
-    "ottieni_offerte_avanzate",
-    "ottieni_vetrina_casuale",
-)
-_missing_api_symbols = [name for name in _required_api_symbols if not hasattr(_amazon_api, name)]
-if _missing_api_symbols:
-    st.error("app.py e amazon_api.py appartengono a versioni diverse.")
-    st.code("Funzioni mancanti in amazon_api.py: " + ", ".join(_missing_api_symbols))
-    st.info("Sostituisci entrambi i file con quelli dello stesso pacchetto e fai Reboot app su Streamlit Cloud.")
-    st.stop()
-
-_api_module_version = str(getattr(_amazon_api, "API_MODULE_VERSION", ""))
-if _api_module_version != EXPECTED_API_MODULE_VERSION:
-    st.error("Versioni non allineate: app.py e amazon_api.py non appartengono allo stesso pacchetto.")
-    st.code(f"app build: {APP_BUILD}\namazon_api: {_api_module_version or 'versione non dichiarata'}")
-    st.info("Sostituisci insieme app.py e amazon_api.py, poi esegui Reboot app.")
-    st.stop()
-
-print(f"[startup] app={APP_BUILD} amazon_api={_api_module_version}")
-
-MAX_RESULTS = int(getattr(_amazon_api, "MAX_RESULTS", 50))
-SORT_MAPPINGS = getattr(_amazon_api, "SORT_MAPPINGS", {
-    "Prezzo minimo": "Price:LowToHigh",
-    "Popolarità": "Featured",
-    "Recensioni": "AvgCustomerReviews",
-})
-get_partner_tag = _amazon_api.get_partner_tag
-ottieni_offerte_avanzate = _amazon_api.ottieni_offerte_avanzate
-ottieni_vetrina_casuale = _amazon_api.ottieni_vetrina_casuale
-
 # ----------------- INIZIALIZZAZIONE STATO -----------------
 st.session_state.setdefault("current_tab", "vetrina")
 st.session_state.setdefault("has_searched", False)
@@ -74,10 +31,8 @@ st.session_state.setdefault("item_count", 10)
 st.session_state.setdefault("current_page", 1)
 st.session_state.setdefault("scroll_to_top_flag", False)
 st.session_state.setdefault("offerte", [])
-st.session_state.setdefault("preferiti_session", {})
 st.session_state.setdefault("search_notice", "")
 
-# Consente un link diretto all'informativa senza introdurre una pagina/app separata.
 try:
     if str(st.query_params.get("privacy", "")) == "1":
         st.session_state["current_tab"] = "privacy"
@@ -686,7 +641,6 @@ st.markdown("""
     }
 
     .site-footer-box a { color: #0369a1; font-weight: 800; text-decoration: underline; }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -796,24 +750,6 @@ def set_tab(tab_name):
     except Exception:
         pass
 
-
-def toggle_preferito(prodotto):
-    asin = str(prodotto.get("asin") or "").strip().upper()
-    if not asin:
-        return
-    preferiti = dict(st.session_state.get("preferiti_session", {}))
-    if asin in preferiti:
-        preferiti.pop(asin, None)
-    else:
-        # Copia in sessione: nessun database condiviso tra utenti.
-        preferiti[asin] = dict(prodotto)
-    st.session_state["preferiti_session"] = preferiti
-
-
-def svuota_preferiti():
-    st.session_state["preferiti_session"] = {}
-
-
 def esegui_ricerca(increment=False):
     st.session_state["current_tab"] = "cerca"
     st.session_state["has_searched"] = True
@@ -883,7 +819,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 if not amazon_configured:
-    st.error("Configurazione Amazon incompleta: aggiungi partner_tag nei Secrets di Streamlit. Le ricerche e i link affiliati restano disattivati finché non viene configurato.")
+    st.error("Configurazione Amazon incompleta: inserisci partner_tag nei Secrets di Streamlit.")
 
 if st.session_state.get("scroll_to_top_flag", False):
     st.session_state["scroll_to_top_flag"] = False
@@ -903,9 +839,9 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE PRINCIPALE
+# BARRA DI NAVIGAZIONE A 3 SCHEDE
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
-col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
+col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
     is_t1 = (active_tab == "vetrina")
     st.button("🔥 Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)
@@ -913,22 +849,18 @@ with col_tab2:
     is_t2 = (active_tab == "cerca")
     st.button("🔍 Cerca", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)
 with col_tab3:
-    is_t3 = (active_tab == "preferiti")
-    fav_count = len(st.session_state.get("preferiti_session", {}))
-    st.button(f"♡ Preferiti {fav_count}", key="nav_btn_preferiti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("preferiti",), use_container_width=True)
-with col_tab4:
-    is_t4 = (active_tab == "contatti")
-    st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t4 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
+    is_t3 = (active_tab == "contatti")
+    st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
 def render_product_card(p, tab_key="main"):
+    del tab_key
     with st.container(border=True):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
 
         titolo = str(p.get("titolo") or "Prodotto Amazon")
-        asin = str(p.get("asin") or "").strip().upper()
         link = str(p.get("link_affiliato") or "")
         safe_title_html = html.escape(titolo)
         safe_title_attr = html.escape(titolo, quote=True)
@@ -983,7 +915,7 @@ def render_product_card(p, tab_key="main"):
 
                 st.markdown(
                     f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>"
-                    "<div class='price-source-note'>Prezzo della Buy Box verificato con GetItems Amazon. Prezzi e disponibilità possono variare per account, indirizzo o promozioni.</div>",
+                    "<div class='price-source-note'>Prezzo verificato con Amazon Creators API. Prezzi e disponibilità possono variare.</div>",
                     unsafe_allow_html=True,
                 )
                 share_price = f"\n💰 Prezzo rilevato: {prezzo_finale_display}"
@@ -991,7 +923,7 @@ def render_product_card(p, tab_key="main"):
             else:
                 st.markdown(
                     "<div class='price-unverified'>Vedi prezzo su Amazon</div>"
-                    "<div class='price-source-note'>Prezzo, sconto, Prime e disponibilità non vengono mostrati se non verificati tramite API.</div>",
+                    "<div class='price-source-note'>Prezzo, sconto e disponibilità confermati direttamente su Amazon.</div>",
                     unsafe_allow_html=True,
                 )
                 share_price = ""
@@ -1032,17 +964,6 @@ def render_product_card(p, tab_key="main"):
                 unsafe_allow_html=True,
             )
 
-            preferiti = st.session_state.get("preferiti_session", {})
-            is_saved = bool(asin and asin in preferiti)
-            fav_label = "♥ Rimuovi dai preferiti" if is_saved else "♡ Salva nei preferiti"
-            st.button(
-                fav_label,
-                key=f"fav_{tab_key}_{asin or 'noasin'}",
-                on_click=toggle_preferito,
-                args=(p,),
-                use_container_width=True,
-            )
-
         with col_fb:
             voto_raw = p.get("voto_medio")
             num_raw = p.get("num_recensioni")
@@ -1072,6 +993,7 @@ def render_product_card(p, tab_key="main"):
                 )
             st.markdown(feedback_html, unsafe_allow_html=True)
 
+
 # RENDER DEL CONTENUTO DELLE SCHEDE
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
@@ -1094,7 +1016,6 @@ if active_tab == "vetrina":
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 elif active_tab == "cerca":
-    # Compatibilità con sessioni aperte prima del cambio etichetta "Numero di vendite" -> "Popolarità".
     if st.session_state.get("cerca_radio_sort") == "Numero di vendite":
         st.session_state["cerca_radio_sort"] = "Popolarità"
 
@@ -1180,32 +1101,15 @@ elif active_tab == "cerca":
     elif st.session_state.get("has_searched", False):
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
-elif active_tab == "preferiti":
-    preferiti = list(st.session_state.get("preferiti_session", {}).values())
-    st.markdown("<h2 style='font-size:.95rem;color:#064e3b;margin:4px 0 8px 2px;'>♡ I tuoi preferiti</h2>", unsafe_allow_html=True)
-    st.caption("I preferiti restano solo nella sessione corrente del browser e non vengono salvati in un database condiviso.")
-    if preferiti:
-        st.button("Svuota preferiti", key="btn_clear_favorites", on_click=svuota_preferiti)
-        for idx in range(0, len(preferiti), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(preferiti[idx], tab_key=f"pref_{idx}")
-            if idx + 1 < len(preferiti):
-                with col_r:
-                    render_product_card(preferiti[idx + 1], tab_key=f"pref_{idx + 1}")
-    else:
-        st.info("Non hai ancora salvato prodotti. Usa il pulsante ♡ nelle schede prodotto.")
-
 elif active_tab == "privacy":
     st.markdown("""
     <h2 style='font-size:1.05rem;color:#064e3b;margin:4px 0 8px 2px;'>Informativa privacy</h2>
     <div style='font-size:.78rem;line-height:1.55;color:#334155;padding:4px 6px;'>
     <p><strong>Titolare e contatti.</strong> I dati inviati tramite il modulo di contatto sono gestiti dal responsabile del sito Scala dei Turchi. Per richieste relative ai dati personali puoi utilizzare l'indirizzo <strong>davimarz.social@gmail.com</strong>.</p>
     <p><strong>Dati trattati.</strong> Il modulo raccoglie nome e cognome, numero di telefono, indirizzo email e contenuto del messaggio esclusivamente per ricevere e gestire la richiesta inviata.</p>
-    <p><strong>Finalità e conservazione.</strong> I dati vengono utilizzati per rispondere alla richiesta e conservati solo per il tempo necessario alla sua gestione e agli eventuali obblighi applicabili. Non vengono utilizzati dal codice del sito per profilazione pubblicitaria.</p>
+    <p><strong>Finalità e conservazione.</strong> I dati vengono utilizzati per rispondere alla richiesta e conservati solo per il tempo necessario alla sua gestione e agli eventuali obblighi applicabili. Non vengono utilizzati per profilazione pubblicitaria.</p>
     <p><strong>Destinatari.</strong> I dati possono transitare attraverso i servizi tecnici necessari all'hosting e all'invio email. Non vengono venduti.</p>
-    <p><strong>Diritti.</strong> Puoi chiedere informazioni, accesso, rettifica o cancellazione dei dati scrivendo all'indirizzo sopra indicato, nei limiti previsti dalla normativa applicabile.</p>
-    <p><strong>Cookie e tracciamento.</strong> Questa versione del codice non integra Google Analytics, Meta Pixel o altri strumenti di profilazione. Possono essere presenti soltanto meccanismi tecnici necessari al funzionamento della sessione e quelli eventualmente previsti dal fornitore di hosting. Se in futuro verranno aggiunti strumenti non tecnici, dovrà essere implementata la relativa gestione del consenso.</p>
+    <p><strong>Diritti.</strong> Puoi chiedere informazioni, accesso, rettifica o cancellazione dei dati scrivendo all'indirizzo sopra indicato.</p>
     <p><strong>Affiliazione Amazon.</strong> I pulsanti verso Amazon possono contenere link a pagamento con il tracking ID del Programma di Affiliazione Amazon.</p>
     </div>
     """, unsafe_allow_html=True)
@@ -1241,7 +1145,6 @@ elif active_tab == "contatti":
                         st.error(f"Errore di invio: {msg_err}")
 
 st.markdown('</div>', unsafe_allow_html=True)
-
 
 # ----------------- FOOTER / TRASPARENZA AFFILIAZIONE -----------------
 st.markdown(
