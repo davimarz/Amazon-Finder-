@@ -7,7 +7,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, ottieni_vetrina_casuale, SORT_MAPPINGS, calcola_distribuzione_recensioni
-from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito
+from preferiti_db import ottieni_tutti_preferiti, aggiungi_preferito, rimuovi_preferito, pulisci_preferiti_scaduti
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -16,7 +16,9 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ----------------- INIZIALIZZAZIONE SICURA SESSION STATE -----------------
+# ----------------- PULIZIA AUTOMATICA 24 ORE & INIZIALIZZAZIONE STATO -----------------
+pulisci_preferiti_scaduti(ore=24)
+
 st.session_state.setdefault("current_tab", "vetrina")
 st.session_state.setdefault("has_searched", False)
 st.session_state.setdefault("item_count", 10)
@@ -24,15 +26,14 @@ st.session_state.setdefault("current_page", 1)
 st.session_state.setdefault("scroll_to_top_flag", False)
 st.session_state.setdefault("offerte", [])
 
-if "preferiti_asin" not in st.session_state:
-    salvati = ottieni_tutti_preferiti()
-    st.session_state["preferiti_asin"] = {p["asin"]: p for p in salvati}
+# Ricarica sempre i preferiti non scaduti
+salvati = ottieni_tutti_preferiti()
+st.session_state["preferiti_asin"] = {p["asin"]: p for p in salvati}
 
 if "offerte_vetrina" not in st.session_state or not st.session_state.get("offerte_vetrina"):
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
     st.session_state["offerte_vetrina"] = ottieni_vetrina_casuale(partner_tag, item_count=10)
 
-# Variabile locale protetta per prevenire AttributeError su session_state
 active_tab = st.session_state.get("current_tab", "vetrina")
 
 SVG_WA = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.842-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>'
@@ -403,35 +404,44 @@ st.markdown("""
         overflow: hidden;
     }
 
+    /* PULSANTE STELLA PREFERITI STANDARD */
     div[data-testid="stButton"] button[key^="fav_"] {
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         border: 1px solid #047857 !important;
-        border-radius: 3px !important;
-        min-height: 12px !important;
-        height: 12px !important;
-        width: 12px !important;
-        min-width: 12px !important;
-        max-width: 12px !important;
+        border-radius: 4px !important;
+        min-height: 20px !important;
+        height: 20px !important;
+        width: 20px !important;
+        min-width: 20px !important;
+        max-width: 20px !important;
         padding: 0 !important;
-        font-size: 0.50rem !important;
+        font-size: 0.72rem !important;
         line-height: 1 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.3) !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.3) !important;
         margin-left: auto !important;
     }
 
     div[data-testid="stButton"] button[key^="fav_"] p {
-        font-size: 0.50rem !important;
+        font-size: 0.72rem !important;
         line-height: 1 !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
+    /* PULSANTE STELLA QUANDO IL PRODOTTO È ATTIVO NEI PREFERITI (COLORATO E VISIBILE) */
+    div[data-testid="stButton"] button[key^="fav_fav_"],
+    div[data-testid="stButton"] button:has(p:contains("⭐")) {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        border: 1.5px solid #b45309 !important;
+        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.45) !important;
+    }
+
     div[data-testid="stButton"] button[key^="fav_"]:hover {
-        background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
-        border-color: #065f46 !important;
+        transform: scale(1.1) !important;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25) !important;
     }
 
     .buy-btn-action {
@@ -1029,20 +1039,19 @@ elif active_tab == "cerca":
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
 
 elif active_tab == "preferiti":
-    lista_preferiti = list(st.session_state.get("preferiti_asin", {}).values())
-    
     st.markdown("""
-        <div style="background-color: #ffffff; border: 1.5px solid #0284c7; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.1);">
-            <p style="font-size: 0.78rem; font-weight: 700; color: #0369a1; margin: 0 0 4px 0;">
-                ℹ️ <strong>Preferiti Condivisi e Temporanei</strong>
+        <div style="background-color: #ffffff; border: 1.5px solid #0284c7; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.12);">
+            <p style="font-size: 0.80rem; font-weight: 800; color: #0369a1; margin: 0 0 4px 0;">
+                ⭐ Preferiti Condivisi della Community
             </p>
-            <p style="font-size: 0.72rem; color: #334155; margin: 0; line-height: 1.35;">
-                I prodotti visualizzati qui sotto sono i preferiti di tutti gli utenti che navigano sul sito e <strong>verranno cancellati automaticamente dopo 24 ore</strong>.<br>
+            <p style="font-size: 0.74rem; color: #334155; margin: 0; line-height: 1.4;">
+                Questi prodotti sono i preferiti di tutti gli utenti che navigano sul sito e <strong>vengono cancellati automaticamente dopo 24 ore</strong>.<br>
                 Se desideri che i tuoi preferiti rimangano memorizzati nel tuo profilo personale, effettua l'accesso registrandoti in maniera del tutto gratuita con la tua email Google.
             </p>
         </div>
     """, unsafe_allow_html=True)
 
+    lista_preferiti = list(st.session_state.get("preferiti_asin", {}).values())
     if not lista_preferiti:
         st.info("Nessun prodotto nei preferiti al momento.")
     else:
