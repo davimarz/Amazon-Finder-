@@ -26,7 +26,6 @@ st.session_state.setdefault("current_page", 1)
 st.session_state.setdefault("scroll_to_top_flag", False)
 st.session_state.setdefault("offerte", [])
 
-# Ricarica sempre i preferiti non scaduti
 salvati = ottieni_tutti_preferiti()
 st.session_state["preferiti_asin"] = {p["asin"]: p for p in salvati}
 
@@ -404,44 +403,41 @@ st.markdown("""
         overflow: hidden;
     }
 
-    /* PULSANTE STELLA PREFERITI STANDARD */
+    /* PULSANTE STELLA PREFERITI CON SFONDO BLU SCURO VISIBILE E COORDINATO */
     div[data-testid="stButton"] button[key^="fav_"] {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        border: 1px solid #047857 !important;
-        border-radius: 4px !important;
-        min-height: 20px !important;
-        height: 20px !important;
-        width: 20px !important;
-        min-width: 20px !important;
-        max-width: 20px !important;
+        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+        border: 1.5px solid #0369a1 !important;
+        border-radius: 5px !important;
+        min-height: 22px !important;
+        height: 22px !important;
+        width: 22px !important;
+        min-width: 22px !important;
+        max-width: 22px !important;
         padding: 0 !important;
-        font-size: 0.72rem !important;
-        line-height: 1 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.3) !important;
+        box-shadow: 0 2px 5px rgba(2, 132, 199, 0.4) !important;
         margin-left: auto !important;
+        transition: all 0.15s ease-in-out !important;
+        cursor: pointer !important;
     }
 
     div[data-testid="stButton"] button[key^="fav_"] p {
-        font-size: 0.72rem !important;
+        font-size: 0.82rem !important;
         line-height: 1 !important;
         margin: 0 !important;
         padding: 0 !important;
-    }
-
-    /* PULSANTE STELLA QUANDO IL PRODOTTO È ATTIVO NEI PREFERITI (COLORATO E VISIBILE) */
-    div[data-testid="stButton"] button[key^="fav_fav_"],
-    div[data-testid="stButton"] button:has(p:contains("⭐")) {
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-        border: 1.5px solid #b45309 !important;
-        box-shadow: 0 2px 6px rgba(217, 119, 6, 0.45) !important;
+        color: #fef08a !important; /* Stella in giallo dorato brillante */
+        font-weight: 900 !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
     }
 
     div[data-testid="stButton"] button[key^="fav_"]:hover {
-        transform: scale(1.1) !important;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25) !important;
+        background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%) !important;
+        border-color: #ffffff !important;
+        transform: scale(1.15) !important;
+        box-shadow: 0 4px 10px rgba(2, 132, 199, 0.6) !important;
     }
 
     .buy-btn-action {
@@ -833,7 +829,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione sicura tramite variabile locale)
+# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione protetta tramite variabile locale)
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
 with col_tab1:
@@ -857,7 +853,7 @@ def render_product_card(p, tab_key="main"):
     with st.container(border=True):
         col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
         is_fav = p["asin"] in st.session_state.get("preferiti_asin", {})
-        star_icon = "⭐" if is_fav else "☆"
+        star_icon = "★" if is_fav else "☆"
 
         with col_left:
             img_url = p.get('immagine_url') or IMG_FALLBACK_SVG
@@ -1045,8 +1041,8 @@ elif active_tab == "preferiti":
                 ⭐ Preferiti Condivisi della Community
             </p>
             <p style="font-size: 0.74rem; color: #334155; margin: 0; line-height: 1.4;">
-                Questi prodotti sono i preferiti di tutti gli utenti che navigano sul sito e <strong>vengono cancellati automaticamente dopo 24 ore</strong>.<br>
-                Se desideri che i tuoi preferiti rimangano memorizzati nel tuo profilo personale, effettua l'accesso registrandoti in maniera del tutto gratuita con la tua email Google.
+                I preferiti visualizzati in questa sezione sono quelli salvati da tutti gli utenti che navigano in maniera anonima sul sito e <strong>vengono cancellati automaticamente dopo 24 ore</strong>.<br>
+                Se invece desideri memorizzare i tuoi preferiti all'interno del tuo profilo personale senza perderli, è necessario registrarsi. La registrazione è del tutto gratuita.
             </p>
         </div>
     """, unsafe_allow_html=True)
