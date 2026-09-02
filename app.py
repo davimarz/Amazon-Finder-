@@ -721,18 +721,27 @@ def esegui_ricerca(increment=False):
         item_count=target_count
     )
 
+    # Deduplicazione a livello di Session State (ASIN univoci mantenendo l'ordine)
+    prodotti_unici = []
+    asins_visti = set()
+    for p in (risultati or []):
+        cod_asin = p.get("asin", "").strip().upper()
+        if cod_asin and cod_asin not in asins_visti:
+            asins_visti.add(cod_asin)
+            prodotti_unici.append(p)
+
     if increment:
-        if risultati and len(risultati) > len(vecchi_risultati):
-            st.session_state["offerte"] = risultati
-            st.session_state["item_count"] = len(risultati)
-            num_pag_totali = max(1, (len(st.session_state.get("offerte", [])) + 9) // 10)
+        if prodotti_unici and len(prodotti_unici) > len(vecchi_risultati):
+            st.session_state["offerte"] = prodotti_unici
+            st.session_state["item_count"] = len(prodotti_unici)
+            num_pag_totali = max(1, (len(prodotti_unici) + 9) // 10)
             st.session_state["current_page"] = num_pag_totali
         else:
             st.session_state["offerte"] = vecchi_risultati
-            st.warning("⚠️ Raggiunto il limite massimo di richieste o di prodotti disponibili per questa ricerca. I prodotti precedenti rimangono visibili.")
+            st.warning("⚠️ Raggiunto il limite massimo di prodotti unici disponibili per questa ricerca.")
     else:
-        st.session_state["offerte"] = risultati if risultati else []
-        st.session_state["item_count"] = len(st.session_state.get("offerte", [])) if st.session_state.get("offerte") else 10
+        st.session_state["offerte"] = prodotti_unici
+        st.session_state["item_count"] = len(prodotti_unici) if prodotti_unici else 10
 
     st.session_state["scroll_to_top_flag"] = True
 
@@ -766,7 +775,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A 3 SCHEDE (Senza Preferiti)
+# BARRA DI NAVIGAZIONE A 3 SCHEDE
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
@@ -797,7 +806,6 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
 
-            # Titolo pulito a tutta larghezza
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
