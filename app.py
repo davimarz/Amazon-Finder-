@@ -7,7 +7,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
 from amazon_api import ottieni_offerte_avanzate, ottieni_vetrina_casuale, SORT_MAPPINGS, calcola_distribuzione_recensioni
-from preferiti_db import ottieni_tutti_preferiti, pulisci_preferiti_scaduti
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -16,18 +15,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ----------------- PULIZIA AUTOMATICA 24 ORE & INIZIALIZZAZIONE STATO -----------------
-pulisci_preferiti_scaduti(ore=24)
-
+# ----------------- INIZIALIZZAZIONE STATO -----------------
 st.session_state.setdefault("current_tab", "vetrina")
 st.session_state.setdefault("has_searched", False)
 st.session_state.setdefault("item_count", 10)
 st.session_state.setdefault("current_page", 1)
 st.session_state.setdefault("scroll_to_top_flag", False)
 st.session_state.setdefault("offerte", [])
-
-salvati = ottieni_tutti_preferiti()
-st.session_state["preferiti_asin"] = {p["asin"]: p for p in salvati}
 
 if "offerte_vetrina" not in st.session_state or not st.session_state.get("offerte_vetrina"):
     partner_tag = st.secrets.get("amazon_api", {}).get("partner_tag", "eiapromo-21")
@@ -81,7 +75,7 @@ st.markdown("""
         flex: 1 1 0% !important;
         color: #0369a1 !important;
         font-weight: 800 !important;
-        font-size: 0.74rem !important;
+        font-size: 0.76rem !important;
         background: rgba(255, 255, 255, 0.85) !important;
         border: 1px solid rgba(2, 132, 199, 0.2) !important;
         border-radius: 6px !important;
@@ -370,16 +364,17 @@ st.markdown("""
     }
 
     .deal-title {
-        font-size: 0.80rem !important;
+        font-size: 0.82rem !important;
         font-weight: 800 !important;
-        line-height: 1.2 !important;
+        line-height: 1.25 !important;
         color: #064e3b !important;
-        margin: 0 0 3px 0 !important;
+        margin: 0 0 6px 0 !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 28px;
+        min-height: 32px;
+        width: 100% !important;
     }
 
     .buy-btn-action {
@@ -771,9 +766,9 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione sicura tramite variabile locale)
+# BARRA DI NAVIGAZIONE A 3 SCHEDE (Senza Preferiti)
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
-col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
+col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
     is_t1 = (active_tab == "vetrina")
     st.button("🔥 Offerte Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)
@@ -781,12 +776,8 @@ with col_tab2:
     is_t2 = (active_tab == "cerca")
     st.button("🔍 Cerca Prodotto", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)
 with col_tab3:
-    is_t3 = (active_tab == "preferiti")
-    num_fav = len(st.session_state.get("preferiti_asin", {}))
-    st.button(f"⭐ Preferiti ({num_fav})", key="nav_btn_preferiti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("preferiti",), use_container_width=True)
-with col_tab4:
-    is_t4 = (active_tab == "contatti")
-    st.button("✉️ Contattaci", key="nav_btn_contatti", type="primary" if is_t4 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
+    is_t3 = (active_tab == "contatti")
+    st.button("✉️ Contattaci", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
@@ -806,7 +797,7 @@ def render_product_card(p, tab_key="main"):
             titolo = p.get('titolo', 'Prodotto Amazon')
             link = p.get('link_affiliato', '')
 
-            # Titolo a tutta larghezza (nessun pulsante o colonna aggiuntiva)
+            # Titolo pulito a tutta larghezza
             st.markdown(f"<div class='deal-title'>{titolo}</div>", unsafe_allow_html=True)
             
             badge_html = f"<span class='deal-badge'>{p['sconto']}</span>" if p.get('sconto') else ""
@@ -959,32 +950,6 @@ elif active_tab == "cerca":
 
     elif st.session_state.get("has_searched", False):
         st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
-
-elif active_tab == "preferiti":
-    st.markdown("""
-        <div style="background-color: #ffffff; border: 1.5px solid #0284c7; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.12);">
-            <p style="font-size: 0.80rem; font-weight: 800; color: #0369a1; margin: 0 0 4px 0;">
-                ⭐ Preferiti Condivisi della Community
-            </p>
-            <p style="font-size: 0.74rem; color: #334155; margin: 0; line-height: 1.4;">
-                I preferiti visualizzati in questa sezione sono gli elenchi di tutti i prodotti salvati da tutti gli utenti che abbiano navigato sul sito e <strong>verranno cancellati automaticamente ogni 24 ore</strong>.<br>
-                Se invece desideri memorizzare stabilmente i tuoi preferiti all'interno del tuo profilo personale, è necessario registrarsi. La registrazione è del tutto gratuita.
-            </p>
-        </div>
-    """, unsafe_allow_html=True)
-
-    lista_preferiti = list(st.session_state.get("preferiti_asin", {}).values())
-    if not lista_preferiti:
-        st.info("Nessun prodotto nei preferiti al momento.")
-    else:
-        st.markdown(f"**{len(lista_preferiti)}** prodotti salvati:")
-        for idx in range(0, len(lista_preferiti), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(lista_preferiti[idx], tab_key=f"fav_{idx}")
-            if idx + 1 < len(lista_preferiti):
-                with col_r:
-                    render_product_card(lista_preferiti[idx + 1], tab_key=f"fav_{idx + 1}")
 
 elif active_tab == "contatti":
     with st.container(border=True):
