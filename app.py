@@ -8,13 +8,18 @@ from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
-from amazon_api import (
-    MAX_RESULTS,
-    SORT_MAPPINGS,
-    get_partner_tag,
-    ottieni_offerte_avanzate,
-    ottieni_vetrina_casuale,
-)
+
+APP_BUILD = "2026.09.03-importsafe-v2"
+EXPECTED_API_MODULE_VERSION = "2026.09.03-price-getitems-v3"
+
+# Import del modulo intero: evita crash "cannot import name ..." quando
+# Streamlit Cloud mantiene temporaneamente file di versioni diverse durante un deploy.
+_AMAZON_IMPORT_ERROR = None
+try:
+    import amazon_api as _amazon_api
+except Exception as exc:
+    _amazon_api = None
+    _AMAZON_IMPORT_ERROR = exc
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -22,6 +27,45 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Controllo di compatibilità fra app.py e amazon_api.py. Se durante un deploy
+# vengono caricati file non allineati, mostriamo un errore leggibile invece di
+# lasciare Streamlit con un ImportError redatto.
+if _amazon_api is None:
+    st.error("Impossibile caricare amazon_api.py. Sostituisci insieme app.py e amazon_api.py e riavvia l'app.")
+    st.code(f"Tipo errore: {type(_AMAZON_IMPORT_ERROR).__name__}")
+    st.stop()
+
+_required_api_symbols = (
+    "get_partner_tag",
+    "ottieni_offerte_avanzate",
+    "ottieni_vetrina_casuale",
+)
+_missing_api_symbols = [name for name in _required_api_symbols if not hasattr(_amazon_api, name)]
+if _missing_api_symbols:
+    st.error("app.py e amazon_api.py appartengono a versioni diverse.")
+    st.code("Funzioni mancanti in amazon_api.py: " + ", ".join(_missing_api_symbols))
+    st.info("Sostituisci entrambi i file con quelli dello stesso pacchetto e fai Reboot app su Streamlit Cloud.")
+    st.stop()
+
+_api_module_version = str(getattr(_amazon_api, "API_MODULE_VERSION", ""))
+if _api_module_version != EXPECTED_API_MODULE_VERSION:
+    st.error("Versioni non allineate: app.py e amazon_api.py non appartengono allo stesso pacchetto.")
+    st.code(f"app build: {APP_BUILD}\namazon_api: {_api_module_version or 'versione non dichiarata'}")
+    st.info("Sostituisci insieme app.py e amazon_api.py, poi esegui Reboot app.")
+    st.stop()
+
+print(f"[startup] app={APP_BUILD} amazon_api={_api_module_version}")
+
+MAX_RESULTS = int(getattr(_amazon_api, "MAX_RESULTS", 50))
+SORT_MAPPINGS = getattr(_amazon_api, "SORT_MAPPINGS", {
+    "Prezzo minimo": "Price:LowToHigh",
+    "Popolarità": "Featured",
+    "Recensioni": "AvgCustomerReviews",
+})
+get_partner_tag = _amazon_api.get_partner_tag
+ottieni_offerte_avanzate = _amazon_api.ottieni_offerte_avanzate
+ottieni_vetrina_casuale = _amazon_api.ottieni_vetrina_casuale
 
 # ----------------- INIZIALIZZAZIONE STATO -----------------
 st.session_state.setdefault("current_tab", "vetrina")
@@ -906,15 +950,21 @@ def render_product_card(p, tab_key="main"):
             if prezzo_verificato:
                 prezzo_finale = float(p.get("prezzo_finale") or 0.0)
                 prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)
+                prezzo_finale_display = str(p.get("prezzo_finale_display") or "").strip()
+                prezzo_iniziale_display = str(p.get("prezzo_iniziale_display") or "").strip()
+                if not prezzo_finale_display:
+                    prezzo_finale_display = f"€{prezzo_finale:.2f}"
+                if prezzo_iniziale > prezzo_finale and not prezzo_iniziale_display:
+                    prezzo_iniziale_display = f"€{prezzo_iniziale:.2f}"
                 sconto = html.escape(str(p.get("sconto") or ""))
                 badge_html = f"<span class='deal-badge'>{sconto}</span>" if sconto else ""
                 old_price_html = (
-                    f"<span class='deal-price-old'>€{prezzo_iniziale:.2f}</span>"
-                    if prezzo_iniziale > prezzo_finale else ""
+                    f"<span class='deal-price-old'>{html.escape(prezzo_iniziale_display)}</span>"
+                    if prezzo_iniziale > prezzo_finale and prezzo_iniziale_display else ""
                 )
                 prices_sub_html = (
                     f"<div class='price-subgroup-left'>{badge_html}"
-                    f"<span class='deal-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}</div>"
+                    f"<span class='deal-price-final'>{html.escape(prezzo_finale_display)}</span>{old_price_html}</div>"
                 )
 
                 costo_raw = p.get("costo_spedizione")
@@ -933,10 +983,10 @@ def render_product_card(p, tab_key="main"):
 
                 st.markdown(
                     f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>"
-                    "<div class='price-source-note'>Prezzo rilevato tramite Amazon Creators API. Prezzi e disponibilità possono variare.</div>",
+                    "<div class='price-source-note'>Prezzo della Buy Box verificato con GetItems Amazon. Prezzi e disponibilità possono variare per account, indirizzo o promozioni.</div>",
                     unsafe_allow_html=True,
                 )
-                share_price = f"\n💰 Prezzo rilevato: €{prezzo_finale:.2f}"
+                share_price = f"\n💰 Prezzo rilevato: {prezzo_finale_display}"
                 buy_label = "🛒 Acquista su Amazon"
             else:
                 st.markdown(
