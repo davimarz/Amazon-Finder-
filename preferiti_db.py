@@ -1,3 +1,10 @@
+"""Modulo legacy opzionale.
+
+La versione corrente di app.py usa preferiti in st.session_state, così i dati non
+sono condivisi tra utenti. Questo file resta disponibile solo per compatibilità
+con eventuali integrazioni precedenti che usavano SQLite.
+"""
+
 import sqlite3
 import time
 
