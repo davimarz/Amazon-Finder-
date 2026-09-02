@@ -17,23 +17,12 @@ st.set_page_config(
 )
 
 # ----------------- INIZIALIZZAZIONE SICURA SESSION STATE -----------------
-if "current_tab" not in st.session_state:
-    st.session_state["current_tab"] = "vetrina"
-
-if "has_searched" not in st.session_state:
-    st.session_state["has_searched"] = False
-
-if "item_count" not in st.session_state:
-    st.session_state["item_count"] = 10
-
-if "current_page" not in st.session_state:
-    st.session_state["current_page"] = 1
-
-if "scroll_to_top_flag" not in st.session_state:
-    st.session_state["scroll_to_top_flag"] = False
-
-if "offerte" not in st.session_state:
-    st.session_state["offerte"] = []
+st.session_state.setdefault("current_tab", "vetrina")
+st.session_state.setdefault("has_searched", False)
+st.session_state.setdefault("item_count", 10)
+st.session_state.setdefault("current_page", 1)
+st.session_state.setdefault("scroll_to_top_flag", False)
+st.session_state.setdefault("offerte", [])
 
 if "preferiti_asin" not in st.session_state:
     salvati = ottieni_tutti_preferiti()
@@ -834,7 +823,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Accesso protetto con variabile locale)
+# BARRA DI NAVIGAZIONE A PULSANTI NATIVI (Valutazione sicura tramite variabile locale)
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3, col_tab4 = st.columns(4)
 with col_tab1:
@@ -1041,8 +1030,21 @@ elif active_tab == "cerca":
 
 elif active_tab == "preferiti":
     lista_preferiti = list(st.session_state.get("preferiti_asin", {}).values())
+    
+    st.markdown("""
+        <div style="background-color: #ffffff; border: 1.5px solid #0284c7; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.1);">
+            <p style="font-size: 0.78rem; font-weight: 700; color: #0369a1; margin: 0 0 4px 0;">
+                ℹ️ <strong>Preferiti Condivisi e Temporanei</strong>
+            </p>
+            <p style="font-size: 0.72rem; color: #334155; margin: 0; line-height: 1.35;">
+                I prodotti visualizzati qui sotto sono i preferiti di tutti gli utenti che navigano sul sito e <strong>verranno cancellati automaticamente dopo 24 ore</strong>.<br>
+                Se desideri che i tuoi preferiti rimangano memorizzati nel tuo profilo personale, effettua l'accesso registrandoti in maniera del tutto gratuita con la tua email Google.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
     if not lista_preferiti:
-        st.info("Nessun prodotto nei preferiti (☆).")
+        st.info("Nessun prodotto nei preferiti al momento.")
     else:
         st.markdown(f"**{len(lista_preferiti)}** prodotti salvati:")
         for idx in range(0, len(lista_preferiti), 2):
