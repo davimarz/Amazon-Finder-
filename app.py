@@ -906,15 +906,21 @@ def render_product_card(p, tab_key="main"):
             if prezzo_verificato:
                 prezzo_finale = float(p.get("prezzo_finale") or 0.0)
                 prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)
+                prezzo_finale_display = str(p.get("prezzo_finale_display") or "").strip()
+                prezzo_iniziale_display = str(p.get("prezzo_iniziale_display") or "").strip()
+                if not prezzo_finale_display:
+                    prezzo_finale_display = f"€{prezzo_finale:.2f}"
+                if prezzo_iniziale > prezzo_finale and not prezzo_iniziale_display:
+                    prezzo_iniziale_display = f"€{prezzo_iniziale:.2f}"
                 sconto = html.escape(str(p.get("sconto") or ""))
                 badge_html = f"<span class='deal-badge'>{sconto}</span>" if sconto else ""
                 old_price_html = (
-                    f"<span class='deal-price-old'>€{prezzo_iniziale:.2f}</span>"
-                    if prezzo_iniziale > prezzo_finale else ""
+                    f"<span class='deal-price-old'>{html.escape(prezzo_iniziale_display)}</span>"
+                    if prezzo_iniziale > prezzo_finale and prezzo_iniziale_display else ""
                 )
                 prices_sub_html = (
                     f"<div class='price-subgroup-left'>{badge_html}"
-                    f"<span class='deal-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}</div>"
+                    f"<span class='deal-price-final'>{html.escape(prezzo_finale_display)}</span>{old_price_html}</div>"
                 )
 
                 costo_raw = p.get("costo_spedizione")
@@ -933,10 +939,10 @@ def render_product_card(p, tab_key="main"):
 
                 st.markdown(
                     f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>"
-                    "<div class='price-source-note'>Prezzo rilevato tramite Amazon Creators API. Prezzi e disponibilità possono variare.</div>",
+                    "<div class='price-source-note'>Prezzo della Buy Box verificato con GetItems Amazon. Prezzi e disponibilità possono variare per account, indirizzo o promozioni.</div>",
                     unsafe_allow_html=True,
                 )
-                share_price = f"\n💰 Prezzo rilevato: €{prezzo_finale:.2f}"
+                share_price = f"\n💰 Prezzo rilevato: {prezzo_finale_display}"
                 buy_label = "🛒 Acquista su Amazon"
             else:
                 st.markdown(
