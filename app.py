@@ -736,6 +736,9 @@ if "item_count" not in st.session_state:
 if "current_page" not in st.session_state:
     st.session_state.current_page = 1
 
+if "scroll_to_top" not in st.session_state:
+    st.session_state.scroll_to_top = False
+
 def esegui_ricerca(increment=False):
     st.session_state.has_searched = True
     if increment:
@@ -781,6 +784,25 @@ st.markdown("""
     <div class="hero-author-tag">Realizzato da <strong>Davide Marziano</strong></div>
 </div>
 """, unsafe_allow_html=True)
+
+# Gestione scroll morbido verso l'alto se richiesto dal pulsante +10
+if st.session_state.get("scroll_to_top", False):
+    st.session_state.scroll_to_top = False
+    st.markdown("""
+    <script>
+        setTimeout(function() {
+            try {
+                const stContainer = window.parent.document.querySelector('[data-testid="stAppViewContainer"]') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid="stAppViewContainer"]');
+                if (stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
+            } catch(e) {}
+            try {
+                const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
+                if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+            } catch(e) {}
+            try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
+        }, 100);
+    </script>
+    """, unsafe_allow_html=True)
 
 tab_vetrina, tab_cerca, tab_preferiti, tab_contatti = st.tabs([
     "🔥 Offerte Vetrina",
@@ -938,6 +960,7 @@ with tab_cerca:
     if btn_altri_10:
         with st.spinner("Caricamento altri prodotti in corso..."):
             esegui_ricerca(increment=True)
+        st.session_state.scroll_to_top = True
         st.rerun()
 
     if st.session_state.offerte:
@@ -953,6 +976,7 @@ with tab_cerca:
                     btn_type = "primary" if is_active else "secondary"
                     if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state.current_page = p_num
+                        st.session_state.scroll_to_top = True
                         st.rerun()
 
         start_idx = (st.session_state.current_page - 1) * 10
@@ -969,12 +993,13 @@ with tab_cerca:
                 with col_r:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.current_page}_{idx + 1}")
 
-        # PULSANTE +10 IN FONDO ALLA PAGINA DI RICERCA
+        # PULSANTE +10 IN FONDO ALLA PAGINA: carica i successivi, seleziona l'ultima pagina e scrolla in cima
         st.markdown("<div style='margin-top: 10px; margin-bottom: 5px;'></div>", unsafe_allow_html=True)
         btn_altri_10_bottom = st.button("➕ Altri 10", key="btn_altri_10_bottom", use_container_width=True)
         if btn_altri_10_bottom:
             with st.spinner("Caricamento altri prodotti in corso..."):
                 esegui_ricerca(increment=True)
+            st.session_state.scroll_to_top = True
             st.rerun()
 
     elif st.session_state.has_searched:
