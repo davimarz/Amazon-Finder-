@@ -1,10 +1,3 @@
-"""Accesso ai prodotti Amazon per l'app Streamlit.
-
-Priorità: Creators API. Il fallback HTML è usato solo per scoprire prodotti e
-costruire il link affiliato; non pubblica prezzi/sconti/spedizione come dati
-verificati quando la Creators API non è disponibile.
-"""
-
 import logging
 import random
 import re
@@ -23,7 +16,6 @@ except ImportError:
     c_requests = None
     HAS_CURL = False
 
-
 MARKETPLACE = "www.amazon.it"
 CREATORS_API_BASE = "https://creatorsapi.amazon/catalog/v1"
 DEFAULT_EU_TOKEN_URL = "https://api.amazon.co.uk/auth/o2/token"
@@ -31,7 +23,7 @@ OFFERS_CACHE_TTL_SECONDS = 2 * 60
 METADATA_CACHE_TTL_SECONDS = 24 * 60 * 60
 VETRINA_CACHE_TTL_SECONDS = 2 * 60
 MAX_RESULTS = 50
-MAX_CREATORS_PAGES = 5  # 10 item/pagina -> massimo 50 risultati
+MAX_CREATORS_PAGES = 5
 HTTP_TIMEOUT_SECONDS = 6
 RETRY_BACKOFF_SECONDS = 0.35
 
@@ -45,10 +37,14 @@ SORT_FALLBACK_MAP = {
     "Prezzo minimo": "price-asc-rank",
     "Popolarità": "exact-aware-popularity-rank",
     "Recensioni": "review-rank",
-    "Numero di vendite": "exact-aware-popularity-rank",  # compatibilità legacy
+    "Numero di vendite": "exact-aware-popularity-rank",
 }
 
 RE_ASIN = re.compile(r"(?:/dp/|/gp/product/|/d/|^)([A-Z0-9]{10})(?:[/?&#]|$)", re.IGNORECASE)
+RE_PRICE = re.compile(r'(\d{1,3}(?:\.\d{3})*|\d+)[,\.](\d{2})')
+RE_STAR = re.compile(r'(\d+[.,]\d+)\s*(?:su|out of|di)\s*5', re.IGNORECASE)
+RE_DIGITS = re.compile(r'[^\d]')
+
 _TOKEN_CACHE: Dict[str, Any] = {"access_token": None, "expires_at": 0.0}
 _HTTP_SESSION = requests.Session()
 _CURL_SESSION = None
@@ -56,12 +52,8 @@ if HAS_CURL:
     try:
         _CURL_SESSION = c_requests.Session()
     except Exception:
-        # curl_cffi è solo un acceleratore/fallback: non deve impedire
-        # l'avvio dell'intera app se la versione installata è incompatibile.
         HAS_CURL = False
         _CURL_SESSION = None
-
-API_MODULE_VERSION = "2026.09.03-price-getitems-v3"
 
 LOGGER = logging.getLogger("amazon_affiliate")
 if not LOGGER.handlers:
@@ -97,12 +89,10 @@ def _amazon_secrets() -> Dict[str, Any]:
 
 
 def get_partner_tag() -> str:
-    """Restituisce il tracking ID configurato; nessun ID è hardcoded."""
     return str(_amazon_secrets().get("partner_tag", "")).strip()
 
 
 def build_affiliate_link(asin: str, partner_tag: Optional[str] = None) -> str:
-    """Costruisce un link Amazon.it canonico con tracking ID."""
     asin_clean = (asin or "").strip().upper()
     tag = (partner_tag or get_partner_tag()).strip()
     if len(asin_clean) != 10 or not tag:
@@ -112,7 +102,6 @@ def build_affiliate_link(asin: str, partner_tag: Optional[str] = None) -> str:
 
 
 def _affiliate_detail_url(item: Dict[str, Any], asin: str, partner_tag: str) -> str:
-    """Mantiene il detailPageURL restituito da Amazon (variante inclusa) e forza il nostro tag."""
     raw_url = str(item.get("detailPageURL") or "").strip()
     if not raw_url:
         return build_affiliate_link(asin, partner_tag)
@@ -131,15 +120,16 @@ def _affiliate_detail_url(item: Dict[str, Any], asin: str, partner_tag: str) -> 
         return build_affiliate_link(asin, partner_tag)
 
 
-def _select_listing_for_display(listings: List[Dict[str, Any]], allow_prime_exclusive: bool = False) -> Dict[str, Any]:
-    """Sceglie la featured offer che Amazon indica come Buy Box winner.
+def _safe_float(value: Any) -> Optional[float]:
+    try:
+        if value is None:
+            return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
-    Il flag ``allow_prime_exclusive`` resta per compatibilità, ma non deve
-    scavalcare ``isBuyBoxWinner``: la Buy Box è la fonte più vicina al prezzo
-    visualizzato nella pagina dettaglio Amazon. Subscribe & Save viene evitato
-    salvo che sia l'unica offerta disponibile.
-    """
-    del allow_prime_exclusive
+
+def _select_listing_for_display(listings: List[Dict[str, Any]]) -> Dict[str, Any]:
     valid: List[Dict[str, Any]] = []
     for listing in listings or []:
         amount = _safe_float((listing.get("price") or {}).get("money", {}).get("amount"))
@@ -156,18 +146,14 @@ def _select_listing_for_display(listings: List[Dict[str, Any]], allow_prime_excl
         normalized = str(l.get("type") or "").upper().replace("_", "")
         return normalized == "SUBSCRIBEANDSAVE"
 
-    # 1) Buy Box non Subscribe & Save: è il prezzo di riferimento principale.
     buy_box = [l for l in valid if l.get("isBuyBoxWinner") is True and not is_subscribe(l)]
     if buy_box:
         return buy_box[0]
 
-    # 2) Qualunque Buy Box, se Amazon ha marcato solo quella.
     buy_box_any = [l for l in valid if l.get("isBuyBoxWinner") is True]
     if buy_box_any:
         return buy_box_any[0]
 
-    # Per la modalità "precisione prima di tutto" non inventiamo una Buy Box:
-    # se Amazon non marca esplicitamente l'offerta vincente, niente prezzo in scheda.
     return {}
 
 
@@ -194,7 +180,6 @@ def get_creators_access_token(force_refresh: bool = False) -> Optional[str]:
 
     client_id, client_secret, token_url = _creators_credentials()
     if not client_id or not client_secret:
-        LOGGER.warning("Creators API non configurata: credenziali mancanti")
         return None
 
     payload = {
@@ -212,8 +197,7 @@ def get_creators_access_token(force_refresh: bool = False) -> Optional[str]:
                 headers={"Content-Type": "application/json"},
                 timeout=HTTP_TIMEOUT_SECONDS,
             )
-        except requests.RequestException as exc:
-            LOGGER.warning("Token OAuth: errore rete %s", type(exc).__name__)
+        except requests.RequestException:
             if attempt == 0:
                 time.sleep(RETRY_BACKOFF_SECONDS)
                 continue
@@ -224,17 +208,14 @@ def get_creators_access_token(force_refresh: bool = False) -> Optional[str]:
                 data = response.json()
                 token = data.get("access_token")
                 if not token:
-                    LOGGER.warning("Token OAuth: risposta senza access_token")
                     return None
                 expires_in = int(data.get("expires_in", 3600))
                 _TOKEN_CACHE["access_token"] = token
                 _TOKEN_CACHE["expires_at"] = now + max(60, expires_in)
                 return str(token)
             except (ValueError, TypeError):
-                LOGGER.warning("Token OAuth: risposta JSON non valida")
                 return None
 
-        LOGGER.warning("Token OAuth: HTTP %s", response.status_code)
         if _transient_status(response.status_code) and attempt == 0:
             time.sleep(RETRY_BACKOFF_SECONDS)
             continue
@@ -245,7 +226,6 @@ def get_creators_access_token(force_refresh: bool = False) -> Optional[str]:
 
 @st.cache_data(ttl=OFFERS_CACHE_TTL_SECONDS, show_spinner=False)
 def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    """Chiamata Creators API cache-ata con retry limitato e refresh su 401."""
     endpoint = f"{CREATORS_API_BASE}/{operation}"
     token = get_creators_access_token()
     if not token:
@@ -267,8 +247,7 @@ def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict
                 headers=headers,
                 timeout=HTTP_TIMEOUT_SECONDS,
             )
-        except requests.RequestException as exc:
-            LOGGER.warning("Creators API %s: errore rete %s", operation, type(exc).__name__)
+        except requests.RequestException:
             if not transient_retry_used:
                 transient_retry_used = True
                 time.sleep(RETRY_BACKOFF_SECONDS)
@@ -279,11 +258,9 @@ def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict
             try:
                 return response.json()
             except ValueError:
-                LOGGER.warning("Creators API %s: JSON non valido", operation)
                 return None
 
         if response.status_code == 401 and not auth_refresh_used:
-            LOGGER.warning("Creators API %s: 401, rinnovo token", operation)
             auth_refresh_used = True
             _TOKEN_CACHE["access_token"] = None
             _TOKEN_CACHE["expires_at"] = 0.0
@@ -292,20 +269,10 @@ def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict
                 return None
             continue
 
-        LOGGER.warning("Creators API %s: HTTP %s", operation, response.status_code)
         if _transient_status(response.status_code) and not transient_retry_used:
             transient_retry_used = True
             time.sleep(RETRY_BACKOFF_SECONDS)
             continue
-        return None
-
-
-def _safe_float(value: Any) -> Optional[float]:
-    try:
-        if value is None:
-            return None
-        return float(value)
-    except (TypeError, ValueError):
         return None
 
 
@@ -314,12 +281,6 @@ def _api_item_to_product(
     partner_tag: str,
     prime_filter_applied: bool = False,
 ) -> Optional[Dict[str, Any]]:
-    """Converte SOLO un GetItems esatto in prodotto visualizzabile.
-
-    I prezzi vengono letti dalla featured offer / Buy Box di OffersV2.
-    SearchItems viene usato esclusivamente per scoprire gli ASIN e non è più
-    considerato fonte autorevole del prezzo mostrato nella scheda.
-    """
     asin = str(item.get("asin", "")).strip().upper()
     if len(asin) != 10:
         return None
@@ -328,15 +289,12 @@ def _api_item_to_product(
     image_url = item.get("images", {}).get("primary", {}).get("large", {}).get("url", "")
 
     listings = item.get("offersV2", {}).get("listings", []) or []
-    listing = _select_listing_for_display(listings, allow_prime_exclusive=prime_filter_applied)
-    if not listing:
+    listing = _select_listing_for_display(listings)
+    if not listing or listing.get("violatesMAP") is True:
         return None
-    if listing.get("violatesMAP") is True:
-        LOGGER.info("Prezzo non pubblicato per %s: offerta soggetta a MAP", asin)
-        return None
+
     condition_value = str((listing.get("condition") or {}).get("value") or "").strip().upper()
     if condition_value and condition_value not in {"NEW", "NUOVO", "NUOVA"}:
-        LOGGER.info("Prezzo non pubblicato per %s: condizione non nuova (%s)", asin, condition_value)
         return None
 
     price_block = listing.get("price", {}) or {}
@@ -350,8 +308,6 @@ def _api_item_to_product(
     saving_money = saving_struct.get("money", {}) or {}
     saving_basis = _safe_float(saving_money.get("amount"))
     saving_display = str(saving_money.get("displayAmount") or "").strip()
-    saving_type = str(saving_struct.get("savingBasisType") or "").strip()
-    saving_label = str(saving_struct.get("savingBasisTypeLabel") or "").strip()
 
     savings_struct = price_block.get("savings", {}) or {}
     savings_pct = savings_struct.get("percentage")
@@ -360,17 +316,11 @@ def _api_item_to_product(
     except (TypeError, ValueError):
         discount = 0
 
-    # Il prezzo barrato viene mostrato soltanto se Amazon lo restituisce come
-    # SavingBasis della stessa featured offer e se è coerente col prezzo attuale.
     has_reference_price = bool(saving_basis and saving_basis > price and discount > 0)
     old_price = float(saving_basis) if has_reference_price else float(price)
     if not has_reference_price:
         saving_display = ""
-        saving_type = ""
-        saving_label = ""
 
-    # Come controllo difensivo, se Amazon non fornisse la percentuale ma fornisse
-    # valori coerenti, calcoliamo lo sconto soltanto dalla stessa coppia di prezzi.
     if discount <= 0 and has_reference_price:
         discount = int(round(((old_price - price) / old_price) * 100))
 
@@ -378,7 +328,6 @@ def _api_item_to_product(
     access_type = str(deal.get("accessType", "")).upper()
     is_prime_exclusive = "PRIME" in access_type
     is_prime = True if prime_filter_applied or is_prime_exclusive else None
-    merchant_name = str((listing.get("merchantInfo") or {}).get("name") or "").strip()
 
     return {
         "asin": asin,
@@ -388,8 +337,6 @@ def _api_item_to_product(
         "prezzo_finale": float(price),
         "prezzo_iniziale_display": saving_display,
         "prezzo_finale_display": price_display,
-        "prezzo_riferimento_tipo": saving_type,
-        "prezzo_riferimento_label": saving_label,
         "prezzo_verificato": True,
         "sconto": f"-{discount}%" if discount > 0 else "",
         "sconto_val": discount,
@@ -399,12 +346,6 @@ def _api_item_to_product(
         "voto_medio": None,
         "num_recensioni": None,
         "link_affiliato": _affiliate_detail_url(item, asin, partner_tag),
-        "offerta_buy_box": listing.get("isBuyBoxWinner") is True,
-        "tipo_offerta": str(listing.get("type") or ""),
-        "prime_exclusive": is_prime_exclusive,
-        "venditore": merchant_name,
-        "source": "creators_api_getitems",
-        "rilevato_il": int(time.time()),
     }
 
 
@@ -433,7 +374,6 @@ def _filter_verified_product(
     return True
 
 
-# ------------------------- FALLBACK METADATI -----------------------------
 def _fetch_html(url: str, timeout: int = HTTP_TIMEOUT_SECONDS) -> Optional[str]:
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
@@ -445,38 +385,20 @@ def _fetch_html(url: str, timeout: int = HTTP_TIMEOUT_SECONDS) -> Optional[str]:
     }
     cookies = {"lc-acbit": "it_IT", "i18n-prefs": "EUR", "sp-cdn": "L5Z9:IT"}
 
-    # curl_cffi è il client preferito; requests è fallback. Nessun loop aggressivo.
     if _CURL_SESSION is not None:
-        for attempt in range(2):
-            try:
-                response = _CURL_SESSION.get(
-                    url,
-                    headers=headers,
-                    cookies=cookies,
-                    timeout=timeout,
-                    impersonate="chrome",
-                )
-                if response.status_code == 200 and response.text and len(response.text) > 1500 and "Robot Check" not in response.text:
-                    return response.text
-                if not _transient_status(int(response.status_code)):
-                    break
-            except Exception as exc:
-                LOGGER.info("Fallback HTML curl: %s", type(exc).__name__)
-            if attempt == 0:
-                time.sleep(RETRY_BACKOFF_SECONDS)
-
-    for attempt in range(2):
         try:
-            response = _HTTP_SESSION.get(url, headers=headers, cookies=cookies, timeout=timeout)
+            response = _CURL_SESSION.get(url, headers=headers, cookies=cookies, timeout=timeout, impersonate="chrome")
             if response.status_code == 200 and response.text and len(response.text) > 1500 and "Robot Check" not in response.text:
                 return response.text
-            LOGGER.info("Fallback HTML requests: HTTP %s", response.status_code)
-            if not _transient_status(response.status_code):
-                break
-        except requests.RequestException as exc:
-            LOGGER.info("Fallback HTML requests: %s", type(exc).__name__)
-        if attempt == 0:
-            time.sleep(RETRY_BACKOFF_SECONDS)
+        except Exception:
+            pass
+
+    try:
+        response = _HTTP_SESSION.get(url, headers=headers, cookies=cookies, timeout=timeout)
+        if response.status_code == 200 and response.text and len(response.text) > 1500 and "Robot Check" not in response.text:
+            return response.text
+    except requests.RequestException:
+        pass
     return None
 
 
@@ -486,7 +408,6 @@ def _fetch_html_cached(url: str) -> Optional[str]:
 
 
 def _extract_metadata_from_html(html_text: str, partner_tag: str) -> List[Dict[str, Any]]:
-    """Estrae solo metadati stabili; nessun prezzo/sconto/spedizione viene pubblicato."""
     if not html_text:
         return []
     soup = BeautifulSoup(html_text, "html.parser")
@@ -525,26 +446,20 @@ def _extract_metadata_from_html(html_text: str, partner_tag: str) -> List[Dict[s
             "voto_medio": None,
             "num_recensioni": None,
             "link_affiliato": build_affiliate_link(asin, partner_tag),
-            "source": "html_fallback_metadata",
-            "rilevato_il": int(time.time()),
         })
     return products
 
 
-# Alias legacy: mantiene compatibilità ma ora restituisce solo metadati non dinamici.
-def _estrai_prodotti_da_html(html_text: str, partner_tag: str, **_: Any) -> List[Dict[str, Any]]:
-    return _extract_metadata_from_html(html_text, partner_tag)
-
-
-def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen: set[str]) -> None:
+def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen_asins: set[str], seen_titles: set[str]) -> None:
     for product in source:
         asin = str(product.get("asin", "")).strip().upper()
-        if asin and asin not in seen:
-            seen.add(asin)
+        clean_title = re.sub(r'[^a-zA-Z0-9]', '', str(product.get("titolo", "")).lower())[:50]
+        if asin and (asin not in seen_asins) and (clean_title not in seen_titles):
+            seen_asins.add(asin)
+            seen_titles.add(clean_title)
             target.append(product)
 
 
-# --------------------------- CREATORS API --------------------------------
 EXACT_ITEM_RESOURCES = [
     "images.primary.large",
     "itemInfo.title",
@@ -564,7 +479,6 @@ def _get_exact_items_batch(
     partner_tag: str,
     prime_filter_applied: bool = False,
 ) -> List[Dict[str, Any]]:
-    """Recupera prezzi e link da GetItems per gli ASIN esatti (max 10/call)."""
     clean_asins: List[str] = []
     seen: set[str] = set()
     for asin in asins:
@@ -592,17 +506,15 @@ def _get_exact_items_batch(
             continue
         returned_items = data.get("itemsResult", {}).get("items", []) or []
         by_asin = {str(it.get("asin", "")).strip().upper(): it for it in returned_items}
-        # Manteniamo l'ordine della ricerca, ma il prezzo viene da GetItems.
         for asin in batch:
             item = by_asin.get(asin)
             if not item:
                 continue
-            product = _api_item_to_product(
-                item, partner_tag, prime_filter_applied=prime_filter_applied
-            )
+            product = _api_item_to_product(item, partner_tag, prime_filter_applied=prime_filter_applied)
             if product:
                 products.append(product)
     return products
+
 
 def _get_item_from_creators_api(
     asin: str,
@@ -633,7 +545,6 @@ def _search_creators_api(
     max_discount: int,
     item_count: int,
 ) -> Optional[List[Dict[str, Any]]]:
-    """SearchItems scopre gli ASIN; GetItems fornisce SEMPRE i prezzi mostrati."""
     if not get_creators_access_token():
         return None
 
@@ -642,7 +553,8 @@ def _search_creators_api(
         "Featured",
     )
     collected: List[Dict[str, Any]] = []
-    seen: set[str] = set()
+    seen_asins: set[str] = set()
+    seen_titles: set[str] = set()
     pages_needed = min(MAX_CREATORS_PAGES, max(1, (item_count + 9) // 10))
 
     for page in range(1, pages_needed + 1):
@@ -656,7 +568,6 @@ def _search_creators_api(
             "itemCount": 10,
             "itemPage": page,
             "sortBy": sort_value,
-            # SearchItems non è più fonte prezzo: chiediamo solo metadati minimi.
             "resources": ["itemInfo.title"],
         }
         if min_price is not None:
@@ -666,12 +577,9 @@ def _search_creators_api(
         if min_discount > 0:
             discovery_payload["minSavingPercent"] = min(99, int(min_discount))
 
-        delivery_modes = [None]
-        if solo_spedizione_gratuita:
-            delivery_modes = ["Prime", "FreeShipping"]
-
+        delivery_modes = ["Prime", "FreeShipping"] if solo_spedizione_gratuita else [None]
         page_had_items = False
-        all_modes_short = True
+
         for delivery_mode in delivery_modes:
             mode_payload = dict(discovery_payload)
             if delivery_mode:
@@ -679,14 +587,11 @@ def _search_creators_api(
 
             data = _creators_api_call("searchItems", mode_payload)
             if data is None:
-                LOGGER.warning("Ricerca Creators API non disponibile; attivo fallback metadati")
                 return None if not collected else collected
 
             search_items = data.get("searchResult", {}).get("items", []) or []
             if search_items:
                 page_had_items = True
-            if len(search_items) >= 10:
-                all_modes_short = False
 
             discovered_asins = [
                 str(item.get("asin", "")).strip().upper()
@@ -702,25 +607,17 @@ def _search_creators_api(
             for product in exact_products:
                 if delivery_mode == "FreeShipping":
                     product["is_sped_gratis"] = True
-                # I filtri vengono riconfermati sui prezzi GetItems, non sui valori SearchItems.
-                if _filter_verified_product(
-                    product, min_price, max_price, min_discount, max_discount
-                ):
+                if _filter_verified_product(product, min_price, max_price, min_discount, max_discount):
                     parsed.append(product)
-            _append_unique(collected, parsed, seen)
+            _append_unique(collected, parsed, seen_asins, seen_titles)
             if len(collected) >= item_count:
                 break
 
-        if len(collected) >= item_count:
-            break
-        if not page_had_items or all_modes_short:
+        if len(collected) >= item_count or not page_had_items:
             break
 
     if sort_type == "Prezzo minimo":
         collected.sort(key=lambda x: float(x.get("prezzo_finale") or float("inf")))
-    elif sort_type == "Recensioni":
-        # Creators API non restituisce più il conteggio recensioni nel resource set corrente.
-        pass
 
     return collected[:item_count]
 
@@ -736,7 +633,6 @@ def _search_html_fallback(
     max_discount: int,
     item_count: int,
 ) -> List[Dict[str, Any]]:
-    # Senza API non possiamo garantire filtri dinamici: meglio zero risultati che dati fuorvianti.
     if (
         solo_spedizione_gratuita
         or min_price is not None
@@ -744,13 +640,13 @@ def _search_html_fallback(
         or min_discount > 0
         or max_discount < 100
     ):
-        LOGGER.info("Fallback metadati disattivato: filtri dinamici non verificabili")
         return []
 
     query_encoded = urllib.parse.quote_plus(keyword)
     sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
     collected: List[Dict[str, Any]] = []
-    seen: set[str] = set()
+    seen_asins: set[str] = set()
+    seen_titles: set[str] = set()
     max_pages = min(4, max(1, (item_count + 15) // 16))
 
     for page in range(1, max_pages + 1):
@@ -758,13 +654,12 @@ def _search_html_fallback(
         html_text = _fetch_html_cached(url)
         if not html_text:
             continue
-        _append_unique(collected, _extract_metadata_from_html(html_text, partner_tag), seen)
+        _append_unique(collected, _extract_metadata_from_html(html_text, partner_tag), seen_asins, seen_titles)
         if len(collected) >= item_count:
             break
     return collected[:item_count]
 
 
-# ----------------------------- API PUBBLICA ------------------------------
 @st.cache_data(ttl=VETRINA_CACHE_TTL_SECONDS, show_spinner=False)
 def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int = 10) -> List[Dict[str, Any]]:
     configured_tag = get_partner_tag() or str(partner_tag or "").strip()
@@ -772,7 +667,6 @@ def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int =
         return []
     item_count = max(1, min(int(item_count or 10), 20))
 
-    # Una singola vetrina viene condivisa dalla cache tra le sessioni per 15 minuti.
     keyword = random.choice(KEYWORDS_VETRINA)
     products = ottieni_offerte_avanzate(
         keyword=keyword,
@@ -813,7 +707,6 @@ def ottieni_offerte_avanzate(
 
     partner_tag = get_partner_tag() or str(_partner_tag_override or "").strip()
     if not partner_tag:
-        LOGGER.warning("Ricerca non eseguita: partner_tag mancante")
         return []
 
     item_count = max(1, min(int(item_count or 10), MAX_RESULTS))
@@ -831,7 +724,6 @@ def ottieni_offerte_avanzate(
         if api_product:
             return [api_product]
 
-        # Fallback diretto: cerca l'ASIN e restituisce solo metadati non dinamici.
         fallback = _search_html_fallback(
             asin, "Popolarità", partner_tag, solo_spedizione_gratuita,
             min_price, max_price, min_discount, max_discount, 10,
