@@ -153,6 +153,69 @@ def calcola_distribuzione_recensioni(voto_medio, num_recensioni=0):
     p1 = max(1, 100 - (p5 + p4 + p3 + p2))
     return {"5": p5, "4": p4, "3": p3, "2": p2, "1": p1}
 
+def aggiorna_prezzo_live_prodotto(prodotto):
+    """
+    Verifica in tempo reale il prezzo effettivo del link prima di renderizzare la scheda
+    e sovrascrive prezzo finale, prezzo iniziale e sconto.
+    """
+    asin = prodotto.get("asin")
+    if not asin:
+        return prodotto
+
+    url_dettaglio = f"https://www.amazon.it/dp/{asin}"
+    html = _fetch_html(url_dettaglio, timeout=4)
+    if not html:
+        return prodotto
+
+    soup = BeautifulSoup(html, "html.parser")
+    
+    selettori_prezzo_finale = [
+        "#apex_desktop span.priceToPay span.a-offscreen",
+        "#corePriceDisplay_desktop_feature_div span.a-price:not([data-a-strike='true']) span.a-offscreen",
+        "#corePrice_desktop span.a-price:not([data-a-strike='true']) span.a-offscreen",
+        "#priceblock_ourprice",
+        "#priceblock_dealprice",
+        "#price_inside_buybox",
+        "#tp_price_block_total_price_ww span.a-offscreen"
+    ]
+
+    nuovo_prezzo = 0.0
+    for sel in selettori_prezzo_finale:
+        el = soup.select_one(sel)
+        if el:
+            nuovo_prezzo = parse_price(el.get_text(strip=True))
+            if nuovo_prezzo > 0.0:
+                break
+
+    selettori_prezzo_barrato = [
+        "#corePriceDisplay_desktop_feature_div span.a-price[data-a-strike='true'] span.a-offscreen",
+        "#corePrice_desktop span.a-price[data-a-strike='true'] span.a-offscreen",
+        "span.basisPrice span.a-offscreen",
+        "#priceblock_ourprice_lbl + span"
+    ]
+
+    nuovo_prezzo_iniziale = 0.0
+    for sel in selettori_prezzo_barrato:
+        el = soup.select_one(sel)
+        if el:
+            nuovo_prezzo_iniziale = parse_price(el.get_text(strip=True))
+            if nuovo_prezzo_iniziale > 0.0:
+                break
+
+    if nuovo_prezzo > 0.0:
+        prodotto["prezzo_finale"] = nuovo_prezzo
+        if nuovo_prezzo_iniziale > nuovo_prezzo:
+            prodotto["prezzo_iniziale"] = nuovo_prezzo_iniziale
+            sconto_perc = int(round(((nuovo_prezzo_iniziale - nuovo_prezzo) / nuovo_prezzo_iniziale) * 100))
+            prodotto["sconto"] = f"-{sconto_perc}%"
+            prodotto["sconto_val"] = sconto_perc
+        else:
+            prodotto["prezzo_iniziale"] = nuovo_prezzo
+            prodotto["sconto"] = ""
+            prodotto["sconto_val"] = 0
+
+    return prodotto
+
 def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min_price=None, max_price=None, min_discount=0, max_discount=100):
     asin = it.get("ASIN", "")
     title = it.get("ItemInfo", {}).get("Title", {}).get("DisplayValue", "Prodotto Amazon")
@@ -199,7 +262,7 @@ def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min
     voto = float(it.get("CustomerReviews", {}).get("StarRating", {}).get("Value", 4.5))
     recensioni = int(it.get("CustomerReviews", {}).get("Count", 0))
 
-    return {
+    prodotto = {
         "asin": asin,
         "titolo": title,
         "immagine_url": img,
@@ -216,6 +279,8 @@ def parse_item_api_response(it, partner_tag, solo_spedizione_gratuita=False, min
         "link_affiliato": link
     }
 
+    return aggiorna_prezzo_live_prodotto(prodotto)
+
 def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=None, min_discount=0, max_discount=100):
     if not html_text:
         return []
@@ -229,7 +294,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
     asins_visti = set()
 
     for it in items:
-        asin = it.get("data-asin", "").strip()
+        asin = it.get("data-asin", "").strip().upper()
         if not asin or asin in asins_visti:
             continue
 
@@ -290,7 +355,7 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
                     pass
 
         asins_visti.add(asin)
-        prodotti.append({
+        prodotto = {
             "asin": asin,
             "titolo": titolo,
             "immagine_url": img_url,
@@ -305,15 +370,14 @@ def _estrai_prodotti_da_html(html_text, partner_tag, min_price=None, max_price=N
             "num_recensioni": num_rev_val if num_rev_val > 0 else random.randint(120, 2400),
             "vendite_mensili": num_rev_val if num_rev_val > 0 else random.randint(80, 1500),
             "link_affiliato": f"https://www.amazon.it/dp/{asin}?tag={partner_tag}"
-        })
+        }
+
+        prodotto_aggiornato = aggiorna_prezzo_live_prodotto(prodotto)
+        prodotti.append(prodotto_aggiornato)
 
     return prodotti
 
 def ottieni_vetrina_casuale(partner_tag, item_count=10):
-    """
-    Funzione non cacheata: ad ogni chiamata sceglie una keyword casuale,
-    estrae un pool di offerte e restituisce prodotti ordinati e rimescolati a random.
-    """
     kw_scelta = random.choice(KEYWORDS_VETRINA)
     prodotti = ottieni_offerte_avanzate(
         keyword=kw_scelta,
@@ -325,7 +389,6 @@ def ottieni_vetrina_casuale(partner_tag, item_count=10):
         random.shuffle(prodotti)
         return prodotti[:item_count]
 
-    # Fallback su keyword classica se la prima non restituisce dati
     prodotti_fb = ottieni_offerte_avanzate(
         keyword="offerte del giorno",
         sort_type="Numero di vendite",
@@ -338,7 +401,7 @@ def ottieni_vetrina_casuale(partner_tag, item_count=10):
 
     return []
 
-@st.cache_data(ttl=600, show_spinner=False)
+@st.cache_data(ttl=120, show_spinner=False)
 def ottieni_offerte_avanzate(
     keyword="", 
     sort_type="Prezzo minimo", 
@@ -379,6 +442,7 @@ def ottieni_offerte_avanzate(
     query_str = clean_keyword if clean_keyword else "offerte del giorno"
     prodotti_raccolti = []
     asins_totali = set()
+    titoli_visti = set()
 
     pagine_da_scaricare = max(1, (item_count + 15) // 20)
     query_encoded = urllib.parse.quote_plus(query_str)
@@ -395,8 +459,12 @@ def ottieni_offerte_avanzate(
         if html:
             estratti = _estrai_prodotti_da_html(html, partner_tag, min_price, max_price, min_discount, max_discount)
             for it in estratti:
-                if it["asin"] not in asins_totali:
-                    asins_totali.add(it["asin"])
+                asin_val = it.get("asin", "").strip().upper()
+                titolo_chiave = it.get("titolo", "").strip().lower()[:60]
+                
+                if asin_val and (asin_val not in asins_totali) and (titolo_chiave not in titoli_visti):
+                    asins_totali.add(asin_val)
+                    titoli_visti.add(titolo_chiave)
                     prodotti_raccolti.append(it)
         
         if len(prodotti_raccolti) >= item_count:
@@ -406,7 +474,14 @@ def ottieni_offerte_avanzate(
         url_relax = f"https://www.amazon.it/s?k={query_encoded}"
         html_relax = _fetch_html(url_relax, timeout=6)
         if html_relax:
-            prodotti_raccolti = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100)
+            estratti_relax = _estrai_prodotti_da_html(html_relax, partner_tag, min_price, max_price, min_discount=0, max_discount=100)
+            for it in estratti_relax:
+                asin_val = it.get("asin", "").strip().upper()
+                titolo_chiave = it.get("titolo", "").strip().lower()[:60]
+                if asin_val and (asin_val not in asins_totali) and (titolo_chiave not in titoli_visti):
+                    asins_totali.add(asin_val)
+                    titoli_visti.add(titolo_chiave)
+                    prodotti_raccolti.append(it)
 
     if sort_type == "Prezzo minimo":
         prodotti_raccolti.sort(key=lambda x: x["prezzo_finale"])
