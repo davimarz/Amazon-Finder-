@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Accesso sicuro e diretto ai componenti del modulo amazon_api
+# Estrazione sicura delle funzioni e costanti dal modulo amazon_api
 MAX_RESULTS = getattr(amazon_api, "MAX_RESULTS", 50)
 SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
     "Prezzo minimo": "Price:LowToHigh",
