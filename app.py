@@ -841,6 +841,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
+# BARRA DI NAVIGAZIONE A 3 SCHEDE
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
@@ -1138,6 +1139,7 @@ elif active_tab == "contatti":
 
 st.markdown('</div>', unsafe_allow_html=True)
 
+# ----------------- FOOTER / TRASPARENZA AFFILIAZIONE -----------------
 st.markdown(
     """
     <div class="site-footer-box">
@@ -1150,6 +1152,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
 st.markdown(
     """
     <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 15px 0 20px 0;">
