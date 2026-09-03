@@ -8,14 +8,7 @@ from datetime import date
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import urllib.parse
-
-from amazon_api import (
-    MAX_RESULTS,
-    SORT_MAPPINGS,
-    get_partner_tag,
-    ottieni_offerte_avanzate,
-    ottieni_vetrina_casuale,
-)
+import amazon_api
 
 st.set_page_config(
     page_title="Scaladeiturchi | Offerte Amazon AI",
@@ -23,6 +16,17 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Accesso sicuro e diretto ai componenti del modulo amazon_api
+MAX_RESULTS = getattr(amazon_api, "MAX_RESULTS", 50)
+SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
+    "Prezzo minimo": "Price:LowToHigh",
+    "Popolarità": "Featured",
+    "Recensioni": "AvgCustomerReviews",
+})
+get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "")
+ottieni_offerte_avanzate = getattr(amazon_api, "ottieni_offerte_avanzate", lambda **kwargs: [])
+ottieni_vetrina_casuale = getattr(amazon_api, "ottieni_vetrina_casuale", lambda **kwargs: [])
 
 # ----------------- INIZIALIZZAZIONE STATO -----------------
 st.session_state.setdefault("current_tab", "vetrina")
@@ -839,7 +843,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A 3 SCHEDE (Senza preferiti)
+# BARRA DI NAVIGAZIONE A 3 SCHEDE
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
@@ -912,7 +916,6 @@ def render_product_card(p, tab_key="main"):
                     "<div class='price-source-note'>Prezzo rilevato tramite Amazon Creators API. Prezzi e disponibilità possono variare.</div>",
                     unsafe_allow_html=True,
                 )
-                share_price = f"\n💰 Prezzo rilevato: €{prezzo_finale:.2f}"
                 buy_label = "🛒 Acquista su Amazon"
             else:
                 st.markdown(
@@ -920,7 +923,6 @@ def render_product_card(p, tab_key="main"):
                     "<div class='price-source-note'>Prezzo, sconto e disponibilità confermati direttamente su Amazon.</div>",
                     unsafe_allow_html=True,
                 )
-                share_price = ""
                 buy_label = "🛒 Vedi su Amazon"
 
             if link:
@@ -936,6 +938,7 @@ def render_product_card(p, tab_key="main"):
                 )
 
             safe_title_text = titolo.replace("\n", " ").strip()
+            share_price = f"\n💰 Prezzo rilevato: €{float(p.get('prezzo_finale', 0.0)):.2f}" if prezzo_verificato else ""
             share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"
             wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
             fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
