@@ -1,3 +1,4 @@
+# BUILD: 2026.09.03-search-10x
 import streamlit as st
 import smtplib
 import sqlite3
@@ -797,14 +798,28 @@ def esegui_ricerca(increment=False):
             prodotti_unici.append(prodotto)
 
     if increment:
-        if len(prodotti_unici) > len(vecchi_risultati):
-            st.session_state["offerte"] = prodotti_unici
-            st.session_state["current_page"] = max(1, (len(prodotti_unici) + 9) // 10)
+        # Mantiene i risultati già presenti e aggiunge solo nuovi ASIN.
+        # In questo modo un'eventuale risposta parziale di Amazon non fa
+        # sparire prodotti già visualizzati.
+        merged = []
+        merged_asins = set()
+
+        for prodotto in list(vecchi_risultati) + list(prodotti_unici):
+            asin = str(prodotto.get("asin") or "").strip().upper()
+            if asin and asin not in merged_asins:
+                merged_asins.add(asin)
+                merged.append(prodotto)
+
+        st.session_state["offerte"] = merged[:target_count]
+
+        if len(st.session_state["offerte"]) > len(vecchi_risultati):
+            st.session_state["current_page"] = max(
+                1, (len(st.session_state["offerte"]) + 9) // 10
+            )
         else:
-            st.session_state["offerte"] = vecchi_risultati
             st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."
     else:
-        st.session_state["offerte"] = prodotti_unici
+        st.session_state["offerte"] = prodotti_unici[:10]
 
     st.session_state["scroll_to_top_flag"] = True
 

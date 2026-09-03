@@ -1,3 +1,4 @@
+# BUILD: 2026.09.03-search-10x
 import logging
 import random
 import re
@@ -506,14 +507,28 @@ def _extract_products_from_html(
     return products
 
 
-def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen_asins: set[str], seen_titles: set[str]) -> None:
+def _append_unique(
+    target: List[Dict[str, Any]],
+    source: Iterable[Dict[str, Any]],
+    seen_asins: set[str],
+    seen_titles: Optional[set[str]] = None,
+) -> None:
+    """
+    Aggiunge prodotti unici usando esclusivamente l'ASIN.
+
+    In precedenza venivano esclusi anche i prodotti con i primi 50 caratteri
+    del titolo simili. Questo eliminava molte varianti/modelli distinti e
+    poteva ridurre una pagina Amazon da 10 risultati a una sola scheda.
+    """
+    del seen_titles  # mantenuto nel parametro solo per compatibilità interna
+
     for product in source:
         asin = str(product.get("asin", "")).strip().upper()
-        clean_title = re.sub(r'[^a-zA-Z0-9]', '', str(product.get("titolo", "")).lower())[:50]
-        if asin and (asin not in seen_asins) and (clean_title not in seen_titles):
-            seen_asins.add(asin)
-            seen_titles.add(clean_title)
-            target.append(product)
+        if not asin or asin in seen_asins:
+            continue
+
+        seen_asins.add(asin)
+        target.append(product)
 
 
 def _get_item_from_creators_api(
@@ -638,7 +653,11 @@ def _search_creators_api(
         if len(collected) >= item_count:
             break
 
-        if len(items) < 10:
+        # Non interrompere prematuramente se Amazon restituisce meno di 10
+        # elementi in una singola pagina: con filtri/offerte non disponibili
+        # una pagina può essere parziale mentre le successive contengono
+        # altri ASIN validi.
+        if not items:
             break
 
     return collected[:item_count]
@@ -662,7 +681,9 @@ def _search_html_fallback(
     seen_asins: set[str] = set()
     seen_titles: set[str] = set()
 
-    max_pages = min(10, max(1, (item_count + 9) // 10 + 2))
+    # Scarica qualche pagina in più del minimo necessario perché alcuni
+    # risultati possono essere sponsorizzati, senza prezzo o duplicati ASIN.
+    max_pages = min(10, max(2, (item_count + 9) // 10 + 3))
     for page in range(1, max_pages + 1):
         url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&s={sort_param}"
         html_text = _fetch_html_cached(url)
