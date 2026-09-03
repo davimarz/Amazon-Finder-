@@ -43,7 +43,6 @@ RE_DIGITS = re.compile(r"[^\d]")
 
 _TOKEN_CACHE: Dict[str, Any] = {"access_token": None, "expires_at": 0.0}
 _HTTP_SESSION = requests.Session()
-_CURL_SESSION = c_requests.Session() if HAS_CURL else None
 
 LOGGER = logging.getLogger("amazon_affiliate")
 if not LOGGER.handlers:
@@ -54,9 +53,9 @@ LOGGER.setLevel(logging.INFO)
 LOGGER.propagate = False
 
 USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
 ]
 
 KEYWORDS_VETRINA = [
@@ -79,7 +78,8 @@ def _amazon_secrets() -> Dict[str, Any]:
 
 
 def get_partner_tag() -> str:
-    return str(_amazon_secrets().get("partner_tag", "")).strip()
+    tag = str(_amazon_secrets().get("partner_tag", "")).strip()
+    return tag if tag else "eiapromo-21"
 
 
 def build_affiliate_link(asin: str, partner_tag: Optional[str] = None) -> str:
@@ -307,14 +307,19 @@ def _filter_product(
     return True
 
 
-def _fetch_html(url: str, timeout: int = 6) -> Optional[str]:
+def _fetch_html(url: str, timeout: int = 7) -> Optional[str]:
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
-        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept-Encoding": "gzip, deflate, br",
         "DNT": "1",
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
     }
     cookies = {
         "lc-acbit": "it_IT",
@@ -322,29 +327,26 @@ def _fetch_html(url: str, timeout: int = 6) -> Optional[str]:
         "sp-cdn": "L5Z9:IT",
     }
 
-    if _CURL_SESSION is not None:
+    if HAS_CURL:
         try:
-            response = _CURL_SESSION.get(url, headers=headers, cookies=cookies, timeout=timeout, impersonate="chrome")
-            if (
-                response.status_code == 200
-                and response.text
-                and len(response.text) > 1500
-                and "Robot Check" not in response.text
-            ):
-                return response.text
+            r = c_requests.get(
+                url,
+                headers=headers,
+                cookies=cookies,
+                timeout=timeout,
+                impersonate="chrome120",
+            )
+            if r.status_code == 200 and r.text and len(r.text) > 1500 and "Robot Check" not in r.text:
+                return r.text
         except Exception:
             pass
 
     try:
-        response = _HTTP_SESSION.get(url, headers=headers, cookies=cookies, timeout=timeout)
-        if (
-            response.status_code == 200
-            and response.text
-            and len(response.text) > 1500
-            and "Robot Check" not in response.text
-        ):
-            return response.text
-    except requests.RequestException:
+        s = requests.Session()
+        r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
+        if r.status_code == 200 and r.text and len(r.text) > 1500 and "Robot Check" not in r.text:
+            return r.text
+    except Exception:
         pass
 
     return None
@@ -352,7 +354,7 @@ def _fetch_html(url: str, timeout: int = 6) -> Optional[str]:
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner=False)
 def _fetch_html_cached(url: str) -> Optional[str]:
-    return _fetch_html(url, timeout=6)
+    return _fetch_html(url, timeout=7)
 
 
 def _extract_reviews(item: Any) -> Tuple[Optional[float], Optional[int]]:
@@ -435,17 +437,22 @@ def _extract_products_from_html(
         if len(asin) != 10 or asin in seen_asins:
             continue
 
-        title_element = item.select_one("h2 span") or item.find("h2")
+        title_element = (
+            item.select_one("h2 span")
+            or item.select_one("h2 a span")
+            or item.select_one("h2 a")
+            or item.find("h2")
+        )
         if not title_element:
             continue
         title = title_element.get_text(" ", strip=True)
 
         price_element = (
             item.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen")
-            or item.select_one(".a-price span.a-offscreen")
+            or item.select_one("span.a-price span.a-offscreen")
+            or item.select_one("span.a-price-whole")
             or item.select_one(".a-color-price")
             or item.select_one("span.a-offscreen")
-            or item.select_one("span.a-price-whole")
         )
         price = parse_price(price_element.get_text(" ", strip=True)) if price_element else 0.0
         if price <= 0:
@@ -506,19 +513,12 @@ def _extract_products_from_html(
     return products
 
 
-def _append_unique(
-    target: List[Dict[str, Any]],
-    source: Iterable[Dict[str, Any]],
-    seen_asins: set[str],
-    seen_titles: Optional[set[str]] = None,
-) -> None:
-    del seen_titles
+def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen_asins: set[str]) -> None:
     for product in source:
         asin = str(product.get("asin", "")).strip().upper()
-        if not asin or asin in seen_asins:
-            continue
-        seen_asins.add(asin)
-        target.append(product)
+        if asin and asin not in seen_asins:
+            seen_asins.add(asin)
+            target.append(product)
 
 
 def _get_item_from_creators_api(
@@ -594,7 +594,7 @@ def _search_creators_api(
         payload: Dict[str, Any] = {
             "partnerTag": partner_tag,
             "keywords": keyword,
-            "searchIndex": "All",  # RICERCA IN TUTTE LE CATEGORIE
+            "searchIndex": "All",
             "marketplace": MARKETPLACE,
             "languagesOfPreference": ["it_IT"],
             "currencyOfPreference": "EUR",
@@ -662,13 +662,16 @@ def _search_html_fallback(
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
-    # Scarica le pagine inserendo i=aps per garantire la ricerca in TUTTE LE CATEGORIE su Amazon.it
-    max_pages = min(10, max(2, (item_count + 9) // 10 + 3))
+    max_pages = min(5, max(2, (item_count + 9) // 10 + 2))
     for page in range(1, max_pages + 1):
+        # Ricerca su TUTTE LE CATEGORIE (&i=aps)
         url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}&s={sort_param}"
         html_text = _fetch_html_cached(url)
         if not html_text:
-            url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}"
+            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&s={sort_param}"
+            html_text = _fetch_html_cached(url)
+        if not html_text:
+            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
             html_text = _fetch_html_cached(url)
         if not html_text:
             continue
@@ -688,15 +691,13 @@ def _search_html_fallback(
             break
 
     if sort_type == "Prezzo minimo":
-        collected.sort(key=lambda product: float(product.get("prezzo_finale") or 0.0))
+        collected.sort(key=lambda product: float(product.get("prezzo_finale") or float("inf")))
 
     return collected[:item_count]
 
 
 def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int = 10) -> List[Dict[str, Any]]:
     configured_tag = get_partner_tag() or str(partner_tag or "").strip()
-    if not configured_tag:
-        return []
 
     keyword = random.choice(KEYWORDS_VETRINA)
     products = ottieni_offerte_avanzate(
@@ -739,16 +740,12 @@ def ottieni_offerte_avanzate(
     del categoria, sottocategoria
 
     partner_tag = get_partner_tag() or str(_partner_tag_override or "").strip()
-    if not partner_tag:
-        return []
-
     item_count = max(1, min(int(item_count or 10), MAX_RESULTS))
     min_discount = max(0, min(int(min_discount or 0), 100))
     max_discount = max(min_discount, min(int(max_discount or 100), 100))
 
     clean_keyword = (keyword or "").strip()
 
-    # Riconoscimento ASIN singolo ESCLUSIVAMENTE per link o codici esatti
     is_direct_asin = False
     asin_matched = None
 
@@ -790,9 +787,9 @@ def ottieni_offerte_avanzate(
                 return [product]
         return []
 
-    # Ricerca generale a catalogo su TUTTE le categorie
     query = clean_keyword or "offerte del giorno"
 
+    # Ricerca Creators API (All Categories)
     api_products = _search_creators_api(
         query,
         sort_type,
@@ -807,8 +804,7 @@ def ottieni_offerte_avanzate(
 
     collected = list(api_products) if api_products else []
 
-    # Se l'API restituisce meno prodotti del target richiesto,
-    # completa la lista con la ricerca web (i=aps, tutte le categorie)
+    # Completa sempre la lista con la ricerca web fino al numero richiesto (10 schede)
     if len(collected) < item_count:
         html_products = _search_html_fallback(
             query,
@@ -828,5 +824,20 @@ def ottieni_offerte_avanzate(
                 seen_asins.add(hp["asin"])
             if len(collected) >= item_count:
                 break
+
+    # Se non viene trovato alcun prodotto e c'è un filtro di sconto attivo, riprova senza lo sconto
+    if not collected and (min_discount > 0 or max_discount < 100):
+        html_products_relax = _search_html_fallback(
+            query,
+            sort_type,
+            partner_tag,
+            solo_spedizione_gratuita,
+            min_price,
+            max_price,
+            min_discount=0,
+            max_discount=100,
+            item_count=item_count,
+        )
+        collected = html_products_relax
 
     return collected[:item_count]
