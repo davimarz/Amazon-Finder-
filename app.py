@@ -17,7 +17,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Estrazione sicura delle funzioni e costanti dal modulo amazon_api
 MAX_RESULTS = getattr(amazon_api, "MAX_RESULTS", 50)
 SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
     "Prezzo minimo": "Price:LowToHigh",
@@ -28,7 +27,6 @@ get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "")
 ottieni_offerte_avanzate = getattr(amazon_api, "ottieni_offerte_avanzate", lambda **kwargs: [])
 ottieni_vetrina_casuale = getattr(amazon_api, "ottieni_vetrina_casuale", lambda **kwargs: [])
 
-# ----------------- INIZIALIZZAZIONE STATO -----------------
 st.session_state.setdefault("current_tab", "vetrina")
 st.session_state.setdefault("has_searched", False)
 st.session_state.setdefault("item_count", 10)
@@ -843,7 +841,6 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A 3 SCHEDE
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
@@ -990,7 +987,6 @@ def render_product_card(p, tab_key="main"):
                 )
             st.markdown(feedback_html, unsafe_allow_html=True)
 
-# RENDER DEL CONTENUTO DELLE SCHEDE
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
 if active_tab == "vetrina":
@@ -1142,7 +1138,6 @@ elif active_tab == "contatti":
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ----------------- FOOTER / TRASPARENZA AFFILIAZIONE -----------------
 st.markdown(
     """
     <div class="site-footer-box">
@@ -1155,7 +1150,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
 st.markdown(
     """
     <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 15px 0 20px 0;">
