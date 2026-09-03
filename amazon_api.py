@@ -444,6 +444,8 @@ def _extract_products_from_html(
             item.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen")
             or item.select_one(".a-price span.a-offscreen")
             or item.select_one(".a-color-price")
+            or item.select_one("span.a-offscreen")
+            or item.select_one("span.a-price-whole")
         )
         price = parse_price(price_element.get_text(" ", strip=True)) if price_element else 0.0
         if price <= 0:
@@ -452,6 +454,7 @@ def _extract_products_from_html(
         old_price_element = (
             item.select_one("span.a-price[data-a-strike='true'] span.a-offscreen")
             or item.select_one("span.a-text-price span.a-offscreen")
+            or item.select_one("span.a-price[data-a-strike='true']")
         )
         old_price = parse_price(old_price_element.get_text(" ", strip=True)) if old_price_element else price
         if old_price < price:
@@ -744,6 +747,7 @@ def ottieni_offerte_avanzate(
 
     clean_keyword = (keyword or "").strip()
 
+    # Identificazione rigorosa di URL o ASIN singolo Amazon
     is_direct_asin = False
     asin_matched = None
 
@@ -752,7 +756,7 @@ def ottieni_offerte_avanzate(
         if match:
             is_direct_asin = True
             asin_matched = match.group(1).upper()
-    elif re.fullmatch(r"^B0[A-Z0-9]{8}$", clean_keyword, re.IGNORECASE):
+    elif re.fullmatch(r"^B0[A-Z0-9]{8}$", clean_keyword, re.IGNORECASE) or re.fullmatch(r"^\d{9}[\dX]$", clean_keyword, re.IGNORECASE):
         is_direct_asin = True
         asin_matched = clean_keyword.upper()
 
@@ -785,6 +789,7 @@ def ottieni_offerte_avanzate(
                 return [product]
         return []
 
+    # Ricerca per parola chiave su catalogo completo
     query = clean_keyword or "offerte del giorno"
 
     api_products = _search_creators_api(
@@ -798,27 +803,29 @@ def ottieni_offerte_avanzate(
         max_discount,
         item_count,
     )
-    if api_products is not None and len(api_products) >= item_count:
-        return api_products[:item_count]
 
-    html_products = _search_html_fallback(
-        query,
-        sort_type,
-        partner_tag,
-        solo_spedizione_gratuita,
-        min_price,
-        max_price,
-        min_discount,
-        max_discount,
-        item_count,
-    )
+    collected = list(api_products) if api_products else []
 
-    if api_products:
-        seen = {p["asin"] for p in api_products}
-        for p in html_products:
-            if p["asin"] not in seen:
-                api_products.append(p)
-                seen.add(p["asin"])
-        return api_products[:item_count]
+    # Se l'API restituisce meno prodotti del target (es. 10),
+    # integra con la ricerca web di fallback per garantire sempre il numero di schede richiesto
+    if len(collected) < item_count:
+        html_products = _search_html_fallback(
+            query,
+            sort_type,
+            partner_tag,
+            solo_spedizione_gratuita,
+            min_price,
+            max_price,
+            min_discount,
+            max_discount,
+            item_count * 2,
+        )
+        seen_asins = {p["asin"] for p in collected if p.get("asin")}
+        for hp in html_products:
+            if hp.get("asin") not in seen_asins:
+                collected.append(hp)
+                seen_asins.add(hp["asin"])
+            if len(collected) >= item_count:
+                break
 
-    return html_products[:item_count]
+    return collected[:item_count]
