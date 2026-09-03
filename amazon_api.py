@@ -1,4 +1,3 @@
-# BUILD: 2026.09.03-search-10x
 import logging
 import random
 import re
@@ -513,20 +512,11 @@ def _append_unique(
     seen_asins: set[str],
     seen_titles: Optional[set[str]] = None,
 ) -> None:
-    """
-    Aggiunge prodotti unici usando esclusivamente l'ASIN.
-
-    In precedenza venivano esclusi anche i prodotti con i primi 50 caratteri
-    del titolo simili. Questo eliminava molte varianti/modelli distinti e
-    poteva ridurre una pagina Amazon da 10 risultati a una sola scheda.
-    """
-    del seen_titles  # mantenuto nel parametro solo per compatibilità interna
-
+    del seen_titles
     for product in source:
         asin = str(product.get("asin", "")).strip().upper()
         if not asin or asin in seen_asins:
             continue
-
         seen_asins.add(asin)
         target.append(product)
 
@@ -599,13 +589,12 @@ def _search_creators_api(
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
-    seen_titles: set[str] = set()
 
     for page in range(1, MAX_CREATORS_PAGES + 1):
         payload: Dict[str, Any] = {
             "partnerTag": partner_tag,
             "keywords": keyword,
-            "searchIndex": "All",
+            "searchIndex": "All",  # RICERCA IN TUTTE LE CATEGORIE
             "marketplace": MARKETPLACE,
             "languagesOfPreference": ["it_IT"],
             "currencyOfPreference": "EUR",
@@ -649,15 +638,8 @@ def _search_creators_api(
             if _filter_product(product, min_price, max_price, min_discount, max_discount):
                 parsed_page.append(product)
 
-        _append_unique(collected, parsed_page, seen_asins, seen_titles)
+        _append_unique(collected, parsed_page, seen_asins)
         if len(collected) >= item_count:
-            break
-
-        # Non interrompere prematuramente se Amazon restituisce meno di 10
-        # elementi in una singola pagina: con filtri/offerte non disponibili
-        # una pagina può essere parziale mentre le successive contengono
-        # altri ASIN validi.
-        if not items:
             break
 
     return collected[:item_count]
@@ -679,16 +661,14 @@ def _search_html_fallback(
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
-    seen_titles: set[str] = set()
 
-    # Scarica qualche pagina in più del minimo necessario perché alcuni
-    # risultati possono essere sponsorizzati, senza prezzo o duplicati ASIN.
+    # Scarica le pagine inserendo i=aps per garantire la ricerca in TUTTE LE CATEGORIE su Amazon.it
     max_pages = min(10, max(2, (item_count + 9) // 10 + 3))
     for page in range(1, max_pages + 1):
-        url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&s={sort_param}"
+        url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}&s={sort_param}"
         html_text = _fetch_html_cached(url)
         if not html_text:
-            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
+            url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}"
             html_text = _fetch_html_cached(url)
         if not html_text:
             continue
@@ -702,7 +682,7 @@ def _search_html_fallback(
             max_discount=max_discount,
             require_free_or_prime=solo_spedizione_gratuita,
         )
-        _append_unique(collected, products, seen_asins, seen_titles)
+        _append_unique(collected, products, seen_asins)
 
         if len(collected) >= item_count:
             break
@@ -768,7 +748,7 @@ def ottieni_offerte_avanzate(
 
     clean_keyword = (keyword or "").strip()
 
-    # Identificazione rigorosa di URL o ASIN singolo Amazon
+    # Riconoscimento ASIN singolo ESCLUSIVAMENTE per link o codici esatti
     is_direct_asin = False
     asin_matched = None
 
@@ -810,7 +790,7 @@ def ottieni_offerte_avanzate(
                 return [product]
         return []
 
-    # Ricerca per parola chiave su catalogo completo
+    # Ricerca generale a catalogo su TUTTE le categorie
     query = clean_keyword or "offerte del giorno"
 
     api_products = _search_creators_api(
@@ -827,8 +807,8 @@ def ottieni_offerte_avanzate(
 
     collected = list(api_products) if api_products else []
 
-    # Se l'API restituisce meno prodotti del target (es. 10),
-    # integra con la ricerca web di fallback per garantire sempre il numero di schede richiesto
+    # Se l'API restituisce meno prodotti del target richiesto,
+    # completa la lista con la ricerca web (i=aps, tutte le categorie)
     if len(collected) < item_count:
         html_products = _search_html_fallback(
             query,
