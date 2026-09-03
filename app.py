@@ -1,4 +1,3 @@
-# BUILD: 2026.09.03-search-10x
 import streamlit as st
 import smtplib
 import sqlite3
@@ -798,9 +797,6 @@ def esegui_ricerca(increment=False):
             prodotti_unici.append(prodotto)
 
     if increment:
-        # Mantiene i risultati già presenti e aggiunge solo nuovi ASIN.
-        # In questo modo un'eventuale risposta parziale di Amazon non fa
-        # sparire prodotti già visualizzati.
         merged = []
         merged_asins = set()
 
@@ -1154,7 +1150,6 @@ elif active_tab == "contatti":
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ----------------- FOOTER / TRASPARENZA AFFILIAZIONE -----------------
 st.markdown(
     """
     <div class="site-footer-box">
@@ -1167,7 +1162,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ----------------- PULSANTE TORNA ALL'INIZIO -----------------
 st.markdown(
     """
     <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 15px 0 20px 0;">
