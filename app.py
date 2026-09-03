@@ -23,7 +23,7 @@ SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
     "Popolarità": "Featured",
     "Recensioni": "AvgCustomerReviews",
 })
-get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "")
+get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "eiapromo-21")
 ottieni_offerte_avanzate = getattr(amazon_api, "ottieni_offerte_avanzate", lambda **kwargs: [])
 ottieni_vetrina_casuale = getattr(amazon_api, "ottieni_vetrina_casuale", lambda **kwargs: [])
 
@@ -41,8 +41,7 @@ try:
 except Exception:
     pass
 
-amazon_configured = bool(get_partner_tag())
-if amazon_configured and ("offerte_vetrina" not in st.session_state or not st.session_state.get("offerte_vetrina")):
+if "offerte_vetrina" not in st.session_state or not st.session_state.get("offerte_vetrina"):
     st.session_state["offerte_vetrina"] = ottieni_vetrina_casuale(item_count=10)
 
 active_tab = st.session_state.get("current_tab", "vetrina")
@@ -830,9 +829,6 @@ st.markdown("""
     <div class="hero-author-tag">Realizzato da <strong>Davide Marziano</strong></div>
 </div>
 """, unsafe_allow_html=True)
-
-if not amazon_configured:
-    st.error("Configurazione Amazon incompleta: inserisci partner_tag nei Secrets di Streamlit.")
 
 if st.session_state.get("scroll_to_top_flag", False):
     st.session_state["scroll_to_top_flag"] = False
