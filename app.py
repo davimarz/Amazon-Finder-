@@ -81,7 +81,7 @@ st.markdown("""
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER A 2 RIGHE COMPATTE */
+    /* 1. HEADER COMPATTO A 2 RIGHE */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,7 +133,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. OVERRIDE TOTALE DEI BOTTONI STREAMLIT: ZERO ROSSO */
+    /* 2. OVERRIDE PULSANTI: ZERO ROSSO */
     button[data-testid="stBaseButton-primary"],
     button[kind="primary"],
     .stButton > button[kind="primary"] {
@@ -242,7 +242,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH: NESSUN PALLINO ROSSO */
+    /* 5. FILTER CHIPS TOUCH: ZERO ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -296,7 +296,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO PROPORZIONATA (FOTO RADDOPPIATA E BARRA AZIONI UNIFICATA) */
+    /* 7. SCHEDA PRODOTTO: FOTO RADDOPPIATA E BARRA AZIONI UNIFICATA */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -325,12 +325,11 @@ st.markdown("""
         gap: 12px;
     }
 
-    /* FOTO RADDOPPIATA A 190PX */
     .pcm-img-box {
-        width: 190px;
-        height: 190px;
-        min-width: 190px;
-        max-width: 190px;
+        width: 180px;
+        height: 180px;
+        min-width: 180px;
+        max-width: 180px;
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
         border-radius: 9px;
@@ -349,10 +348,10 @@ st.markdown("""
 
     @media (max-width: 580px) {
         .pcm-img-box {
-            width: 145px;
-            height: 145px;
-            min-width: 145px;
-            max-width: 145px;
+            width: 140px;
+            height: 140px;
+            min-width: 140px;
+            max-width: 140px;
         }
     }
 
@@ -474,7 +473,6 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* BARRA AZIONI ORIZZONTALE COMPATTA */
     .pcm-bottom-bar {
         display: flex;
         align-items: center;
@@ -536,7 +534,6 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
-    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -861,6 +858,7 @@ elif active_tab == "cerca":
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
+        index=0,
         horizontal=True,
         key="cerca_radio_sort",
         on_change=esegui_ricerca,
