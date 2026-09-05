@@ -249,7 +249,7 @@ def _api_item_to_product(
 
     deal = listing.get("dealDetails", {}) or {}
     access_type = str(deal.get("accessType", "")).upper()
-    
+
     is_prime = True if prime_filter_applied or "PRIME" in access_type or "PRIME" in str(item).upper() else None
     is_free = True if (is_prime or price >= 35.0) else None
 
@@ -293,6 +293,7 @@ def _filter_product(
 
 
 def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
+    # 1. Tentativo con curl_cffi se disponibile
     if HAS_CURL:
         for imp in ["chrome120", "chrome119"]:
             try:
@@ -307,13 +308,14 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
                     cookies={
                         "lc-acbit": "it_IT",
                         "i18n-prefs": "EUR",
-                    }
+                    },
                 )
                 if r.status_code == 200 and r.text and len(r.text) > 2000 and "Robot Check" not in r.text:
                     return r.text
             except Exception:
                 pass
 
+    # 2. Tentativo con requests standard e Client-Hints completi
     try:
         s = requests.Session()
         headers = {
@@ -321,16 +323,39 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
             "Upgrade-Insecure-Requests": "1",
-            "Referer": "https://www.google.it/",
             "DNT": "1",
+            "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
         }
         cookies = {
             "lc-acbit": "it_IT",
             "i18n-prefs": "EUR",
+            "session-id": f"260-{random.randint(1000000, 9999999)}-{random.randint(1000000, 9999999)}",
         }
         r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
         if r.status_code == 200 and r.text and len(r.text) > 2000 and "Robot Check" not in r.text:
             return r.text
+    except Exception:
+        pass
+
+    # 3. Canale Mobile di Emergenza (supera i filtri anti-bot restrittivi su server Cloud)
+    try:
+        mobile_headers = {
+            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "it-IT,it;q=0.9",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+        }
+        r_mob = requests.get(url, headers=mobile_headers, timeout=timeout)
+        if r_mob.status_code == 200 and r_mob.text and len(r_mob.text) > 1500 and "Robot Check" not in r_mob.text:
+            return r_mob.text
     except Exception:
         pass
 
@@ -341,11 +366,11 @@ def _get_search_html_cached(url: str) -> Optional[str]:
     now = time.time()
     if url in _HTML_CACHE:
         cache_time, cached_html = _HTML_CACHE[url]
-        if now - cache_time < CACHE_TTL_SECONDS and cached_html and len(cached_html) > 2000:
+        if now - cache_time < CACHE_TTL_SECONDS and cached_html and len(cached_html) > 1500:
             return cached_html
 
     html_content = _fetch_html(url)
-    if html_content and len(html_content) > 2000:
+    if html_content and len(html_content) > 1500:
         _HTML_CACHE[url] = (now, html_content)
         return html_content
 
@@ -419,10 +444,11 @@ def _extract_products_from_html(
         return []
 
     soup = BeautifulSoup(html_text, "html.parser")
-    items = soup.find_all("div", {"data-component-type": "s-search-result"})
+    items = soup.select("div[data-component-type='s-search-result']")
     if not items or len(items) < 2:
-        asin_divs = soup.find_all("div", attrs={"data-asin": True})
-        items = [d for d in asin_divs if len(d.get("data-asin", "").strip()) == 10]
+        items = [d for d in soup.select("div[data-asin]") if len(d.get("data-asin", "").strip()) == 10]
+    if not items:
+        items = soup.select("div.s-result-item")
 
     products: List[Dict[str, Any]] = []
     seen_asins = set()
@@ -432,30 +458,27 @@ def _extract_products_from_html(
         if len(asin) != 10 or asin in seen_asins:
             continue
 
-        title_element = (
-            item.select_one("h2 a span")
-            or item.select_one("h2 span")
-            or item.select_one("h2 a")
-            or item.select_one(".s-title-instructions-style span")
-            or item.select_one("a.a-link-normal span.a-text-normal")
-            or item.find("h2")
-        )
-        if not title_element:
-            continue
-        title = title_element.get_text(" ", strip=True)
+        # Estrazione titolo completa (non tronca le parti del marchio nelle calzature/moda)
+        title = ""
+        h2 = item.select_one("h2")
+        if h2:
+            title = h2.get_text(" ", strip=True)
+        if not title:
+            t_el = item.select_one(".a-size-base-plus, .a-size-medium, .a-text-normal, a span")
+            if t_el:
+                title = t_el.get_text(" ", strip=True)
         if not title or len(title) < 3:
             continue
 
         price = 0.0
         price_elem = (
-            item.select_one("span.a-price:not([data-a-strike='true'])")
-            or item.select_one(".a-price-range .a-price:not([data-a-strike='true'])")
-            or item.select_one("span.a-price")
+            item.select_one("span.a-price:not([data-a-strike='true']) .a-offscreen")
+            or item.select_one(".a-price-range .a-price:not([data-a-strike='true']) .a-offscreen")
+            or item.select_one("span.a-price .a-offscreen")
             or item.select_one(".a-color-price")
         )
         if price_elem:
-            offscreen = price_elem.select_one(".a-offscreen")
-            price = parse_price(offscreen.get_text(" ", strip=True) if offscreen else price_elem.get_text(" ", strip=True))
+            price = parse_price(price_elem.get_text(" ", strip=True))
 
         if price <= 0:
             whole_elem = item.select_one(".a-price-whole")
@@ -470,13 +493,12 @@ def _extract_products_from_html(
 
         old_price = price
         old_price_elem = (
-            item.select_one("span.a-price[data-a-strike='true']")
-            or item.select_one("span.a-text-price")
+            item.select_one("span.a-price[data-a-strike='true'] .a-offscreen")
+            or item.select_one("span.a-text-price .a-offscreen")
             or item.select_one("span[data-a-strike='true']")
         )
         if old_price_elem:
-            offscreen_old = old_price_elem.select_one(".a-offscreen")
-            old_p_val = parse_price(offscreen_old.get_text(" ", strip=True) if offscreen_old else old_price_elem.get_text(" ", strip=True))
+            old_p_val = parse_price(old_price_elem.get_text(" ", strip=True))
             if old_p_val > price:
                 old_price = old_p_val
 
@@ -485,9 +507,11 @@ def _extract_products_from_html(
             discount_value = int(round(((old_price - price) / old_price) * 100))
 
         image_url = ""
-        image_elem = item.select_one("img.s-image") or item.find("img")
+        image_elem = item.select_one("img.s-image, img[data-src], img")
         if image_elem:
             image_url = str(image_elem.get("src") or image_elem.get("data-src") or "")
+            if "pixel" in image_url or "transparent-pixel" in image_url:
+                image_url = ""
 
         rating, reviews = _extract_reviews(item)
         is_prime, is_free = _extract_shipping_flags(item, price)
@@ -544,8 +568,6 @@ def _get_item_from_creators_api(
         "itemIdType": "ASIN",
         "marketplace": MARKETPLACE,
         "partnerTag": partner_tag,
-        "languagesOfPreference": ["it_IT"],
-        "currencyOfPreference": "EUR",
         "resources": [
             "images.primary.large",
             "itemInfo.title",
@@ -597,8 +619,6 @@ def _search_creators_api(
             "keywords": keyword,
             "searchIndex": "All",
             "marketplace": MARKETPLACE,
-            "languagesOfPreference": ["it_IT"],
-            "currencyOfPreference": "EUR",
             "itemCount": 10,
             "itemPage": page,
             "resources": [
@@ -609,7 +629,7 @@ def _search_creators_api(
             ],
         }
 
-        # NESSUN sortBy inserito: evita l'errore 400 Bad Request di Amazon su searchIndex="All"
+        # NESSUN sortBy su searchIndex='All': evita l'errore 400 Bad Request di Amazon
         if min_price is not None:
             payload["minPrice"] = max(1, int(round(min_price * 100)))
         if max_price is not None:
@@ -653,18 +673,22 @@ def _search_html_fallback(
     max_price: Optional[float],
     item_count: int,
 ) -> List[Dict[str, Any]]:
-    query_encoded = urllib.parse.quote_plus(keyword)
+    query_encoded = urllib.parse.quote_plus(keyword.strip())
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
     max_pages = min(4, max(2, (item_count + 9) // 10 + 1))
     for page in range(1, max_pages + 1):
-        url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&ref=nb_sb_noss"
+        # Query diretta con formato compatibile per brand e termini composti
+        url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
         html_text = _get_search_html_cached(url)
+
+        # Fallback all'endpoint field-keywords se il primo non risponde
         if not html_text:
-            url_alt = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}"
+            url_alt = f"https://www.amazon.it/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords={query_encoded}&page={page}"
             html_text = _get_search_html_cached(url_alt)
+
         if not html_text:
             continue
 
@@ -680,7 +704,7 @@ def _search_html_fallback(
         if len(collected) >= item_count:
             break
 
-    # Ordinamento affidabile in memoria Python
+    # Ordinamento sicuro eseguito in memoria (evita blocchi URL di Amazon)
     if sort_type == "Prezzo minimo":
         collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
     elif sort_type == "Vendite":
@@ -733,6 +757,7 @@ def ottieni_offerte_avanzate(
 
     clean_keyword = (keyword or "").strip()
 
+    # Rilevamento ASIN diretto da codice o da URL
     is_direct_asin = False
     asin_matched = None
 
@@ -802,6 +827,7 @@ def ottieni_offerte_avanzate(
             if len(collected) >= item_count:
                 break
 
+    # Rilassamento della spedizione gratuita se nessun risultato è trovato
     if not collected and solo_spedizione_gratuita:
         html_products_relax = _search_html_fallback(
             query,
