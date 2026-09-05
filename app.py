@@ -32,6 +32,7 @@ st.session_state.setdefault("has_searched", False)
 st.session_state.setdefault("item_count", 10)
 st.session_state.setdefault("current_page", 1)
 st.session_state.setdefault("scroll_to_top_flag", False)
+st.session_state.setdefault("scroll_to_results_flag", False)
 st.session_state.setdefault("offerte", [])
 st.session_state.setdefault("search_notice", "")
 
@@ -73,98 +74,111 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.25rem 0.40rem 90px 0.40rem !important;
+        padding: 0.20rem 0.35rem 95px 0.35rem !important;
         max-width: 100% !important;
     }
 
-    /* --- HEADER COMPATTO --- */
-    .hero-compact {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 4px 6px;
-        margin-bottom: 4px;
-        background: rgba(255, 255, 255, 0.7);
-        border: 1px solid rgba(2, 132, 199, 0.2);
-        border-radius: 8px;
+    /* --- INTESTAZIONE COMPATTA IN 2 RIGHE SOTTO I 200PX --- */
+    .hero-container-single {
+        text-align: center;
+        margin: 2px 0 6px 0;
+        padding: 2px 0;
+        width: 100%;
     }
-    .hero-compact-left {
-        display: flex;
-        align-items: baseline;
-        gap: 6px;
-    }
-    .hero-compact-title {
-        font-size: 1.15rem;
-        font-weight: 900;
-        margin: 0;
-        background: linear-gradient(90deg, #0369a1 0%, #0284c7 100%);
+    .hero-title-single {
+        font-size: clamp(1.45rem, 5.5vw, 2.1rem) !important;
+        font-weight: 900 !important;
+        line-height: 1.1 !important;
+        margin: 0 !important;
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        line-height: 1;
     }
-    .hero-compact-badge {
+    .hero-subtitle-single {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 0.72rem;
+        color: #334155;
+        margin-top: 2px;
+        white-space: nowrap !important;
+    }
+    .ai-badge-chip {
         background: #0284c7;
         color: #ffffff;
         font-size: 0.65rem;
         font-weight: 800;
-        padding: 2px 5px;
+        padding: 1px 6px;
         border-radius: 4px;
-        line-height: 1;
+        letter-spacing: 0.5px;
+        line-height: 1.2;
     }
-    .hero-compact-author {
-        font-size: 0.65rem;
-        color: #475569;
-        font-weight: 600;
-        margin: 0;
-    }
-    .hero-compact-author strong { color: #0369a1; }
 
-    /* --- SEGMENTED CONTROL ORIZZONTALE --- */
-    .nav-bar-container [data-testid="stHorizontalBlock"] {
-        background: rgba(255, 255, 255, 0.9) !important;
-        padding: 2px !important;
-        border-radius: 8px !important;
-        border: 1px solid rgba(2, 132, 199, 0.25) !important;
-        gap: 3px !important;
+    /* --- SEGMENTED CONTROL: 3 PULSANTI FORZATI SU UN'UNICA RIGA (BLU/CIANO NAVY) --- */
+    .nav-bar-container {
+        width: 100% !important;
         margin-bottom: 6px !important;
+    }
+    .nav-bar-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+        gap: 3px !important;
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        border-radius: 9px !important;
+        padding: 3px !important;
         width: 100% !important;
     }
-
-    .nav-bar-container button {
+    .nav-bar-container [data-testid="column"] {
         flex: 1 1 0% !important;
-        color: #0369a1 !important;
-        font-weight: 800 !important;
-        font-size: 0.76rem !important;
-        background: transparent !important;
-        border: none !important;
-        border-radius: 6px !important;
-        padding: 4px 5px !important;
-        min-height: 30px !important;
-        height: 30px !important;
-        text-align: center !important;
-        justify-content: center !important;
+        min-width: 0 !important;
+        width: 33.333% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .nav-bar-container [data-testid="column"] > div {
+        width: 100% !important;
+    }
+    .nav-bar-container button {
+        width: 100% !important;
         white-space: nowrap !important;
+        font-size: 0.74rem !important;
+        font-weight: 700 !important;
+        padding: 4px 1px !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        border-radius: 7px !important;
+        border: none !important;
+        background: transparent !important;
+        color: #94a3b8 !important;
         box-shadow: none !important;
         transition: all 0.2s ease;
     }
-
+    .nav-bar-container button:hover {
+        background: #1e293b !important;
+        color: #ffffff !important;
+    }
     .nav-bar-container button[kind="primary"] {
         color: #ffffff !important;
         background: #0284c7 !important;
-        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.4) !important;
+        box-shadow: 0 1px 5px rgba(2, 132, 199, 0.45) !important;
     }
-
     .nav-bar-container button[kind="primary"] p {
         color: #ffffff !important;
         font-weight: 800 !important;
     }
 
-    /* --- SEARCH BAR COMPATTA CON LENTE INTEGRATA --- */
+    /* --- SEARCH BAR CON LENTE INTEGRATA --- */
     .search-box-native {
         position: relative;
         width: 100%;
-        margin-bottom: 4px;
+        margin-bottom: 5px;
     }
     div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) {
         margin: 0 !important;
@@ -176,7 +190,7 @@ st.markdown("""
         padding-right: 36px !important;
         font-size: 0.82rem !important;
         font-weight: 600 !important;
-        height: 34px !important;
+        height: 36px !important;
         background-color: #ffffff !important;
         box-shadow: 0 1px 4px rgba(2, 132, 199, 0.15) !important;
     }
@@ -192,7 +206,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* --- FILTER CHIPS TOUCH-FRIENDLY (ORIZZONTALI) --- */
+    /* --- FILTER CHIPS TOUCH-FRIENDLY (ORIZZONTALI BLU/NAVY) --- */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.72rem !important;
@@ -217,6 +231,7 @@ st.markdown("""
         text-align: center !important;
         justify-content: center !important;
         cursor: pointer !important;
+        transition: all 0.15s ease;
     }
     div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
         background: #0284c7 !important;
@@ -237,7 +252,7 @@ st.markdown("""
 
     /* --- ACCORDION FILTRI SECONDARI --- */
     div[data-testid="stExpander"] {
-        background: rgba(255, 255, 255, 0.8) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
         border-radius: 8px !important;
         margin-bottom: 6px !important;
@@ -250,7 +265,7 @@ st.markdown("""
 
     /* --- SCHEDE PRODOTTO & CONTENITORE --- */
     .tab-content-panel {
-        background: rgba(255, 255, 255, 0.60) !important;
+        background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
@@ -422,7 +437,7 @@ st.markdown("""
         line-height: 1.2;
     }
 
-    /* --- DISCLAIMER FOOTER NON SOVRAPPOSTO (SCROLLABILE) --- */
+    /* --- DISCLAIMER FOOTER NON INVASIVO (SCROLLABILE) --- */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.88);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -460,63 +475,63 @@ def valida_campi_contatto(nome, telefono, email, note):
     note_clean = note.strip()
 
     if not nome_clean or not tel_digits or not email_clean or not note_clean:
-        return False, "Tutti i campi sono obbligatori."
+        return False, "Tutti i campi sono obbligatori."[cite: 3]
     if len(nome_clean) < 3:
-        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."
+        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."[cite: 3]
     if tel_digits.startswith("39") and len(tel_digits) == 12:
-        tel_digits = tel_digits[2:]
+        tel_digits = tel_digits[2:][cite: 3]
     if len(tel_digits) != 10:
-        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."
+        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."[cite: 3]
     if not EMAIL_REGEX.match(email_clean):
-        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."
+        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."[cite: 3]
     if len(note_clean) < 10:
-        return False, "Il messaggio deve contenere almeno 10 caratteri."
-    return True, "OK"
+        return False, "Il messaggio deve contenere almeno 10 caratteri."[cite: 3]
+    return True, "OK"[cite: 3]
 
 def init_rate_limit_db():
-    conn = sqlite3.connect("rate_limit.db")
-    c = conn.cursor()
+    conn = sqlite3.connect("rate_limit.db")[cite: 3]
+    c = conn.cursor()[cite: 3]
     c.execute("""
         CREATE TABLE IF NOT EXISTS invii_contatti (
             email TEXT,
             data_invio TEXT
         )
-    """)
-    conn.commit()
-    conn.close()
+    """)[cite: 3]
+    conn.commit()[cite: 3]
+    conn.close()[cite: 3]
 
 def verifica_puo_inviare(email):
-    init_rate_limit_db()
-    today_str = date.today().isoformat()
-    conn = sqlite3.connect("rate_limit.db")
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))
-    count = c.fetchone()[0]
-    conn.close()
-    return count == 0
+    init_rate_limit_db()[cite: 3]
+    today_str = date.today().isoformat()[cite: 3]
+    conn = sqlite3.connect("rate_limit.db")[cite: 3]
+    c = conn.cursor()[cite: 3]
+    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))[cite: 3]
+    count = c.fetchone()[0][cite: 3]
+    conn.close()[cite: 3]
+    return count == 0[cite: 3]
 
 def registra_invio_completato(email):
-    init_rate_limit_db()
-    today_str = date.today().isoformat()
-    conn = sqlite3.connect("rate_limit.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))
-    conn.commit()
-    conn.close()
+    init_rate_limit_db()[cite: 3]
+    today_str = date.today().isoformat()[cite: 3]
+    conn = sqlite3.connect("rate_limit.db")[cite: 3]
+    c = conn.cursor()[cite: 3]
+    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))[cite: 3]
+    conn.commit()[cite: 3]
+    conn.close()[cite: 3]
 
 def invia_email_smtp_diretta(nome, telefono, email, note):
-    destinatario = "davimarz.social@gmail.com"
-    email_cfg = st.secrets.get("email", {})
-    sender = email_cfg.get("sender", "davimarz.social@gmail.com")
-    app_pwd = email_cfg.get("app_password", "").replace(" ", "")
+    destinatario = "davimarz.social@gmail.com"[cite: 3]
+    email_cfg = st.secrets.get("email", {})[cite: 3]
+    sender = email_cfg.get("sender", "davimarz.social@gmail.com")[cite: 3]
+    app_pwd = email_cfg.get("app_password", "").replace(" ", "")[cite: 3]
 
     if not app_pwd:
-        return False, "Password per le app non configurata nei Secrets di Streamlit."
+        return False, "Password per le app non configurata nei Secrets di Streamlit."[cite: 3]
 
-    msg = MIMEMultipart()
-    msg['From'] = f"Scala dei Turchi <{sender}>"
-    msg['To'] = destinatario
-    msg['Subject'] = f"🔴 [SCALA DEI TURCHI - SITO] Messaggio da {nome}"
+    msg = MIMEMultipart()[cite: 3]
+    msg['From'] = f"Scala dei Turchi <{sender}>"[cite: 3]
+    msg['To'] = destinatario[cite: 3]
+    msg['Subject'] = f"🔴 [SCALA DEI TURCHI - SITO] Messaggio da {nome}"[cite: 3]
 
     corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
 
@@ -526,55 +541,55 @@ def invia_email_smtp_diretta(nome, telefono, email, note):
 
 Messaggio / Note:
 {note}
-"""
-    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
+"""[cite: 3]
+    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))[cite: 3]
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:
-            server.login(sender, app_pwd)
-            server.sendmail(sender, [destinatario], msg.as_string())
-        return True, "OK"
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:[cite: 3]
+            server.login(sender, app_pwd)[cite: 3]
+            server.sendmail(sender, [destinatario], msg.as_string())[cite: 3]
+        return True, "OK"[cite: 3]
     except Exception as e:
-        return False, str(e)
+        return False, str(e)[cite: 3]
 
 OPZIONI_SCONTO = {
     "Tutti": (0, 100),
     "0-20%": (0, 20),
     "20-50%": (20, 50),
     ">50%": (50, 100)
-}
+}[cite: 3]
 
 def set_tab(tab_name):
-    st.session_state["current_tab"] = tab_name
+    st.session_state["current_tab"] = tab_name[cite: 3]
     try:
-        st.query_params.clear()
+        st.query_params.clear()[cite: 3]
     except Exception:
-        pass
+        pass[cite: 3]
 
 def esegui_ricerca(increment=False):
-    st.session_state["current_tab"] = "cerca"
-    st.session_state["has_searched"] = True
-    st.session_state["search_notice"] = ""
+    st.session_state["current_tab"] = "cerca"[cite: 3]
+    st.session_state["has_searched"] = True[cite: 3]
+    st.session_state["search_notice"] = ""[cite: 3]
 
-    vecchi_risultati = st.session_state.get("offerte", [])
-    current_target = max(10, int(st.session_state.get("item_count", 10) or 10))
+    vecchi_risultati = st.session_state.get("offerte", [])[cite: 3]
+    current_target = max(10, int(st.session_state.get("item_count", 10) or 10))[cite: 3]
 
     if increment:
-        if current_target >= MAX_RESULTS:
-            st.session_state["search_notice"] = f"Limite di {MAX_RESULTS} prodotti raggiunto per questa ricerca."
+        if current_target >= MAX_RESULTS:[cite: 3]
+            st.session_state["search_notice"] = f"Limite di {MAX_RESULTS} prodotti raggiunto per questa ricerca."[cite: 3]
             return
-        target_count = min(MAX_RESULTS, current_target + 10)
+        target_count = min(MAX_RESULTS, current_target + 10)[cite: 3]
     else:
-        target_count = 10
-        st.session_state["current_page"] = 1
+        target_count = 10[cite: 3]
+        st.session_state["current_page"] = 1[cite: 3]
 
-    st.session_state["item_count"] = target_count
+    st.session_state["item_count"] = target_count[cite: 3]
 
-    kw = st.session_state.get("cerca_keyword_input", "").strip()
-    sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
-    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")
-    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))
-    free_ship = st.session_state.get("cerca_check_sped_gratis", False)
+    kw = st.session_state.get("cerca_keyword_input", "").strip()[cite: 3]
+    sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")[cite: 3]
+    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")[cite: 3]
+    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))[cite: 3]
+    free_ship = st.session_state.get("cerca_check_sped_gratis", False)[cite: 3]
 
     risultati = ottieni_offerte_avanzate(
         keyword=kw,
@@ -585,47 +600,51 @@ def esegui_ricerca(increment=False):
         min_discount=min_d,
         max_discount=max_d,
         item_count=target_count,
-    )
+    )[cite: 3]
 
-    prodotti_unici = []
-    asins_visti = set()
-    for prodotto in (risultati or []):
-        asin = str(prodotto.get("asin") or "").strip().upper()
-        if asin and asin not in asins_visti:
-            asins_visti.add(asin)
-            prodotti_unici.append(prodotto)
+    prodotti_unici = [][cite: 3]
+    asins_visti = set()[cite: 3]
+    for prodotto in (risultati or []):[cite: 3]
+        asin = str(prodotto.get("asin") or "").strip().upper()[cite: 3]
+        if asin and asin not in asins_visti:[cite: 3]
+            asins_visti.add(asin)[cite: 3]
+            prodotti_unici.append(prodotto)[cite: 3]
 
     if increment:
-        merged = []
-        merged_asins = set()
-        for prodotto in list(vecchi_risultati) + list(prodotti_unici):
-            asin = str(prodotto.get("asin") or "").strip().upper()
-            if asin and asin not in merged_asins:
-                merged_asins.add(asin)
-                merged.append(prodotto)
+        merged = [][cite: 3]
+        merged_asins = set()[cite: 3]
+        for prodotto in list(vecchi_risultati) + list(prodotti_unici):[cite: 3]
+            asin = str(prodotto.get("asin") or "").strip().upper()[cite: 3]
+            if asin and asin not in merged_asins:[cite: 3]
+                merged_asins.add(asin)[cite: 3]
+                merged.append(prodotto)[cite: 3]
 
-        st.session_state["offerte"] = merged[:target_count]
-        if len(st.session_state["offerte"]) > len(vecchi_risultati):
-            st.session_state["current_page"] = max(1, (len(st.session_state["offerte"]) + 9) // 10)
+        st.session_state["offerte"] = merged[:target_count][cite: 3]
+        if len(st.session_state["offerte"]) > len(vecchi_risultati):[cite: 3]
+            st.session_state["current_page"] = max(1, (len(st.session_state["offerte"]) + 9) // 10)[cite: 3]
         else:
-            st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."
+            st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."[cite: 3]
+        
+        # Quando si incrementano i prodotti, lo scroll torna alla testata dell'elenco prodotti
+        st.session_state["scroll_to_results_flag"] = True
+        st.session_state["scroll_to_top_flag"] = False
     else:
-        st.session_state["offerte"] = prodotti_unici[:10]
+        st.session_state["offerte"] = prodotti_unici[:10][cite: 3]
+        st.session_state["scroll_to_results_flag"] = True
 
-    st.session_state["scroll_to_top_flag"] = True
-
-# --- INTESTAZIONE COMPATTA SOTTO I 200PX ---
+# --- HEADER: 2 RIGHE COMPATTE SU UN UNICO RIGO CIASCUNA ---
 st.markdown("""
 <div id="top_page"></div>
-<div class="hero-compact">
-    <div class="hero-compact-left">
-        <h1 class="hero-compact-title">Scala dei Turchi</h1>
-        <span class="hero-compact-badge">AI DEALS</span>
+<div class="hero-container-single">
+    <h1 class="hero-title-single">Scala dei Turchi</h1>
+    <div class="hero-subtitle-single">
+        <span class="ai-badge-chip">AI DEALS</span>
+        <span>by <strong>Davide Marziano</strong></span>
     </div>
-    <div class="hero-compact-author">by <strong>Davide Marziano</strong></div>
 </div>
 """, unsafe_allow_html=True)
 
+# GESTIONE SCROLL DINAMICO
 if st.session_state.get("scroll_to_top_flag", False):
     st.session_state["scroll_to_top_flag"] = False
     st.markdown("""
@@ -640,107 +659,125 @@ if st.session_state.get("scroll_to_top_flag", False):
                 if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
             } catch(e) {}
             try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-        }, 50);
+        }, 60);
     </script>
     """, unsafe_allow_html=True)
 
-# --- SEGMENTED CONTROL ORIZZONTALE (VETRINA / CERCA / CONTATTI) ---
-st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
-col_tab1, col_tab2, col_tab3 = st.columns(3)
-with col_tab1:
-    is_t1 = (active_tab == "vetrina")
-    st.button("🔥 Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)
-with col_tab2:
-    is_t2 = (active_tab == "cerca")
-    st.button("🔍 Cerca", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)
-with col_tab3:
-    is_t3 = (active_tab == "contatti")
-    st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+if st.session_state.get("scroll_to_results_flag", False):
+    st.session_state["scroll_to_results_flag"] = False
+    st.markdown("""
+    <script>
+        setTimeout(function() {
+            try {
+                const el = window.parent.document.getElementById('ancora_risultati') || document.getElementById('ancora_risultati');
+                if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
+            } catch(e) {}
+        }, 100);
+    </script>
+    """, unsafe_allow_html=True)
 
-IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
+# --- SEGMENTED CONTROL: FORZATURA SU UNICO RIGO ---
+st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
+col_tab1, col_tab2, col_tab3 = st.columns(3)[cite: 3]
+with col_tab1:
+    is_t1 = (active_tab == "vetrina")[cite: 3]
+    st.button("🔥 Vetrina", key="nav_btn_vetrina", type="primary" if is_t1 else "secondary", on_click=set_tab, args=("vetrina",), use_container_width=True)[cite: 3]
+with col_tab2:
+    is_t2 = (active_tab == "cerca")[cite: 3]
+    st.button("🔍 Cerca", key="nav_btn_cerca", type="primary" if is_t2 else "secondary", on_click=set_tab, args=("cerca",), use_container_width=True)[cite: 3]
+with col_tab3:
+    is_t3 = (active_tab == "contatti")[cite: 3]
+    st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)[cite: 3]
+st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
+
+IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"[cite: 3]
 
 def render_product_card(p, tab_key="main"):
-    del tab_key
-    with st.container(border=True):
-        col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])
+    del tab_key[cite: 3]
+    with st.container(border=True):[cite: 3]
+        col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])[cite: 3]
 
-        titolo = str(p.get("titolo") or "Prodotto Amazon")
-        link = str(p.get("link_affiliato") or "")
-        safe_title_html = html.escape(titolo)
-        safe_title_attr = html.escape(titolo, quote=True)
-        safe_link_attr = html.escape(link, quote=True)
-        prezzo_verificato = p.get("prezzo_verificato") is True
+        titolo = str(p.get("titolo") or "Prodotto Amazon")[cite: 3]
+        link = str(p.get("link_affiliato") or "")[cite: 3]
+        safe_title_html = html.escape(titolo)[cite: 3]
+        safe_title_attr = html.escape(titolo, quote=True)[cite: 3]
+        safe_link_attr = html.escape(link, quote=True)[cite: 3]
+        prezzo_verificato = p.get("prezzo_verificato") is True[cite: 3]
 
-        with col_left:
-            img_url = str(p.get("immagine_url") or IMG_FALLBACK_SVG)
-            safe_img_url = html.escape(img_url, quote=True)
-            safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)
+        with col_left:[cite: 3]
+            img_url = str(p.get("immagine_url") or IMG_FALLBACK_SVG)[cite: 3]
+            safe_img_url = html.escape(img_url, quote=True)[cite: 3]
+            safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)[cite: 3]
             st.markdown(
                 f'<div class="product-img-wrapper-full"><img src="{safe_img_url}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src=\'{safe_fallback}\';" alt="{safe_title_attr}"></div>',
                 unsafe_allow_html=True,
-            )
+            )[cite: 3]
 
-        with col_center:
-            st.markdown(f"<div class='deal-title'>{safe_title_html}</div>", unsafe_allow_html=True)
+        with col_center:[cite: 3]
+            st.markdown(f"<div class='deal-title'>{safe_title_html}</div>", unsafe_allow_html=True)[cite: 3]
 
-            if prezzo_verificato:
-                prezzo_finale = float(p.get("prezzo_finale") or 0.0)
-                prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)
-                sconto = html.escape(str(p.get("sconto") or ""))
-                badge_html = f"<span class='deal-badge'>{sconto}</span>" if sconto else ""
+            if prezzo_verificato:[cite: 3]
+                prezzo_finale = float(p.get("prezzo_finale") or 0.0)[cite: 3]
+                prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)[cite: 3]
+                sconto = html.escape(str(p.get("sconto") or ""))[cite: 3]
+                badge_html = f"<span class='deal-badge'>{sconto}</span>" if sconto else ""[cite: 3]
                 old_price_html = (
                     f"<span class='deal-price-old'>€{prezzo_iniziale:.2f}</span>"
                     if prezzo_iniziale > prezzo_finale else ""
-                )
+                )[cite: 3]
                 prices_sub_html = (
                     f"<div class='price-subgroup-left'>{badge_html}"
                     f"<span class='deal-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}</div>"
-                )
+                )[cite: 3]
 
-                costo_raw = p.get("costo_spedizione")
+                costo_raw = p.get("costo_spedizione")[cite: 3]
                 try:
-                    costo_s = float(costo_raw) if costo_raw is not None else None
+                    costo_s = float(costo_raw) if costo_raw is not None else None[cite: 3]
                 except (TypeError, ValueError):
-                    costo_s = None
-                if p.get("is_prime") is True:
-                    ship_html = "<span class='shipping-badge-prime'>prime</span>"
-                elif p.get("is_sped_gratis") is True:
-                    ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"
-                elif costo_s is not None and costo_s > 0:
-                    ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"
+                    costo_s = None[cite: 3]
+                if p.get("is_prime") is True:[cite: 3]
+                    ship_html = "<span class='shipping-badge-prime'>prime</span>"[cite: 3]
+                elif p.get("is_sped_gratis") is True:[cite: 3]
+                    ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"[cite: 3]
+                elif costo_s is not None and costo_s > 0:[cite: 3]
+                    ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"[cite: 3]
                 else:
-                    ship_html = "<span class='shipping-badge-unknown'>🚚 Verifica</span>"
+                    ship_html = "<span class='shipping-badge-unknown'>🚚 Verifica</span>"[cite: 3]
 
                 st.markdown(
                     f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>"
                     "<div class='price-source-note'>Prezzi e disponibilità possono variare.</div>",
                     unsafe_allow_html=True,
                 )
-                buy_label = "🛒 Acquista su Amazon"
+                buy_label = "🛒 Acquista su Amazon"[cite: 3]
             else:
                 st.markdown(
                     "<div class='price-unverified'>Vedi prezzo su Amazon</div>"
                     "<div class='price-source-note'>Prezzo verificato su Amazon.</div>",
                     unsafe_allow_html=True,
                 )
-                buy_label = "🛒 Vedi su Amazon"
+                buy_label = "🛒 Vedi su Amazon"[cite: 3]
 
-            if link:
+            if link:[cite: 3]
                 st.markdown(
                     f"<a href='{safe_link_attr}' target='_blank' rel='noopener noreferrer sponsored' class='buy-btn-action' aria-label='{html.escape(buy_label, quote=True)}: {safe_title_attr}'>{buy_label}</a>"
                     "<div class='affiliate-note'>(link affiliato)</div>",
                     unsafe_allow_html=True,
                 )
+            else:
+                st.markdown(
+                    "<span class='buy-btn-action' style='opacity:.55;cursor:not-allowed;'>🛒 Link non disponibile</span>",
+                    unsafe_allow_html=True,
+                )[cite: 3]
 
-            safe_title_text = titolo.replace("\n", " ").strip()
-            share_price = f"\n💰 Prezzo rilevato: €{float(p.get('prezzo_finale', 0.0)):.2f}" if prezzo_verificato else ""
-            share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"
-            wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"
-            fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
-            ig_url = "https://www.instagram.com/"
-            tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
-            gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
+            safe_title_text = titolo.replace("\n", " ").strip()[cite: 3]
+            share_price = f"\n💰 Prezzo rilevato: €{float(p.get('prezzo_finale', 0.0)):.2f}" if prezzo_verificato else ""[cite: 3]
+            share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"[cite: 3]
+            wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"[cite: 3]
+            fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"[cite: 3]
+            ig_url = "https://www.instagram.com/"[cite: 3]
+            tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"[cite: 3]
+            gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"[cite: 3]
             copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
 
             st.markdown(
@@ -755,62 +792,62 @@ def render_product_card(p, tab_key="main"):
                 </div>
                 """,
                 unsafe_allow_html=True,
-            )
+            )[cite: 3]
 
-        with col_fb:
-            voto_raw = p.get("voto_medio")
-            num_raw = p.get("num_recensioni")
+        with col_fb:[cite: 3]
+            voto_raw = p.get("voto_medio")[cite: 3]
+            num_raw = p.get("num_recensioni")[cite: 3]
             try:
-                voto = float(voto_raw) if voto_raw is not None else None
+                voto = float(voto_raw) if voto_raw is not None else None[cite: 3]
             except (TypeError, ValueError):
-                voto = None
+                voto = None[cite: 3]
             try:
-                num_val = int(num_raw) if num_raw is not None else None
+                num_val = int(num_raw) if num_raw is not None else None[cite: 3]
             except (TypeError, ValueError):
-                num_val = None
+                num_val = None[cite: 3]
 
-            if voto is not None and 0 < voto <= 5:
-                voto_str = f"{voto:.1f}".replace(".", ",")
-                stelle_piene = max(0, min(5, int(round(voto))))
-                stelle_icon = "★" * stelle_piene + "☆" * (5 - stelle_piene)
-                count_html = f"<span class='feedback-subcount'>({num_val})</span>" if num_val is not None else ""
+            if voto is not None and 0 < voto <= 5:[cite: 3]
+                voto_str = f"{voto:.1f}".replace(".", ",")[cite: 3]
+                stelle_piene = max(0, min(5, int(round(voto))))[cite: 3]
+                stelle_icon = "★" * stelle_piene + "☆" * (5 - stelle_piene)[cite: 3]
+                count_html = f"<span class='feedback-subcount'>({num_val})</span>" if num_val is not None else ""[cite: 3]
                 feedback_html = (
                     "<div class='feedback-container'><div class='feedback-stars-row'>"
                     f"<span class='feedback-stars'>{stelle_icon}</span>"
                     f"<span class='feedback-score-text'>{voto_str}</span>{count_html}</div></div>"
-                )
+                )[cite: 3]
             else:
                 feedback_html = (
                     "<div class='feedback-container'><div class='feedback-stars-row'>"
                     "<span class='feedback-score-text'>Recensioni su Amazon</span></div></div>"
                 )
-            st.markdown(feedback_html, unsafe_allow_html=True)
+            st.markdown(feedback_html, unsafe_allow_html=True)[cite: 3]
 
-st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
+st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)[cite: 3]
 
-if active_tab == "vetrina":
+if active_tab == "vetrina":[cite: 3]
     st.markdown("""
         <h2 style='font-size: 0.90rem; font-weight: 800; color: #064e3b; margin: 2px 0 2px 2px;'>🔥 Offerte in Vetrina</h2>
         <p style='font-size: 0.70rem; color: #475569; margin: 0 0 6px 2px;'>Prezzi e sconti confermati su Amazon al momento dell'acquisto.</p>
     """, unsafe_allow_html=True)
 
-    vetrina_items = st.session_state.get("offerte_vetrina", [])
-    if vetrina_items:
-        for idx in range(0, len(vetrina_items), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(vetrina_items[idx], tab_key=f"vetrina_{idx}")
-            if idx + 1 < len(vetrina_items):
-                with col_r:
-                    render_product_card(vetrina_items[idx + 1], tab_key=f"vetrina_{idx + 1}")
+    vetrina_items = st.session_state.get("offerte_vetrina", [])[cite: 3]
+    if vetrina_items:[cite: 3]
+        for idx in range(0, len(vetrina_items), 2):[cite: 3]
+            col_l, col_r = st.columns(2)[cite: 3]
+            with col_l:[cite: 3]
+                render_product_card(vetrina_items[idx], tab_key=f"vetrina_{idx}")[cite: 3]
+            if idx + 1 < len(vetrina_items):[cite: 3]
+                with col_r:[cite: 3]
+                    render_product_card(vetrina_items[idx + 1], tab_key=f"vetrina_{idx + 1}")[cite: 3]
     else:
-        st.info("Nessun prodotto disponibile in vetrina al momento.")
+        st.info("Nessun prodotto disponibile in vetrina al momento.")[cite: 3]
 
-elif active_tab == "cerca":
-    if st.session_state.get("cerca_radio_sort") == "Numero di vendite":
-        st.session_state["cerca_radio_sort"] = "Popolarità"
+elif active_tab == "cerca":[cite: 3]
+    if st.session_state.get("cerca_radio_sort") == "Numero di vendite":[cite: 3]
+        st.session_state["cerca_radio_sort"] = "Popolarità"[cite: 3]
 
-    # --- BARRA DI RICERCA UNIFICATA CON LENTE INTEGRATA ---
+    # --- BARRA DI RICERCA CON LENTE INTEGRATA ---
     st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
     st.text_input(
         "cerca_input_main",
@@ -822,7 +859,7 @@ elif active_tab == "cerca":
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- FILTER CHIPS: ORDINAMENTO DIRETTO ---
+    # --- FILTER CHIPS: ORDINAMENTO RAPIDO ---
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
@@ -833,7 +870,7 @@ elif active_tab == "cerca":
         args=(False,)
     )
 
-    # --- FILTRI SECONDARI RACCHIUSI IN ACCORDION ---
+    # --- ACCORDION FILTRI SECONDARI ---
     with st.expander("⚙️ Filtri avanzati (Sconto & Prime)"):
         st.radio(
             "Fascia Sconto:",
@@ -852,52 +889,54 @@ elif active_tab == "cerca":
             args=(False,)
         )
 
-    if st.session_state.get("search_notice"):
-        st.info(st.session_state.get("search_notice"))
+    if st.session_state.get("search_notice"):[cite: 3]
+        st.info(st.session_state.get("search_notice"))[cite: 3]
 
-    prodotti_cerca = st.session_state.get("offerte", [])
-    if prodotti_cerca:
-        tot_offerte = len(prodotti_cerca)
-        tot_pagine = max(1, (tot_offerte + 9) // 10)
+    prodotti_cerca = st.session_state.get("offerte", [])[cite: 3]
+    if prodotti_cerca:[cite: 3]
+        tot_offerte = len(prodotti_cerca)[cite: 3]
+        tot_pagine = max(1, (tot_offerte + 9) // 10)[cite: 3]
 
-        if tot_pagine > 1:
+        if tot_pagine > 1:[cite: 3]
             st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
-            cols_pag = st.columns([1] * tot_pagine + [max(1, 10 - tot_pagine)])
-            for p_num in range(1, tot_pagine + 1):
-                with cols_pag[p_num - 1]:
-                    is_active = (st.session_state.get("current_page", 1) == p_num)
-                    btn_type = "primary" if is_active else "secondary"
+            cols_pag = st.columns([1] * tot_pagine + [max(1, 10 - tot_pagine)])[cite: 3]
+            for p_num in range(1, tot_pagine + 1):[cite: 3]
+                with cols_pag[p_num - 1]:[cite: 3]
+                    is_active = (st.session_state.get("current_page", 1) == p_num)[cite: 3]
+                    btn_type = "primary" if is_active else "secondary"[cite: 3]
                     if st.button(f"P.{p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
-                        st.session_state["current_page"] = p_num
-                        st.session_state["current_tab"] = "cerca"
-                        st.session_state["scroll_to_top_flag"] = True
-                        st.rerun()
+                        st.session_state["current_page"] = p_num[cite: 3]
+                        st.session_state["current_tab"] = "cerca"[cite: 3]
+                        st.session_state["scroll_to_results_flag"] = True
+                        st.rerun()[cite: 3]
 
-        start_idx = (st.session_state.get("current_page", 1) - 1) * 10
-        end_idx = min(start_idx + 10, tot_offerte)
-        offerte_pagina = prodotti_cerca[start_idx:end_idx]
+        start_idx = (st.session_state.get("current_page", 1) - 1) * 10[cite: 3]
+        end_idx = min(start_idx + 10, tot_offerte)[cite: 3]
+        offerte_pagina = prodotti_cerca[start_idx:end_idx][cite: 3]
 
-        st.markdown(f"<p style='font-size: 0.70rem; font-weight: 700; color: #0369a1; margin: 4px 0 2px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
+        # ANCORA DI DESTINAZIONE DELLO SCROLL
+        st.markdown('<div id="ancora_risultati" style="scroll-margin-top: 15px;"></div>', unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 0.72rem; font-weight: 800; color: #0369a1; margin: 4px 0 3px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
 
-        for idx in range(0, len(offerte_pagina), 2):
-            col_l, col_r = st.columns(2)
-            with col_l:
-                render_product_card(offerte_pagina[idx], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx}")
-            if idx + 1 < len(offerte_pagina):
-                with col_r:
-                    render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx + 1}")
+        for idx in range(0, len(offerte_pagina), 2):[cite: 3]
+            col_l, col_r = st.columns(2)[cite: 3]
+            with col_l:[cite: 3]
+                render_product_card(offerte_pagina[idx], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx}")[cite: 3]
+            if idx + 1 < len(offerte_pagina):[cite: 3]
+                with col_r:[cite: 3]
+                    render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx + 1}")[cite: 3]
 
-        # --- PULSANTE '+ ALTRI 10' MOSTRATO ESCLUSIVAMENTE IN FONDO ---
+        # PULSANTE + ALTRI 10 ESCLUSIVAMENTE IN FONDO
         st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
         st.button(
             "➕ Carica altri 10 prodotti ⬇️", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
-            use_container_width=True, disabled=int(st.session_state.get("item_count", 10)) >= MAX_RESULTS
+            use_container_width=True, disabled=int(st.session_state.get("item_count", 10)) >= MAX_RESULTS[cite: 3]
         )
 
-    elif st.session_state.get("has_searched", False):
+    elif st.session_state.get("has_searched", False):[cite: 3]
         st.warning("Nessun prodotto trovato. Prova con una parola chiave più generica o imposta lo Sconto su 'Tutti'.")
 
-elif active_tab == "privacy":
+elif active_tab == "privacy":[cite: 3]
     st.markdown("""
     <h2 style='font-size:1.00rem;color:#064e3b;margin:4px 0 6px 2px;'>Informativa privacy</h2>
     <div style='font-size:.76rem;line-height:1.5;color:#334155;padding:4px 6px;'>
@@ -906,40 +945,40 @@ elif active_tab == "privacy":
     <p><strong>Affiliazione Amazon:</strong> Questo sito partecipa al Programma di Affiliazione Amazon, un programma pubblicitario che consente di percepire commissioni pubblicitarie collegando a Amazon.it.</p>
     </div>
     """, unsafe_allow_html=True)
-    st.button("← Torna alla vetrina", key="privacy_back", on_click=set_tab, args=("vetrina",))
+    st.button("← Torna alla vetrina", key="privacy_back", on_click=set_tab, args=("vetrina",))[cite: 3]
 
-elif active_tab == "contatti":
-    with st.container(border=True):
+elif active_tab == "contatti":[cite: 3]
+    with st.container(border=True):[cite: 3]
         st.markdown("<p style='font-size: 0.80rem; font-weight: 700; color: #064e3b; margin-bottom: 4px;'>Inviaci un messaggio o una richiesta (Campi obbligatori):</p>", unsafe_allow_html=True)
-        with st.form("form_scheda_contatti", clear_on_submit=True):
-            nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
-            tel_val = st.text_input("Numero di telefono (10 cifre)*", placeholder="Es. 3401234567")
-            email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
+        with st.form("form_scheda_contatti", clear_on_submit=True):[cite: 3]
+            nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")[cite: 3]
+            tel_val = st.text_input("Numero di telefono (10 cifre)*", placeholder="Es. 3401234567")[cite: 3]
+            email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")[cite: 3]
             note_val = st.text_area("Messaggio*", placeholder="Scrivi qui il tuo messaggio...", height=110)
             privacy_ack = st.checkbox("Accetto l'informativa privacy.*")
             st.markdown("<small><a href='?privacy=1' target='_self'>Leggi privacy</a></small>", unsafe_allow_html=True)
             
-            btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)
-            if btn_send_form:
-                valido, msg_validazione = valida_campi_contatto(nome_val, tel_val, email_val, note_val)
-                if not valido:
-                    st.error(msg_validazione)
-                elif not privacy_ack:
+            btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)[cite: 3]
+            if btn_send_form:[cite: 3]
+                valido, msg_validazione = valida_campi_contatto(nome_val, tel_val, email_val, note_val)[cite: 3]
+                if not valido:[cite: 3]
+                    st.error(msg_validazione)[cite: 3]
+                elif not privacy_ack:[cite: 3]
                     st.error("Conferma di aver letto l'informativa privacy.")
-                elif not verifica_puo_inviare(email_val.strip()):
-                    st.warning("Hai già inviato un messaggio oggi con questa email. Riprova domani!")
+                elif not verifica_puo_inviare(email_val.strip()):[cite: 3]
+                    st.warning("Hai già inviato un messaggio oggi con questa email. Riprova domani!")[cite: 3]
                 else:
                     with st.spinner("Invio in corso..."):
-                        ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
-                    if ok:
-                        registra_invio_completato(email_val.strip())
+                        ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())[cite: 3]
+                    if ok:[cite: 3]
+                        registra_invio_completato(email_val.strip())[cite: 3]
                         st.success("Messaggio inviato correttamente!")
                     else:
-                        st.error(f"Errore: {msg_err}")
+                        st.error(f"Errore: {msg_err}")[cite: 3]
 
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
 
-# --- DISCLAIMER FOOTER NON INVASIVO (SCROLLABILE) ---
+# --- DISCLAIMER FOOTER NON SOVRAPPOSTO (SCROLLABILE) ---
 st.markdown(
     """
     <div class="site-footer-box">
