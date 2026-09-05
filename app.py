@@ -81,7 +81,7 @@ st.markdown("""
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER COMPATTO A 2 RIGHE */
+    /* 1. HEADER COMPATTO */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,7 +133,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. OVERRIDE TOTALE BOTTONI: ELIMINAZIONE ROSSO */
+    /* 2. OVERRIDE TOTALE DEI BOTTONI: ZERO ROSSO */
     button[data-testid="stBaseButton-primary"],
     button[kind="primary"],
     .stButton > button[kind="primary"] {
@@ -164,7 +164,7 @@ st.markdown("""
         color: #0284c7 !important;
     }
 
-    /* 3. SEGMENTED CONTROL: 1 RIGA ORIZZONTALE */
+    /* 3. SEGMENTED CONTROL ORIZZONTALE */
     div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -242,7 +242,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH-FRIENDLY */
+    /* 5. FILTER CHIPS TOUCH: ZERO ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -283,16 +283,18 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 6. ACCORDION DEI FILTRI */
-    div[data-testid="stExpander"] {
-        background: rgba(255, 255, 255, 0.9) !important;
-        border: 1px solid rgba(2, 132, 199, 0.25) !important;
-        border-radius: 9px !important;
-        margin-bottom: 8px !important;
+    /* 6. CHECKBOX PRIME AZZURRO E COMPATTO */
+    div[data-testid="stCheckbox"] {
+        background: #ffffff !important;
+        border: 1.5px solid #bae6fd !important;
+        border-radius: 8px !important;
+        padding: 4px 10px !important;
+        margin: 4px 0 8px 0 !important;
+        width: fit-content !important;
     }
-    div[data-testid="stExpander"] details summary p {
-        font-size: 0.76rem !important;
-        font-weight: 800 !important;
+    div[data-testid="stCheckbox"] label p {
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
         color: #0369a1 !important;
     }
 
@@ -348,10 +350,10 @@ st.markdown("""
 
     @media (max-width: 580px) {
         .pcm-img-box {
-            width: 140px;
-            height: 140px;
-            min-width: 140px;
-            max-width: 140px;
+            width: 135px;
+            height: 135px;
+            min-width: 135px;
+            max-width: 135px;
         }
     }
 
@@ -534,7 +536,6 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
-    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -649,13 +650,6 @@ Messaggio / Note:
     except Exception as e:
         return False, str(e)
 
-OPZIONI_SCONTO = {
-    "Tutti": (0, 100),
-    "0-20%": (0, 20),
-    "20-50%": (20, 50),
-    ">50%": (50, 100)
-}
-
 def set_tab(tab_name):
     st.session_state["current_tab"] = tab_name
     try:
@@ -684,8 +678,6 @@ def esegui_ricerca(increment=False):
 
     kw = st.session_state.get("cerca_keyword_input", "").strip()
     sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
-    disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")
-    min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))
     free_ship = st.session_state.get("cerca_check_sped_gratis", False)
 
     risultati = ottieni_offerte_avanzate(
@@ -694,8 +686,6 @@ def esegui_ricerca(increment=False):
         solo_spedizione_gratuita=free_ship,
         min_price=None,
         max_price=None,
-        min_discount=min_d,
-        max_discount=max_d,
         item_count=target_count,
     )
 
@@ -802,7 +792,6 @@ def render_single_product_card(p, is_first=False):
     gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
     copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
 
-    # L'ID 'primo_prodotto_card' viene assegnato solo alla prima scheda della pagina
     first_attr = ' id="primo_prodotto_card" style="scroll-margin-top: 75px;"' if is_first else ''
 
     card_html = (
@@ -868,23 +857,13 @@ elif active_tab == "cerca":
         args=(False,)
     )
 
-    with st.expander("⚙️ Filtri avanzati (Sconto & Prime)"):
-        st.radio(
-            "Fascia Sconto:",
-            list(OPZIONI_SCONTO.keys()),
-            index=0,
-            horizontal=True,
-            key="cerca_radio_disc",
-            on_change=esegui_ricerca,
-            args=(False,)
-        )
-        st.checkbox(
-            "🚚 Solo spedizione Prime / Spedizione gratuita",
-            value=False,
-            key="cerca_check_sped_gratis",
-            on_change=esegui_ricerca,
-            args=(False,)
-        )
+    st.checkbox(
+        "🚚 Solo spedizione Prime / Spedizione gratuita",
+        value=False,
+        key="cerca_check_sped_gratis",
+        on_change=esegui_ricerca,
+        args=(False,)
+    )
 
     if st.session_state.get("search_notice"):
         st.info(st.session_state.get("search_notice"))
@@ -923,7 +902,7 @@ elif active_tab == "cerca":
         )
 
     elif st.session_state.get("has_searched", False):
-        st.warning("Nessun prodotto trovato. Prova con una parola chiave diversa o imposta lo Sconto su 'Tutti'.")
+        st.warning("Nessun prodotto trovato. Prova con una parola chiave diversa.")
 
 elif active_tab == "privacy":
     st.markdown("""<h2 style='font-size:1.00rem;color:#0369a1;margin:4px 0 6px 2px;'>Informativa privacy</h2><div style='font-size:.76rem;line-height:1.5;color:#334155;padding:4px 6px;'><p><strong>Titolare e contatti:</strong> davimarz.social@gmail.com.</p><p><strong>Finalità:</strong> I dati inseriti nel modulo contatti servono esclusivamente per rispondere al tuo messaggio.</p><p><strong>Affiliazione Amazon:</strong> Questo sito partecipa al Programma di Affiliazione Amazon, un programma che consente di percepire commissioni collegando a Amazon.it.</p></div>""", unsafe_allow_html=True)
@@ -960,7 +939,6 @@ elif active_tab == "contatti":
 
 st.markdown('</div>', unsafe_allow_html=True)
 
-# SCROLL ROBUSTO MEDIANTE POLLING SULLA PRIMA SCHEDA DELLA NUOVA PAGINA
 if st.session_state.get("scroll_to_results_flag", False):
     st.session_state["scroll_to_results_flag"] = False
     components.html("""
