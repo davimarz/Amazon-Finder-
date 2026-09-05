@@ -133,7 +133,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. OVERRIDE PULSANTI: ZERO ROSSO */
+    /* 2. OVERRIDE TOTALE BOTTONI: ELIMINAZIONE ROSSO */
     button[data-testid="stBaseButton-primary"],
     button[kind="primary"],
     .stButton > button[kind="primary"] {
@@ -210,7 +210,7 @@ st.markdown("""
         box-shadow: none !important;
     }
 
-    /* 4. SEARCH BAR CON LENTE INTEGRATA */
+    /* 4. SEARCH BAR CON LENTE */
     .search-box-native {
         position: relative;
         width: 100%;
@@ -242,7 +242,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH: ZERO ROSSO */
+    /* 5. FILTER CHIPS TOUCH-FRIENDLY */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -534,6 +534,7 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
+    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -745,7 +746,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
-def render_single_product_card(p):
+def render_single_product_card(p, is_first=False):
     titolo = str(p.get("titolo") or "Prodotto Amazon")
     link = str(p.get("link_affiliato") or "")
     safe_title_html = html.escape(titolo)
@@ -801,8 +802,11 @@ def render_single_product_card(p):
     gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
     copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
 
+    # L'ID 'primo_prodotto_card' viene assegnato solo alla prima scheda della pagina
+    first_attr = ' id="primo_prodotto_card" style="scroll-margin-top: 75px;"' if is_first else ''
+
     card_html = (
-        f'<div class="product-card-modern">'
+        f'<div class="product-card-modern"{first_attr}>'
         f'<div class="pcm-top">'
         f'<div class="pcm-img-box">'
         f'<img src="{safe_img_url}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src=\'{safe_fallback}\';" alt="{safe_title_attr}">'
@@ -838,8 +842,8 @@ if active_tab == "vetrina":
 
     vetrina_items = st.session_state.get("offerte_vetrina", [])
     if vetrina_items:
-        for p in vetrina_items:
-            render_single_product_card(p)
+        for idx, p in enumerate(vetrina_items):
+            render_single_product_card(p, is_first=(idx == 0))
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
@@ -858,7 +862,6 @@ elif active_tab == "cerca":
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
-        index=0,
         horizontal=True,
         key="cerca_radio_sort",
         on_change=esegui_ricerca,
@@ -908,11 +911,10 @@ elif active_tab == "cerca":
         end_idx = min(start_idx + 10, tot_offerte)
         offerte_pagina = prodotti_cerca[start_idx:end_idx]
 
-        st.markdown('<div id="ancora_risultati" style="scroll-margin-top: 15px;"></div>', unsafe_allow_html=True)
         st.markdown(f"<p style='font-size: 0.74rem; font-weight: 800; color: #0284c7; margin: 4px 0 4px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
 
-        for p in offerte_pagina:
-            render_single_product_card(p)
+        for idx, p in enumerate(offerte_pagina):
+            render_single_product_card(p, is_first=(idx == 0))
 
         st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
         st.button(
@@ -958,19 +960,28 @@ elif active_tab == "contatti":
 
 st.markdown('</div>', unsafe_allow_html=True)
 
+# SCROLL ROBUSTO MEDIANTE POLLING SULLA PRIMA SCHEDA DELLA NUOVA PAGINA
 if st.session_state.get("scroll_to_results_flag", False):
     st.session_state["scroll_to_results_flag"] = False
     components.html("""
     <script>
-        setTimeout(function() {
+        var attempts = 0;
+        var checkTarget = setInterval(function() {
+            attempts++;
             try {
                 var doc = window.parent.document;
-                var target = doc.getElementById('ancora_risultati');
+                var target = doc.getElementById('primo_prodotto_card');
                 if (target) {
                     target.scrollIntoView({behavior: 'smooth', block: 'start'});
+                    clearInterval(checkTarget);
                 }
-            } catch(e) {}
-        }, 120);
+            } catch(e) {
+                clearInterval(checkTarget);
+            }
+            if (attempts >= 30) {
+                clearInterval(checkTarget);
+            }
+        }, 80);
     </script>
     """, height=0, width=0)
 
