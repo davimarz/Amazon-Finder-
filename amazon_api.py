@@ -232,8 +232,6 @@ def _api_item_to_product(
     price_block = listing.get("price", {}) or {}
 
     price = _safe_float(price_block.get("money", {}).get("amount")) or 0.0
-    if price <= 0:
-        return None
 
     saving_basis = _safe_float(
         price_block.get("savingBasis", {}).get("money", {}).get("amount")
@@ -246,11 +244,12 @@ def _api_item_to_product(
     except (TypeError, ValueError):
         discount_value = 0
 
-    if discount_value <= 0 and old_price > price:
+    if discount_value <= 0 and old_price > price and price > 0:
         discount_value = int(round(((old_price - price) / old_price) * 100))
 
     deal = listing.get("dealDetails", {}) or {}
     access_type = str(deal.get("accessType", "")).upper()
+    
     is_prime = True if prime_filter_applied or "PRIME" in access_type or "PRIME" in str(item).upper() else None
     is_free = True if (is_prime or price >= 35.0) else None
 
@@ -260,7 +259,7 @@ def _api_item_to_product(
         "immagine_url": str(image_url or ""),
         "prezzo_iniziale": float(old_price),
         "prezzo_finale": float(price),
-        "prezzo_verificato": True,
+        "prezzo_verificato": bool(price > 0),
         "sconto": f"-{discount_value}%" if discount_value > 0 else "",
         "sconto_val": discount_value,
         "is_prime": is_prime,
@@ -277,20 +276,13 @@ def _filter_product(
     product: Dict[str, Any],
     min_price: Optional[float],
     max_price: Optional[float],
-    min_discount: int,
-    max_discount: int,
     require_free_or_prime: bool = False,
 ) -> bool:
     price = float(product.get("prezzo_finale") or 0.0)
-    discount = int(product.get("sconto_val") or 0)
 
-    if price <= 0:
+    if min_price is not None and price > 0 and price < min_price:
         return False
-    if min_price is not None and price < min_price:
-        return False
-    if max_price is not None and price > max_price:
-        return False
-    if discount < min_discount or discount > max_discount:
+    if max_price is not None and price > 0 and price > max_price:
         return False
 
     if require_free_or_prime:
@@ -411,8 +403,6 @@ def _extract_products_from_html(
     partner_tag: str,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
-    min_discount: int = 0,
-    max_discount: int = 100,
     require_free_or_prime: bool = False,
 ) -> List[Dict[str, Any]]:
     if not html_text:
@@ -436,9 +426,10 @@ def _extract_products_from_html(
             continue
 
         title_element = (
-            item.select_one("h2 span")
-            or item.select_one("h2 a span")
+            item.select_one("h2 a span")
+            or item.select_one("h2 span")
             or item.select_one("h2 a")
+            or item.select_one(".s-title-instructions-style span")
             or item.select_one("a.a-link-normal span.a-text-normal")
             or item.find("h2")
         )
@@ -446,29 +437,42 @@ def _extract_products_from_html(
             continue
         title = title_element.get_text(" ", strip=True)
 
+        price = 0.0
         price_element = (
-            item.select_one("span.a-price:not([data-a-strike='true']) span.a-offscreen")
-            or item.select_one("span.a-price span.a-offscreen")
-            or item.select_one("span.a-price-whole")
+            item.select_one(".a-price-range .a-price:not([data-a-strike='true'])")
+            or item.select_one("span.a-price:not([data-a-strike='true'])")
+            or item.select_one("span.a-price")
             or item.select_one(".a-color-price")
-            or item.select_one("span.a-offscreen")
-            or item.select_one(".a-color-base")
         )
-        price = parse_price(price_element.get_text(" ", strip=True)) if price_element else 0.0
-        if price <= 0:
-            continue
+        if price_element:
+            offscreen = price_element.select_one(".a-offscreen")
+            price = parse_price(offscreen.get_text(" ", strip=True) if offscreen else price_element.get_text(" ", strip=True))
 
+        if price <= 0:
+            whole_elem = item.select_one(".a-price-whole")
+            if whole_elem:
+                frac_elem = item.select_one(".a-price-fraction")
+                whole_str = whole_elem.get_text(strip=True).replace(".", "").replace(",", "")
+                frac_str = frac_elem.get_text(strip=True) if frac_elem else "00"
+                try:
+                    price = float(f"{whole_str}.{frac_str}")
+                except ValueError:
+                    pass
+
+        old_price = price
         old_price_element = (
-            item.select_one("span.a-price[data-a-strike='true'] span.a-offscreen")
-            or item.select_one("span.a-text-price span.a-offscreen")
-            or item.select_one("span.a-price[data-a-strike='true']")
+            item.select_one("span.a-price[data-a-strike='true']")
+            or item.select_one("span.a-text-price")
+            or item.select_one("span[data-a-strike='true']")
         )
-        old_price = parse_price(old_price_element.get_text(" ", strip=True)) if old_price_element else price
-        if old_price < price:
-            old_price = price
+        if old_price_element:
+            offscreen_old = old_price_element.select_one(".a-offscreen")
+            old_p_val = parse_price(offscreen_old.get_text(" ", strip=True) if offscreen_old else old_price_element.get_text(" ", strip=True))
+            if old_p_val > price:
+                old_price = old_p_val
 
         discount_value = 0
-        if old_price > price:
+        if old_price > price > 0:
             discount_value = int(round(((old_price - price) / old_price) * 100))
 
         image_url = ""
@@ -485,7 +489,7 @@ def _extract_products_from_html(
             "immagine_url": image_url,
             "prezzo_iniziale": float(old_price),
             "prezzo_finale": float(price),
-            "prezzo_verificato": True,
+            "prezzo_verificato": bool(price > 0),
             "sconto": f"-{discount_value}%" if discount_value > 0 else "",
             "sconto_val": discount_value,
             "is_prime": is_prime,
@@ -501,8 +505,6 @@ def _extract_products_from_html(
             product,
             min_price,
             max_price,
-            min_discount,
-            max_discount,
             require_free_or_prime=require_free_or_prime,
         ):
             continue
@@ -526,8 +528,6 @@ def _get_item_from_creators_api(
     partner_tag: str,
     min_price: Optional[float],
     max_price: Optional[float],
-    min_discount: int,
-    max_discount: int,
     require_free_or_prime: bool = False,
 ) -> Optional[Dict[str, Any]]:
     payload = {
@@ -560,8 +560,6 @@ def _get_item_from_creators_api(
         product,
         min_price,
         max_price,
-        min_discount,
-        max_discount,
         require_free_or_prime=require_free_or_prime,
     ):
         return None
@@ -575,8 +573,6 @@ def _search_creators_api(
     solo_spedizione_gratuita: bool,
     min_price: Optional[float],
     max_price: Optional[float],
-    min_discount: int,
-    max_discount: int,
     item_count: int,
 ) -> Optional[List[Dict[str, Any]]]:
     if not get_creators_access_token():
@@ -610,8 +606,6 @@ def _search_creators_api(
             payload["minPrice"] = max(1, int(round(min_price * 100)))
         if max_price is not None:
             payload["maxPrice"] = max(1, int(round(max_price * 100)))
-        if min_discount > 0:
-            payload["minSavingPercent"] = min(99, int(min_discount))
         if solo_spedizione_gratuita:
             payload["deliveryFlags"] = ["Prime"]
 
@@ -632,7 +626,7 @@ def _search_creators_api(
             )
             if not product:
                 continue
-            if _filter_product(product, min_price, max_price, min_discount, max_discount):
+            if _filter_product(product, min_price, max_price):
                 parsed_page.append(product)
 
         _append_unique(collected, parsed_page, seen_asins)
@@ -649,8 +643,6 @@ def _search_html_fallback(
     solo_spedizione_gratuita: bool,
     min_price: Optional[float],
     max_price: Optional[float],
-    min_discount: int,
-    max_discount: int,
     item_count: int,
 ) -> List[Dict[str, Any]]:
     query_encoded = urllib.parse.quote_plus(keyword)
@@ -660,7 +652,6 @@ def _search_html_fallback(
 
     max_pages = min(4, max(2, (item_count + 9) // 10 + 1))
     for page in range(1, max_pages + 1):
-        # URL naturale e pulito: garantisce la restituzione di tutti i prodotti della marca
         url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
         html_text = _fetch_html_cached(url)
         if not html_text:
@@ -673,8 +664,6 @@ def _search_html_fallback(
             partner_tag,
             min_price=min_price,
             max_price=max_price,
-            min_discount=min_discount,
-            max_discount=max_discount,
             require_free_or_prime=solo_spedizione_gratuita,
         )
         _append_unique(collected, products, seen_asins)
@@ -682,7 +671,6 @@ def _search_html_fallback(
         if len(collected) >= item_count:
             break
 
-    # Ordinamento robusto in memoria Python (evita i blocchi URL di Amazon)
     if sort_type == "Prezzo minimo":
         collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
     elif sort_type == "Vendite":
@@ -698,7 +686,6 @@ def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int =
     products = ottieni_offerte_avanzate(
         keyword=keyword,
         sort_type="Vendite",
-        min_discount=5,
         item_count=item_count * 2,
         _partner_tag_override=configured_tag,
     )
@@ -709,7 +696,6 @@ def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int =
     fallback = ottieni_offerte_avanzate(
         keyword="offerte del giorno",
         sort_type="Vendite",
-        min_discount=0,
         item_count=item_count * 2,
         _partner_tag_override=configured_tag,
     )
@@ -725,8 +711,6 @@ def ottieni_offerte_avanzate(
     solo_spedizione_gratuita: bool = False,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
-    min_discount: int = 0,
-    max_discount: int = 100,
     item_count: int = 10,
     categoria: str = "",
     sottocategoria: str = "",
@@ -736,8 +720,6 @@ def ottieni_offerte_avanzate(
 
     partner_tag = get_partner_tag() or str(_partner_tag_override or "").strip()
     item_count = max(1, min(int(item_count or 10), MAX_RESULTS))
-    min_discount = max(0, min(int(min_discount or 0), 100))
-    max_discount = max(min_discount, min(int(max_discount or 100), 100))
 
     clean_keyword = (keyword or "").strip()
 
@@ -759,8 +741,6 @@ def ottieni_offerte_avanzate(
             partner_tag,
             min_price,
             max_price,
-            min_discount,
-            max_discount,
             require_free_or_prime=solo_spedizione_gratuita,
         )
         if api_product:
@@ -773,8 +753,6 @@ def ottieni_offerte_avanzate(
             solo_spedizione_gratuita,
             min_price,
             max_price,
-            min_discount,
-            max_discount,
             10,
         )
         for product in fallback_products:
@@ -791,8 +769,6 @@ def ottieni_offerte_avanzate(
         solo_spedizione_gratuita,
         min_price,
         max_price,
-        min_discount,
-        max_discount,
         item_count,
     )
 
@@ -806,8 +782,6 @@ def ottieni_offerte_avanzate(
             solo_spedizione_gratuita,
             min_price,
             max_price,
-            min_discount,
-            max_discount,
             item_count * 2,
         )
         seen_asins = {p["asin"] for p in collected if p.get("asin")}
@@ -818,8 +792,7 @@ def ottieni_offerte_avanzate(
             if len(collected) >= item_count:
                 break
 
-    # Rilassamento automatico dei filtri se la ricerca non restituisce prodotti
-    if not collected and (min_discount > 0 or max_discount < 100 or solo_spedizione_gratuita):
+    if not collected and solo_spedizione_gratuita:
         html_products_relax = _search_html_fallback(
             query,
             sort_type,
@@ -827,8 +800,6 @@ def ottieni_offerte_avanzate(
             solo_spedizione_gratuita=False,
             min_price=None,
             max_price=None,
-            min_discount=0,
-            max_discount=100,
             item_count=item_count,
         )
         collected = html_products_relax
