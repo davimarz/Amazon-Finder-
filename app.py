@@ -81,7 +81,7 @@ st.markdown("""
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER: 2 RIGHE COMPATTE NON SPEZZATE */
+    /* 1. HEADER: 2 RIGHE COMPATTE */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,7 +133,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. OVERRIDE PULSANTI: ELIMINAZIONE TOTALE DEL ROSSO STREAMLIT */
+    /* 2. OVERRIDE TOTALE PULSANTI: ELIMINAZIONE ROSSO */
     button[data-testid="stBaseButton-primary"],
     button[kind="primary"],
     .stButton > button[kind="primary"] {
@@ -164,7 +164,7 @@ st.markdown("""
         color: #0284c7 !important;
     }
 
-    /* 3. SEGMENTED CONTROL: 1 RIGA ORIZZONTALE BLOCCATA */
+    /* 3. SEGMENTED CONTROL: 1 RIGA ORIZZONTALE */
     div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -242,7 +242,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH-FRIENDLY (NO RADIO NATIVI ROSSI) */
+    /* 5. FILTER CHIPS TOUCH-FRIENDLY */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -267,6 +267,7 @@ st.markdown("""
         text-align: center !important;
         justify-content: center !important;
         cursor: pointer !important;
+        transition: all 0.15s ease;
     }
     div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
         background: #0284c7 !important;
@@ -298,7 +299,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO RESPONSIVE MOBILE */
+    /* 7. SCHEDA PRODOTTO RESPONSIVE */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -374,7 +375,6 @@ st.markdown("""
         flex-wrap: wrap;
     }
 
-    /* BADGE SCONTO: ARANCIONE VIVACE */
     .pcm-discount-badge {
         background-color: #ea580c;
         color: #ffffff;
@@ -464,7 +464,6 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* PULSANTE AMAZON ORO / AMBRA */
     .pcm-buy-btn {
         display: flex;
         align-items: center;
@@ -482,7 +481,6 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
     }
 
-    /* SOCIAL SHARE ROW */
     .pcm-social-row {
         display: flex;
         align-items: center;
@@ -511,7 +509,6 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
-    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -748,7 +745,6 @@ def render_single_product_card(p):
     except (TypeError, ValueError):
         costo_s = None[cite: 3]
 
-    # BADGES SPEDIZIONE
     if p.get("is_prime") is True:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span>"
     elif p.get("is_sped_gratis") is True or prezzo_finale >= 35.0:
@@ -758,7 +754,6 @@ def render_single_product_card(p):
     else:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span> <span class='shipping-free-pill'>🚚 Sped. Gratis</span>"
 
-    # FEEDBACK RECENSIONI
     voto_raw = p.get("voto_medio")[cite: 3]
     try:
         voto = float(voto_raw) if voto_raw is not None else 4.4
@@ -781,7 +776,6 @@ def render_single_product_card(p):
     gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"[cite: 3]
     copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
 
-    # GENERAZIONE HTML SENZA SPAZI INIZIALI PER EVITARE CODE BLOCKS
     card_html = (
         f'<div class="product-card-modern">'
         f'<div class="pcm-top">'
