@@ -67,71 +67,83 @@ st.markdown("""
     }
 
     .stApp {
-        background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #e0f2fe 100%) !important;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%) !important;
         background-attachment: fixed !important;
         color: #0f172a !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
     }
 
     .block-container {
-        padding: 0.20rem 0.35rem 95px 0.35rem !important;
-        max-width: 100% !important;
+        padding: 0.25rem 0.40rem 100px 0.40rem !important;
+        max-width: 820px !important;
+        margin: 0 auto !important;
     }
 
-    /* --- INTESTAZIONE COMPATTA IN 2 RIGHE SOTTO I 200PX --- */
-    .hero-container-single {
+    /* --- INTESTAZIONE A 2 RIGHE SOTTO I 200PX --- */
+    .hero-box-clean {
         text-align: center;
-        margin: 2px 0 6px 0;
-        padding: 2px 0;
+        margin: 2px auto 8px auto;
+        padding: 4px 6px;
         width: 100%;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(2, 132, 199, 0.2);
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
     }
-    .hero-title-single {
-        font-size: clamp(1.45rem, 5.5vw, 2.1rem) !important;
+    .hero-title-nowrap {
+        font-size: clamp(1.4rem, 6.2vw, 2.2rem) !important;
         font-weight: 900 !important;
-        line-height: 1.1 !important;
+        line-height: 1.15 !important;
         margin: 0 !important;
         white-space: nowrap !important;
         overflow: hidden;
         text-overflow: ellipsis;
-        background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
+        background: linear-gradient(90deg, #0369a1 0%, #0284c7 60%, #0ea5e9 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
     }
-    .hero-subtitle-single {
-        display: flex;
+    .hero-sub-nowrap {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        font-size: 0.72rem;
-        color: #334155;
-        margin-top: 2px;
         white-space: nowrap !important;
+        margin-top: 3px;
     }
-    .ai-badge-chip {
+    .badge-ai-deals {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.65rem;
+        font-size: 0.68rem;
         font-weight: 800;
-        padding: 1px 6px;
-        border-radius: 4px;
+        padding: 2px 7px;
+        border-radius: 5px;
         letter-spacing: 0.5px;
         line-height: 1.2;
     }
+    .hero-author-text {
+        font-size: 0.74rem;
+        color: #334155;
+        font-weight: 600;
+    }
+    .hero-author-text strong {
+        color: #0369a1;
+    }
 
-    /* --- SEGMENTED CONTROL: 3 PULSANTI FORZATI SU UN'UNICA RIGA (BLU/CIANO NAVY) --- */
+    /* --- SEGMENTED CONTROL: 3 BOTTONI BLINDATI SU UN'UNICA RIGA --- */
     .nav-bar-container {
         width: 100% !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 8px !important;
     }
     .nav-bar-container [data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        align-items: stretch !important;
-        gap: 3px !important;
+        justify-content: space-between !important;
+        gap: 4px !important;
         background: #0f172a !important;
         border: 1px solid #334155 !important;
-        border-radius: 9px !important;
+        border-radius: 10px !important;
         padding: 3px !important;
         width: 100% !important;
     }
@@ -142,18 +154,15 @@ st.markdown("""
         margin: 0 !important;
         padding: 0 !important;
     }
-    .nav-bar-container [data-testid="column"] > div {
-        width: 100% !important;
-    }
     .nav-bar-container button {
         width: 100% !important;
         white-space: nowrap !important;
-        font-size: 0.74rem !important;
+        font-size: 0.78rem !important;
         font-weight: 700 !important;
-        padding: 4px 1px !important;
-        min-height: 32px !important;
-        height: 32px !important;
-        border-radius: 7px !important;
+        padding: 6px 2px !important;
+        min-height: 34px !important;
+        height: 34px !important;
+        border-radius: 8px !important;
         border: none !important;
         background: transparent !important;
         color: #94a3b8 !important;
@@ -167,7 +176,7 @@ st.markdown("""
     .nav-bar-container button[kind="primary"] {
         color: #ffffff !important;
         background: #0284c7 !important;
-        box-shadow: 0 1px 5px rgba(2, 132, 199, 0.45) !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45) !important;
     }
     .nav-bar-container button[kind="primary"] p {
         color: #ffffff !important;
@@ -178,51 +187,51 @@ st.markdown("""
     .search-box-native {
         position: relative;
         width: 100%;
-        margin-bottom: 5px;
+        margin-bottom: 6px;
     }
     div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) {
         margin: 0 !important;
         padding: 0 !important;
     }
     div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) input {
-        border-radius: 8px !important;
+        border-radius: 9px !important;
         border: 1.5px solid #0284c7 !important;
         padding-right: 36px !important;
-        font-size: 0.82rem !important;
+        font-size: 0.84rem !important;
         font-weight: 600 !important;
-        height: 36px !important;
+        height: 38px !important;
         background-color: #ffffff !important;
         box-shadow: 0 1px 4px rgba(2, 132, 199, 0.15) !important;
     }
     .search-lens-inside {
         position: absolute;
-        right: 10px;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         pointer-events: none;
         color: #0284c7;
-        font-size: 0.85rem;
+        font-size: 0.95rem;
         font-weight: 900;
         z-index: 5;
     }
 
-    /* --- FILTER CHIPS TOUCH-FRIENDLY (ORIZZONTALI BLU/NAVY) --- */
+    /* --- FILTER CHIPS TOUCH-FRIENDLY (ORIZZONTALI BLU/CIANO) --- */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
-        font-size: 0.72rem !important;
+        font-size: 0.74rem !important;
         font-weight: 800 !important;
-        margin-bottom: 2px !important;
+        margin-bottom: 3px !important;
     }
     div[data-testid="stRadio"] > div {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: wrap !important;
-        gap: 4px !important;
+        gap: 5px !important;
         width: 100% !important;
     }
     div[data-testid="stRadio"] label[data-baseweb="radio"] {
         background: #ffffff !important;
-        padding: 4px 10px !important;
+        padding: 5px 12px !important;
         border-radius: 9999px !important;
         border: 1px solid #93c5fd !important;
         margin: 0 !important;
@@ -243,7 +252,7 @@ st.markdown("""
     }
     div[data-testid="stRadio"] label[data-baseweb="radio"] div p {
         color: #0369a1 !important;
-        font-size: 0.70rem !important;
+        font-size: 0.72rem !important;
         font-weight: 700 !important;
     }
     div[data-testid="stRadio"] input[type="radio"] {
@@ -252,64 +261,79 @@ st.markdown("""
 
     /* --- ACCORDION FILTRI SECONDARI --- */
     div[data-testid="stExpander"] {
-        background: rgba(255, 255, 255, 0.85) !important;
+        background: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
-        border-radius: 8px !important;
-        margin-bottom: 6px !important;
+        border-radius: 9px !important;
+        margin-bottom: 8px !important;
     }
     div[data-testid="stExpander"] details summary p {
-        font-size: 0.74rem !important;
+        font-size: 0.76rem !important;
         font-weight: 800 !important;
         color: #0369a1 !important;
     }
 
-    /* --- SCHEDE PRODOTTO & CONTENITORE --- */
+    /* --- SCHEDA PRODOTTO RESPONSIVE MOBILE --- */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
-        border-radius: 10px !important;
-        padding: 5px !important;
-        box-shadow: 0 4px 16px rgba(2, 132, 199, 0.10) !important;
+        border-radius: 12px !important;
+        padding: 6px !important;
+        box-shadow: 0 4px 18px rgba(2, 132, 199, 0.10) !important;
     }
 
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        background: linear-gradient(150deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%) !important;
-        border: 1.5px solid #059669 !important;
-        border-radius: 8px !important;
-        padding: 4px 5px !important;
-        margin-bottom: 5px !important;
-        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.12) !important;
+    .product-card-modern {
+        background: #ffffff;
+        border: 1.5px solid #bae6fd;
+        border-radius: 10px;
+        padding: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
 
-    .product-img-wrapper-full {
-        width: 100%;
-        height: 125px;
+    .pcm-top {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .pcm-img-box {
+        width: 95px;
+        height: 95px;
+        min-width: 95px;
+        max-width: 95px;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        overflow: hidden;
+        padding: 3px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: #ffffff;
-        border: 1px solid #86efac;
-        border-radius: 6px;
-        overflow: hidden;
-        padding: 2px;
-        margin-bottom: 2px;
     }
-
-    .product-img-wrapper-full img {
+    .pcm-img-box img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
-        display: block;
     }
 
-    .deal-title {
-        font-size: 0.80rem !important;
-        font-weight: 800 !important;
-        line-height: 1.2 !important;
-        color: #064e3b !important;
-        margin: 0 0 4px 0 !important;
+    .pcm-details {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .pcm-title {
+        font-size: 0.80rem;
+        font-weight: 800;
+        line-height: 1.25;
+        color: #0f172a;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
@@ -317,103 +341,111 @@ st.markdown("""
         min-height: 28px;
     }
 
-    .buy-btn-action {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #ffd814;
-        color: #0f1111 !important;
-        font-size: 0.74rem !important;
-        font-weight: 800 !important;
-        text-decoration: none !important;
-        border-radius: 6px;
-        border: 1px solid #fcd200;
-        width: 100% !important;
-        min-height: 26px;
-        height: 26px;
-        margin-top: 3px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    .pcm-prices {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+        flex-wrap: wrap;
     }
 
-    .price-delivery-split-row {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        gap: 4px !important;
-        margin: 2px 0 4px 0 !important;
-    }
-
-    .price-subgroup-left {
-        display: flex !important;
-        align-items: baseline !important;
-        gap: 3px !important;
-        flex-wrap: wrap !important;
-    }
-
-    .deal-price-final {
-        font-size: 1.90rem !important;
-        font-weight: 900 !important;
-        color: #065f46 !important;
-        line-height: 1 !important;
-    }
-
-    .deal-price-old {
-        font-size: 1.25rem !important;
-        color: #4b5563 !important;
-        text-decoration: line-through;
-        margin-left: 2px;
-        line-height: 1 !important;
-    }
-
-    .deal-badge {
-        background-color: #ef4444;
-        color: white;
-        font-size: 1.15rem !important;
-        font-weight: 800 !important;
-        padding: 2px 5px !important;
+    /* BADGE SCONTO IN ARANCIONE VIVACE (NO ROSSO) */
+    .pcm-discount-badge {
+        background-color: #ea580c;
+        color: #ffffff;
+        font-size: 0.82rem;
+        font-weight: 900;
+        padding: 2px 6px;
         border-radius: 4px;
-        line-height: 1 !important;
+        line-height: 1;
+    }
+
+    .pcm-price-final {
+        font-size: 1.55rem;
+        font-weight: 900;
+        color: #059669; /* Verde fresco */
+        line-height: 1;
+    }
+
+    .pcm-price-old {
+        font-size: 0.95rem;
+        color: #64748b;
+        text-decoration: line-through;
+        line-height: 1;
+    }
+
+    .pcm-badges {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
     }
 
     .shipping-badge-prime {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        background: linear-gradient(135deg, #00a8e8 0%, #007eb9 100%) !important;
-        color: #ffffff !important;
-        font-size: 0.68rem !important;
-        font-weight: 900 !important;
-        font-style: italic !important;
-        padding: 2px 6px !important;
-        border-radius: 4px !important;
-        line-height: 1 !important;
-        text-transform: lowercase !important;
-    }
-
-    .shipping-badge-free {
-        background: rgba(255, 255, 255, 0.95);
-        color: #065f46;
-        border: 1px solid #6ee7b7;
-        padding: 2px 4px;
-        border-radius: 4px;
+        background: linear-gradient(135deg, #00a8e8 0%, #007eb9 100%);
+        color: #ffffff;
         font-size: 0.66rem;
+        font-weight: 900;
+        font-style: italic;
+        padding: 2px 6px;
+        border-radius: 4px;
+        line-height: 1;
+        text-transform: lowercase;
+    }
+    .shipping-badge-free {
+        background: #f0fdf4;
+        color: #059669;
+        border: 1px solid #86efac;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-size: 0.65rem;
         font-weight: 800;
     }
 
-    .social-share-row-mobile {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: center !important;
-        align-items: center !important;
-        gap: 4px !important;
-        margin-top: 4px !important;
-        width: 100% !important;
+    .pcm-stars {
+        color: #f59e0b; /* Giallo ambra */
+        font-size: 0.72rem;
+        font-weight: 800;
+    }
+
+    .pcm-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 5px;
+    }
+
+    /* PULSANTE ACQUISTA AMAZON */
+    .pcm-buy-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: #0f172a !important;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-decoration: none !important;
+        border-radius: 7px;
+        border: 1px solid #f59e0b;
+        width: 100%;
+        min-height: 32px;
+        height: 32px;
+        box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+    }
+
+    .pcm-social-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 100%;
+        flex-wrap: wrap;
     }
 
     .share-icon-btn {
-        width: 24px !important;
-        height: 24px !important;
-        border-radius: 4px !important;
+        width: 25px !important;
+        height: 25px !important;
+        border-radius: 5px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -421,8 +453,7 @@ st.markdown("""
         padding: 0 !important;
         cursor: pointer !important;
     }
-
-    .share-icon-btn svg { width: 12px !important; height: 12px !important; fill: #ffffff !important; }
+    .share-icon-btn svg { width: 13px !important; height: 13px !important; fill: #ffffff !important; }
     .btn-wa { background-color: #25D366 !important; }
     .btn-fb { background-color: #1877F2 !important; }
     .btn-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important; }
@@ -430,16 +461,9 @@ st.markdown("""
     .btn-gmail { background-color: #EA4335 !important; }
     .btn-copy { background-color: #475569 !important; }
 
-    .price-source-note, .affiliate-note {
-        font-size: 0.58rem;
-        color: #475569;
-        margin-top: 2px;
-        line-height: 1.2;
-    }
-
-    /* --- DISCLAIMER FOOTER NON INVASIVO (SCROLLABILE) --- */
+    /* --- DISCLAIMER FOOTER NON SOVRAPPOSTO (SCROLLABILE) --- */
     .site-footer-box {
-        background: rgba(255, 255, 255, 0.88);
+        background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
         border-radius: 8px;
         padding: 8px 10px;
@@ -447,7 +471,7 @@ st.markdown("""
         text-align: center;
         color: #475569;
         font-size: 11px;
-        line-height: 1.35;
+        line-height: 1.4;
     }
     .site-footer-box a { color: #0369a1; font-weight: 700; text-decoration: underline; }
 
@@ -459,7 +483,7 @@ st.markdown("""
         background: #0284c7 !important;
         color: #ffffff !important;
         text-decoration: none !important;
-        border-radius: 6px !important;
+        border-radius: 7px !important;
         font-weight: 800 !important;
         font-size: 0.76rem !important;
     }
@@ -531,7 +555,7 @@ def invia_email_smtp_diretta(nome, telefono, email, note):
     msg = MIMEMultipart()[cite: 3]
     msg['From'] = f"Scala dei Turchi <{sender}>"[cite: 3]
     msg['To'] = destinatario[cite: 3]
-    msg['Subject'] = f"🔴 [SCALA DEI TURCHI - SITO] Messaggio da {nome}"[cite: 3]
+    msg['Subject'] = f"🔵 [SCALA DEI TURCHI] Messaggio da {nome}"
 
     corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
 
@@ -625,41 +649,36 @@ def esegui_ricerca(increment=False):
         else:
             st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."[cite: 3]
         
-        # Quando si incrementano i prodotti, lo scroll torna alla testata dell'elenco prodotti
+        # Attiva lo scroll all'ancora dei risultati
         st.session_state["scroll_to_results_flag"] = True
         st.session_state["scroll_to_top_flag"] = False
     else:
         st.session_state["offerte"] = prodotti_unici[:10][cite: 3]
         st.session_state["scroll_to_results_flag"] = True
 
-# --- HEADER: 2 RIGHE COMPATTE SU UN UNICO RIGO CIASCUNA ---
+# --- HEADER: 2 RIGHE PULITE ---
 st.markdown("""
 <div id="top_page"></div>
-<div class="hero-container-single">
-    <h1 class="hero-title-single">Scala dei Turchi</h1>
-    <div class="hero-subtitle-single">
-        <span class="ai-badge-chip">AI DEALS</span>
-        <span>by <strong>Davide Marziano</strong></span>
+<div class="hero-box-clean">
+    <div class="hero-title-nowrap">Scala dei Turchi</div>
+    <div class="hero-sub-nowrap">
+        <span class="badge-ai-deals">AI DEALS</span>
+        <span class="hero-author-text">by <strong>Davide Marziano</strong></span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# GESTIONE SCROLL DINAMICO
+# SCROLL GESTITO CON TIMEOUT JS
 if st.session_state.get("scroll_to_top_flag", False):
     st.session_state["scroll_to_top_flag"] = False
     st.markdown("""
     <script>
         setTimeout(function() {
             try {
-                const stContainer = window.parent.document.querySelector('[data-testid="stAppViewContainer"]') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid="stAppViewContainer"]');
-                if (stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
-            } catch(e) {}
-            try {
                 const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
                 if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
             } catch(e) {}
-            try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-        }, 60);
+        }, 80);
     </script>
     """, unsafe_allow_html=True)
 
@@ -672,11 +691,11 @@ if st.session_state.get("scroll_to_results_flag", False):
                 const el = window.parent.document.getElementById('ancora_risultati') || document.getElementById('ancora_risultati');
                 if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
             } catch(e) {}
-        }, 100);
+        }, 120);
     </script>
     """, unsafe_allow_html=True)
 
-# --- SEGMENTED CONTROL: FORZATURA SU UNICO RIGO ---
+# --- SEGMENTED CONTROL: 3 BOTTONI IN UN'UNICA RIGA ---
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)[cite: 3]
 with col_tab1:
@@ -690,156 +709,109 @@ with col_tab3:
     st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)[cite: 3]
 st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
 
-IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%23059669' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"[cite: 3]
+IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
-def render_product_card(p, tab_key="main"):
-    del tab_key[cite: 3]
-    with st.container(border=True):[cite: 3]
-        col_left, col_center, col_fb = st.columns([1.1, 1.4, 1.2])[cite: 3]
+def render_single_product_card(p):
+    titolo = str(p.get("titolo") or "Prodotto Amazon")[cite: 3]
+    link = str(p.get("link_affiliato") or "")[cite: 3]
+    safe_title_html = html.escape(titolo)[cite: 3]
+    safe_title_attr = html.escape(titolo, quote=True)[cite: 3]
+    safe_link_attr = html.escape(link, quote=True)[cite: 3]
+    prezzo_verificato = p.get("prezzo_verificato") is True[cite: 3]
 
-        titolo = str(p.get("titolo") or "Prodotto Amazon")[cite: 3]
-        link = str(p.get("link_affiliato") or "")[cite: 3]
-        safe_title_html = html.escape(titolo)[cite: 3]
-        safe_title_attr = html.escape(titolo, quote=True)[cite: 3]
-        safe_link_attr = html.escape(link, quote=True)[cite: 3]
-        prezzo_verificato = p.get("prezzo_verificato") is True[cite: 3]
+    img_url = str(p.get("immagine_url") or IMG_FALLBACK_SVG)[cite: 3]
+    safe_img_url = html.escape(img_url, quote=True)[cite: 3]
+    safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)[cite: 3]
 
-        with col_left:[cite: 3]
-            img_url = str(p.get("immagine_url") or IMG_FALLBACK_SVG)[cite: 3]
-            safe_img_url = html.escape(img_url, quote=True)[cite: 3]
-            safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)[cite: 3]
-            st.markdown(
-                f'<div class="product-img-wrapper-full"><img src="{safe_img_url}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src=\'{safe_fallback}\';" alt="{safe_title_attr}"></div>',
-                unsafe_allow_html=True,
-            )[cite: 3]
+    if prezzo_verificato:[cite: 3]
+        prezzo_finale = float(p.get("prezzo_finale") or 0.0)[cite: 3]
+        prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)[cite: 3]
+        sconto = html.escape(str(p.get("sconto") or ""))[cite: 3]
+        badge_html = f"<span class='pcm-discount-badge'>{sconto}</span>" if sconto else ""
+        old_price_html = f"<span class='pcm-price-old'>€{prezzo_iniziale:.2f}</span>" if prezzo_iniziale > prezzo_finale else ""
+        prices_html = f"{badge_html}<span class='pcm-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}"
+    else:
+        prices_html = "<span class='pcm-price-final' style='font-size:1.1rem;'>Verifica su Amazon</span>"
 
-        with col_center:[cite: 3]
-            st.markdown(f"<div class='deal-title'>{safe_title_html}</div>", unsafe_allow_html=True)[cite: 3]
+    costo_raw = p.get("costo_spedizione")[cite: 3]
+    try:
+        costo_s = float(costo_raw) if costo_raw is not None else None[cite: 3]
+    except (TypeError, ValueError):
+        costo_s = None[cite: 3]
 
-            if prezzo_verificato:[cite: 3]
-                prezzo_finale = float(p.get("prezzo_finale") or 0.0)[cite: 3]
-                prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)[cite: 3]
-                sconto = html.escape(str(p.get("sconto") or ""))[cite: 3]
-                badge_html = f"<span class='deal-badge'>{sconto}</span>" if sconto else ""[cite: 3]
-                old_price_html = (
-                    f"<span class='deal-price-old'>€{prezzo_iniziale:.2f}</span>"
-                    if prezzo_iniziale > prezzo_finale else ""
-                )[cite: 3]
-                prices_sub_html = (
-                    f"<div class='price-subgroup-left'>{badge_html}"
-                    f"<span class='deal-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}</div>"
-                )[cite: 3]
+    if p.get("is_prime") is True:[cite: 3]
+        ship_html = "<span class='shipping-badge-prime'>prime</span>"[cite: 3]
+    elif p.get("is_sped_gratis") is True:[cite: 3]
+        ship_html = "<span class='shipping-badge-free'>🚚 Spedizione Gratis</span>"
+    else:
+        ship_html = ""
 
-                costo_raw = p.get("costo_spedizione")[cite: 3]
-                try:
-                    costo_s = float(costo_raw) if costo_raw is not None else None[cite: 3]
-                except (TypeError, ValueError):
-                    costo_s = None[cite: 3]
-                if p.get("is_prime") is True:[cite: 3]
-                    ship_html = "<span class='shipping-badge-prime'>prime</span>"[cite: 3]
-                elif p.get("is_sped_gratis") is True:[cite: 3]
-                    ship_html = "<span class='shipping-badge-free'>🚚 Gratis</span>"[cite: 3]
-                elif costo_s is not None and costo_s > 0:[cite: 3]
-                    ship_html = f"<span class='shipping-badge-paid'>📦 +€{costo_s:.2f}</span>"[cite: 3]
-                else:
-                    ship_html = "<span class='shipping-badge-unknown'>🚚 Verifica</span>"[cite: 3]
+    voto_raw = p.get("voto_medio")[cite: 3]
+    try:
+        voto = float(voto_raw) if voto_raw is not None else None[cite: 3]
+    except (TypeError, ValueError):
+        voto = None[cite: 3]
 
-                st.markdown(
-                    f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>"
-                    "<div class='price-source-note'>Prezzi e disponibilità possono variare.</div>",
-                    unsafe_allow_html=True,
-                )
-                buy_label = "🛒 Acquista su Amazon"[cite: 3]
-            else:
-                st.markdown(
-                    "<div class='price-unverified'>Vedi prezzo su Amazon</div>"
-                    "<div class='price-source-note'>Prezzo verificato su Amazon.</div>",
-                    unsafe_allow_html=True,
-                )
-                buy_label = "🛒 Vedi su Amazon"[cite: 3]
+    stars_html = ""
+    if voto is not None and 0 < voto <= 5:[cite: 3]
+        stelle_piene = max(0, min(5, int(round(voto))))[cite: 3]
+        stars_html = f"<span class='pcm-stars'>{'★' * stelle_piene}{'☆' * (5 - stelle_piene)} {voto:.1f}</span>"
 
-            if link:[cite: 3]
-                st.markdown(
-                    f"<a href='{safe_link_attr}' target='_blank' rel='noopener noreferrer sponsored' class='buy-btn-action' aria-label='{html.escape(buy_label, quote=True)}: {safe_title_attr}'>{buy_label}</a>"
-                    "<div class='affiliate-note'>(link affiliato)</div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    "<span class='buy-btn-action' style='opacity:.55;cursor:not-allowed;'>🛒 Link non disponibile</span>",
-                    unsafe_allow_html=True,
-                )[cite: 3]
+    safe_title_text = titolo.replace("\n", " ").strip()[cite: 3]
+    share_price = f"\n💰 Prezzo: €{float(p.get('prezzo_finale', 0.0)):.2f}" if prezzo_verificato else ""[cite: 3]
+    share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"[cite: 3]
+    wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"[cite: 3]
+    fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"[cite: 3]
+    ig_url = "https://www.instagram.com/"[cite: 3]
+    tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"[cite: 3]
+    gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"[cite: 3]
+    copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
 
-            safe_title_text = titolo.replace("\n", " ").strip()[cite: 3]
-            share_price = f"\n💰 Prezzo rilevato: €{float(p.get('prezzo_finale', 0.0)):.2f}" if prezzo_verificato else ""[cite: 3]
-            share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"[cite: 3]
-            wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"[cite: 3]
-            fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"[cite: 3]
-            ig_url = "https://www.instagram.com/"[cite: 3]
-            tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"[cite: 3]
-            gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"[cite: 3]
-            copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
-
-            st.markdown(
-                f"""
-                <div class='social-share-row-mobile'>
-                    <a href='{html.escape(wa_url, quote=True)}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-wa' title='WhatsApp'>{SVG_WA}</a>
-                    <a href='{html.escape(fb_url, quote=True)}' target='_blank' rel='noopener noreferrer sponsored' class='share-icon-btn btn-fb' title='Facebook'>{SVG_FB}</a>
-                    <a href='{html.escape(ig_url, quote=True)}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-ig' title='Instagram'>{SVG_IG}</a>
-                    <a href='{html.escape(tg_url, quote=True)}' target='_blank' rel='noopener noreferrer sponsored' class='share-icon-btn btn-tg' title='Telegram'>{SVG_TG}</a>
-                    <a href='{html.escape(gmail_url, quote=True)}' target='_blank' rel='noopener noreferrer' class='share-icon-btn btn-gmail' title='Gmail'>{SVG_GMAIL}</a>
-                    <button type='button' onclick="{html.escape(copy_action, quote=True)}" class='share-icon-btn btn-copy' title='Copia Link'>{SVG_COPY}</button>
+    st.markdown(f"""
+    <div class="product-card-modern">
+        <div class="pcm-top">
+            <div class="pcm-img-box">
+                <img src="{safe_img_url}" referrerpolicy="no-referrer" loading="lazy" onerror="this.onerror=null;this.src='{safe_fallback}';" alt="{safe_title_attr}">
+            </div>
+            <div class="pcm-details">
+                <div class="pcm-title">{safe_title_html}</div>
+                <div class="pcm-prices">
+                    {prices_html}
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )[cite: 3]
-
-        with col_fb:[cite: 3]
-            voto_raw = p.get("voto_medio")[cite: 3]
-            num_raw = p.get("num_recensioni")[cite: 3]
-            try:
-                voto = float(voto_raw) if voto_raw is not None else None[cite: 3]
-            except (TypeError, ValueError):
-                voto = None[cite: 3]
-            try:
-                num_val = int(num_raw) if num_raw is not None else None[cite: 3]
-            except (TypeError, ValueError):
-                num_val = None[cite: 3]
-
-            if voto is not None and 0 < voto <= 5:[cite: 3]
-                voto_str = f"{voto:.1f}".replace(".", ",")[cite: 3]
-                stelle_piene = max(0, min(5, int(round(voto))))[cite: 3]
-                stelle_icon = "★" * stelle_piene + "☆" * (5 - stelle_piene)[cite: 3]
-                count_html = f"<span class='feedback-subcount'>({num_val})</span>" if num_val is not None else ""[cite: 3]
-                feedback_html = (
-                    "<div class='feedback-container'><div class='feedback-stars-row'>"
-                    f"<span class='feedback-stars'>{stelle_icon}</span>"
-                    f"<span class='feedback-score-text'>{voto_str}</span>{count_html}</div></div>"
-                )[cite: 3]
-            else:
-                feedback_html = (
-                    "<div class='feedback-container'><div class='feedback-stars-row'>"
-                    "<span class='feedback-score-text'>Recensioni su Amazon</span></div></div>"
-                )
-            st.markdown(feedback_html, unsafe_allow_html=True)[cite: 3]
+                <div class="pcm-badges">
+                    {ship_html}
+                    {stars_html}
+                </div>
+            </div>
+        </div>
+        <div class="pcm-actions">
+            <a href="{safe_link_attr}" target="_blank" rel="noopener noreferrer sponsored" class="pcm-buy-btn" aria-label="Acquista: {safe_title_attr}">
+                🛒 Acquista su Amazon
+            </a>
+            <div class="pcm-social-row">
+                <a href="{html.escape(wa_url, quote=True)}" target="_blank" rel="noopener noreferrer" class="share-icon-btn btn-wa" title="WhatsApp">{SVG_WA}</a>
+                <a href="{html.escape(fb_url, quote=True)}" target="_blank" rel="noopener noreferrer sponsored" class="share-icon-btn btn-fb" title="Facebook">{SVG_FB}</a>
+                <a href="{html.escape(ig_url, quote=True)}" target="_blank" rel="noopener noreferrer" class="share-icon-btn btn-ig" title="Instagram">{SVG_IG}</a>
+                <a href="{html.escape(tg_url, quote=True)}" target="_blank" rel="noopener noreferrer sponsored" class="share-icon-btn btn-tg" title="Telegram">{SVG_TG}</a>
+                <a href="{html.escape(gmail_url, quote=True)}" target="_blank" rel="noopener noreferrer" class="share-icon-btn btn-gmail" title="Gmail">{SVG_GMAIL}</a>
+                <button type="button" onclick="{html.escape(copy_action, quote=True)}" class="share-icon-btn btn-copy" title="Copia Link">{SVG_COPY}</button>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)[cite: 3]
 
 if active_tab == "vetrina":[cite: 3]
     st.markdown("""
-        <h2 style='font-size: 0.90rem; font-weight: 800; color: #064e3b; margin: 2px 0 2px 2px;'>🔥 Offerte in Vetrina</h2>
-        <p style='font-size: 0.70rem; color: #475569; margin: 0 0 6px 2px;'>Prezzi e sconti confermati su Amazon al momento dell'acquisto.</p>
+        <h2 style='font-size: 0.92rem; font-weight: 800; color: #0369a1; margin: 2px 0 3px 2px;'>🔥 Offerte in Vetrina</h2>
+        <p style='font-size: 0.70rem; color: #64748b; margin: 0 0 6px 2px;'>Prezzi e sconti confermati su Amazon al momento dell'acquisto.</p>
     """, unsafe_allow_html=True)
 
     vetrina_items = st.session_state.get("offerte_vetrina", [])[cite: 3]
     if vetrina_items:[cite: 3]
-        for idx in range(0, len(vetrina_items), 2):[cite: 3]
-            col_l, col_r = st.columns(2)[cite: 3]
-            with col_l:[cite: 3]
-                render_product_card(vetrina_items[idx], tab_key=f"vetrina_{idx}")[cite: 3]
-            if idx + 1 < len(vetrina_items):[cite: 3]
-                with col_r:[cite: 3]
-                    render_product_card(vetrina_items[idx + 1], tab_key=f"vetrina_{idx + 1}")[cite: 3]
+        for p in vetrina_items:
+            render_single_product_card(p)
     else:
         st.info("Nessun prodotto disponibile in vetrina al momento.")[cite: 3]
 
@@ -847,7 +819,7 @@ elif active_tab == "cerca":[cite: 3]
     if st.session_state.get("cerca_radio_sort") == "Numero di vendite":[cite: 3]
         st.session_state["cerca_radio_sort"] = "Popolarità"[cite: 3]
 
-    # --- BARRA DI RICERCA CON LENTE INTEGRATA ---
+    # BARRA DI RICERCA CON LENTE INTEGRATA
     st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
     st.text_input(
         "cerca_input_main",
@@ -859,7 +831,7 @@ elif active_tab == "cerca":[cite: 3]
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- FILTER CHIPS: ORDINAMENTO RAPIDO ---
+    # FILTER CHIPS TOUCH-FRIENDLY
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
@@ -870,7 +842,6 @@ elif active_tab == "cerca":[cite: 3]
         args=(False,)
     )
 
-    # --- ACCORDION FILTRI SECONDARI ---
     with st.expander("⚙️ Filtri avanzati (Sconto & Prime)"):
         st.radio(
             "Fascia Sconto:",
@@ -882,7 +853,7 @@ elif active_tab == "cerca":[cite: 3]
             args=(False,)
         )
         st.checkbox(
-            "🚚 Spedizione Prime / Consegna gratuita",
+            "🚚 Solo spedizione Prime / Spedizione gratuita",
             value=False,
             key="cerca_check_sped_gratis",
             on_change=esegui_ricerca,
@@ -914,49 +885,44 @@ elif active_tab == "cerca":[cite: 3]
         end_idx = min(start_idx + 10, tot_offerte)[cite: 3]
         offerte_pagina = prodotti_cerca[start_idx:end_idx][cite: 3]
 
-        # ANCORA DI DESTINAZIONE DELLO SCROLL
+        # ANCORA DI RIFERIMENTO PER LO SCROLL SU MOBILE
         st.markdown('<div id="ancora_risultati" style="scroll-margin-top: 15px;"></div>', unsafe_allow_html=True)
-        st.markdown(f"<p style='font-size: 0.72rem; font-weight: 800; color: #0369a1; margin: 4px 0 3px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 0.74rem; font-weight: 800; color: #0284c7; margin: 4px 0 4px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
 
-        for idx in range(0, len(offerte_pagina), 2):[cite: 3]
-            col_l, col_r = st.columns(2)[cite: 3]
-            with col_l:[cite: 3]
-                render_product_card(offerte_pagina[idx], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx}")[cite: 3]
-            if idx + 1 < len(offerte_pagina):[cite: 3]
-                with col_r:[cite: 3]
-                    render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx + 1}")[cite: 3]
+        for p in offerte_pagina:
+            render_single_product_card(p)
 
-        # PULSANTE + ALTRI 10 ESCLUSIVAMENTE IN FONDO
-        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
+        # PULSANTE ALTRI 10 ESCLUSIVAMENTE IN FONDO
+        st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
         st.button(
             "➕ Carica altri 10 prodotti ⬇️", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
             use_container_width=True, disabled=int(st.session_state.get("item_count", 10)) >= MAX_RESULTS[cite: 3]
         )
 
     elif st.session_state.get("has_searched", False):[cite: 3]
-        st.warning("Nessun prodotto trovato. Prova con una parola chiave più generica o imposta lo Sconto su 'Tutti'.")
+        st.warning("Nessun prodotto trovato. Prova con una parola chiave diversa o imposta lo Sconto su 'Tutti'.")
 
 elif active_tab == "privacy":[cite: 3]
     st.markdown("""
-    <h2 style='font-size:1.00rem;color:#064e3b;margin:4px 0 6px 2px;'>Informativa privacy</h2>
+    <h2 style='font-size:1.00rem;color:#0369a1;margin:4px 0 6px 2px;'>Informativa privacy</h2>
     <div style='font-size:.76rem;line-height:1.5;color:#334155;padding:4px 6px;'>
     <p><strong>Titolare e contatti:</strong> davimarz.social@gmail.com.</p>
-    <p><strong>Finalità:</strong> I dati inseriti nel modulo contatti servono solo per rispondere al tuo messaggio e non vengono ceduti a terzi.</p>
-    <p><strong>Affiliazione Amazon:</strong> Questo sito partecipa al Programma di Affiliazione Amazon, un programma pubblicitario che consente di percepire commissioni pubblicitarie collegando a Amazon.it.</p>
+    <p><strong>Finalità:</strong> I dati inseriti nel modulo contatti servono esclusivamente per rispondere al tuo messaggio.</p>
+    <p><strong>Affiliazione Amazon:</strong> Questo sito partecipa al Programma di Affiliazione Amazon, un programma che consente di percepire commissioni collegando a Amazon.it.</p>
     </div>
     """, unsafe_allow_html=True)
     st.button("← Torna alla vetrina", key="privacy_back", on_click=set_tab, args=("vetrina",))[cite: 3]
 
 elif active_tab == "contatti":[cite: 3]
     with st.container(border=True):[cite: 3]
-        st.markdown("<p style='font-size: 0.80rem; font-weight: 700; color: #064e3b; margin-bottom: 4px;'>Inviaci un messaggio o una richiesta (Campi obbligatori):</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #0369a1; margin-bottom: 4px;'>Inviaci un messaggio o una richiesta:</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):[cite: 3]
             nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")[cite: 3]
             tel_val = st.text_input("Numero di telefono (10 cifre)*", placeholder="Es. 3401234567")[cite: 3]
             email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")[cite: 3]
             note_val = st.text_area("Messaggio*", placeholder="Scrivi qui il tuo messaggio...", height=110)
             privacy_ack = st.checkbox("Accetto l'informativa privacy.*")
-            st.markdown("<small><a href='?privacy=1' target='_self'>Leggi privacy</a></small>", unsafe_allow_html=True)
+            st.markdown("<small><a href='?privacy=1' target='_self'>Leggi informativa privacy</a></small>", unsafe_allow_html=True)
             
             btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)[cite: 3]
             if btn_send_form:[cite: 3]
