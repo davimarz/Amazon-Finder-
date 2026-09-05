@@ -745,7 +745,7 @@ def render_single_product_card(p):
     except (TypeError, ValueError):
         costo_s = None
 
-    # BADGES SPEDIZIONE
+    # Badges Spedizione
     if p.get("is_prime") is True:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span>"
     elif p.get("is_sped_gratis") is True or prezzo_finale >= 35.0:
@@ -755,7 +755,7 @@ def render_single_product_card(p):
     else:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span> <span class='shipping-free-pill'>🚚 Sped. Gratis</span>"
 
-    # FEEDBACK RECENSIONI
+    # Feedback Box
     voto_raw = p.get("voto_medio")
     try:
         voto = float(voto_raw) if voto_raw is not None else 4.4
