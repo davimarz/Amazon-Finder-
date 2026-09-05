@@ -77,11 +77,11 @@ st.markdown("""
 
     .block-container {
         padding: 0.20rem 0.35rem 100px 0.35rem !important;
-        max-width: 820px !important;
+        max-width: 860px !important;
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER: 2 RIGHE COMPATTE */
+    /* 1. HEADER A 2 RIGHE COMPATTE */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,7 +133,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. OVERRIDE TOTALE PULSANTI: ELIMINAZIONE ROSSO STREAMLIT */
+    /* 2. OVERRIDE TOTALE DEI BOTTONI STREAMLIT: ZERO ROSSO */
     button[data-testid="stBaseButton-primary"],
     button[kind="primary"],
     .stButton > button[kind="primary"] {
@@ -242,23 +242,23 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH-FRIENDLY */
+    /* 5. FILTER CHIPS TOUCH: NESSUN PALLINO ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
         font-weight: 800 !important;
         margin-bottom: 3px !important;
     }
-    div[data-testid="stRadio"] > div {
+    div[data-testid="stRadio"] div[role="radiogroup"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: wrap !important;
-        gap: 5px !important;
+        gap: 6px !important;
         width: 100% !important;
     }
-    div[data-testid="stRadio"] label[data-baseweb="radio"] {
+    div[data-testid="stRadio"] div[role="radiogroup"] label {
         background: #ffffff !important;
-        padding: 5px 12px !important;
+        padding: 5px 14px !important;
         border-radius: 9999px !important;
         border: 1px solid #93c5fd !important;
         margin: 0 !important;
@@ -267,22 +267,19 @@ st.markdown("""
         text-align: center !important;
         justify-content: center !important;
         cursor: pointer !important;
-        transition: all 0.15s ease;
+        transition: all 0.15s ease !important;
     }
-    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+    div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
         background: #0284c7 !important;
         border-color: #0284c7 !important;
     }
-    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) div p {
+    div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p,
+    div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) span {
         color: #ffffff !important;
         font-weight: 800 !important;
     }
-    div[data-testid="stRadio"] label[data-baseweb="radio"] div p {
-        color: #0369a1 !important;
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
-    }
-    div[data-testid="stRadio"] input[type="radio"] {
+    div[data-testid="stRadio"] div[role="radiogroup"] label input[type="radio"],
+    div[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
         display: none !important;
     }
 
@@ -299,7 +296,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO RESPONSIVE */
+    /* 7. SCHEDA PRODOTTO PROPORZIONATA (FOTO RADDOPPIATA E BARRA AZIONI UNIFICATA) */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -313,34 +310,36 @@ st.markdown("""
     .product-card-modern {
         background: #ffffff;
         border: 1.5px solid #bae6fd;
-        border-radius: 10px;
-        padding: 8px;
-        margin-bottom: 8px;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
     }
 
     .pcm-top {
         display: flex;
-        align-items: flex-start;
-        gap: 8px;
+        align-items: center;
+        gap: 12px;
     }
 
+    /* FOTO GRANDE ALMENO IL DOPPIO */
     .pcm-img-box {
-        width: 95px;
-        height: 95px;
-        min-width: 95px;
-        max-width: 95px;
+        width: 190px;
+        height: 190px;
+        min-width: 190px;
+        max-width: 190px;
         background-color: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 7px;
+        border-radius: 9px;
         overflow: hidden;
-        padding: 3px;
+        padding: 6px;
         display: flex;
         align-items: center;
         justify-content: center;
+        flex-shrink: 0;
     }
     .pcm-img-box img {
         max-width: 100%;
@@ -348,16 +347,26 @@ st.markdown("""
         object-fit: contain;
     }
 
+    @media (max-width: 580px) {
+        .pcm-img-box {
+            width: 145px;
+            height: 145px;
+            min-width: 145px;
+            max-width: 145px;
+        }
+    }
+
     .pcm-details {
         flex: 1;
         min-width: 0;
         display: flex;
         flex-direction: column;
-        gap: 3px;
+        gap: 4px;
+        justify-content: center;
     }
 
     .pcm-title {
-        font-size: 0.80rem;
+        font-size: 0.86rem;
         font-weight: 800;
         line-height: 1.25;
         color: #0f172a;
@@ -371,29 +380,29 @@ st.markdown("""
     .pcm-prices {
         display: flex;
         align-items: baseline;
-        gap: 5px;
+        gap: 6px;
         flex-wrap: wrap;
     }
 
     .pcm-discount-badge {
         background-color: #ea580c;
         color: #ffffff;
-        font-size: 0.82rem;
+        font-size: 0.84rem;
         font-weight: 900;
-        padding: 2px 6px;
+        padding: 2px 7px;
         border-radius: 4px;
         line-height: 1;
     }
 
     .pcm-price-final {
-        font-size: 1.55rem;
+        font-size: 1.65rem;
         font-weight: 900;
         color: #059669;
         line-height: 1;
     }
 
     .pcm-price-old {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         color: #64748b;
         text-decoration: line-through;
         line-height: 1;
@@ -446,7 +455,8 @@ st.markdown("""
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        margin-top: 1px;
+        width: fit-content;
+        margin-top: 2px;
     }
     .fb-star-icons {
         color: #f59e0b;
@@ -464,34 +474,51 @@ st.markdown("""
         font-weight: 600;
     }
 
-    .pcm-buy-btn {
+    /* BARRA AZIONI ORIZZONTALE COMPATTA (BOTTONE ACQUISTA + ICONE SOCIAL) */
+    .pcm-bottom-bar {
         display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 8px;
+        margin-top: 4px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .pcm-buy-btn-compact {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
         color: #0f172a !important;
-        font-size: 0.78rem;
+        font-size: 0.80rem;
         font-weight: 800;
         text-decoration: none !important;
         border-radius: 7px;
         border: 1px solid #f59e0b;
-        width: 100%;
-        min-height: 32px;
-        height: 32px;
-        box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
+        padding: 6px 18px;
+        height: 33px;
+        box-shadow: 0 1px 3px rgba(245, 158, 11, 0.25);
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+    .pcm-buy-btn-compact:hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 3px 6px rgba(245, 158, 11, 0.35);
     }
 
     .pcm-social-row {
-        display: flex;
+        display: inline-flex;
         align-items: center;
-        justify-content: center;
         gap: 6px;
-        width: 100%;
-        margin-top: 4px;
+        flex-wrap: nowrap;
     }
+
     .soc-btn {
-        width: 27px !important;
-        height: 27px !important;
+        width: 28px !important;
+        height: 28px !important;
         border-radius: 6px !important;
         display: inline-flex !important;
         align-items: center !important;
@@ -501,7 +528,7 @@ st.markdown("""
         cursor: pointer !important;
         text-decoration: none !important;
     }
-    .soc-btn svg { width: 13px !important; height: 13px !important; fill: #ffffff !important; }
+    .soc-btn svg { width: 14px !important; height: 14px !important; fill: #ffffff !important; }
     .soc-wa { background-color: #25D366 !important; }
     .soc-fb { background-color: #1877F2 !important; }
     .soc-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important; }
@@ -509,6 +536,7 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
+    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -701,10 +729,10 @@ def esegui_ricerca(increment=False):
         st.session_state["offerte"] = prodotti_unici[:10]
         st.session_state["scroll_to_results_flag"] = True
 
-# 1. HEADER A 2 RIGHE RIGIDAMENTE BLOCCATE
+# 1. HEADER
 st.markdown("""<div id="top_page"></div><div class="brand-header-box"><div class="brand-title-single">Scala dei Turchi</div><div class="brand-subtitle-single"><span class="badge-ai-pill">AI DEALS</span><span class="brand-author">by <strong>Davide Marziano</strong></span></div></div>""", unsafe_allow_html=True)
 
-# 2. SEGMENTED CONTROL ORIZZONTALE A 3 SCHEDE
+# 2. SEGMENTED CONTROL ORIZZONTALE
 st.markdown('<div class="nav-bar-wrapper">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
@@ -745,7 +773,6 @@ def render_single_product_card(p):
     except (TypeError, ValueError):
         costo_s = None
 
-    # Badges Spedizione
     if p.get("is_prime") is True:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span>"
     elif p.get("is_sped_gratis") is True or prezzo_finale >= 35.0:
@@ -755,7 +782,6 @@ def render_single_product_card(p):
     else:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span> <span class='shipping-free-pill'>🚚 Sped. Gratis</span>"
 
-    # Feedback Box
     voto_raw = p.get("voto_medio")
     try:
         voto = float(voto_raw) if voto_raw is not None else 4.4
@@ -791,8 +817,8 @@ def render_single_product_card(p):
         f'{feedback_html}'
         f'</div>'
         f'</div>'
-        f'<div class="pcm-actions">'
-        f'<a href="{safe_link_attr}" target="_blank" rel="noopener noreferrer sponsored" class="pcm-buy-btn" aria-label="Acquista: {safe_title_attr}">'
+        f'<div class="pcm-bottom-bar">'
+        f'<a href="{safe_link_attr}" target="_blank" rel="noopener noreferrer sponsored" class="pcm-buy-btn-compact" aria-label="Acquista: {safe_title_attr}">'
         f'🛒 Acquista su Amazon'
         f'</a>'
         f'<div class="pcm-social-row">'
