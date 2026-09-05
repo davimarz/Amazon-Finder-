@@ -38,6 +38,8 @@ st.session_state.setdefault("contact_sent_session", False)
 st.session_state.setdefault("offerte_vetrina", [])
 st.session_state.setdefault("vetrina_refresh_token", str(time.time_ns()))
 st.session_state.setdefault("vetrina_loaded_token", None)
+st.session_state.setdefault("creators_api_unavailable", False)
+st.session_state.setdefault("creators_api_reason", "")
 
 # La scheda Contatti resta nel codice ma non è visibile/raggiungibile
 # dalla navigazione pubblica.
@@ -441,6 +443,34 @@ div[data-testid="stCheckbox"] {
 .soc-tg { background: #229ED9; }
 .soc-mail { background: #EA4335; }
 
+
+.api-fallback-box {
+    background: linear-gradient(135deg, rgba(255,255,255,.96) 0%, rgba(240,249,255,.96) 55%, rgba(240,253,244,.96) 100%);
+    border: 1.5px solid #7dd3fc;
+    border-radius: 11px;
+    padding: 11px;
+    margin: 7px 0 10px 0;
+    box-shadow: 0 3px 12px rgba(2, 132, 199, 0.10);
+}
+.api-fallback-title {font-size:.86rem;font-weight:900;color:#0369a1;margin-bottom:4px;}
+.api-fallback-text {font-size:.72rem;line-height:1.42;color:#475569;}
+.amazon-search-direct {
+    display:flex;align-items:center;justify-content:center;width:100%;min-height:39px;
+    margin:6px 0;padding:8px 12px;border-radius:8px;
+    background:linear-gradient(135deg,#38bdf8 0%,#0284c7 100%);
+    border:1px solid #0284c7;color:#fff !important;text-decoration:none !important;
+    font-size:.78rem;font-weight:900;box-shadow:0 2px 7px rgba(2,132,199,.24);
+}
+.amazon-search-direct:hover {background:linear-gradient(135deg,#34d399 0%,#059669 100%);border-color:#059669;transform:translateY(-1px);}
+.fallback-category-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px;}
+.fallback-category-link {
+    display:flex;align-items:center;justify-content:center;min-height:42px;padding:7px 8px;
+    border-radius:8px;background:#fff;border:1.5px solid #93c5fd;color:#0369a1 !important;
+    text-decoration:none !important;font-size:.70rem;font-weight:850;text-align:center;
+}
+.fallback-category-link:hover {background:#eff6ff;border-color:#0284c7;}
+@media (max-width:520px) {.fallback-category-grid {grid-template-columns:1fr;}}
+
 .site-footer-box {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(2, 132, 199, 0.25);
@@ -517,9 +547,76 @@ def open_vetrina() -> None:
     _clear_query_params()
 
 
+
+def _remember_api_availability() -> dict:
+    status = amazon_api.get_last_api_status()
+    if amazon_api.is_associate_not_eligible(status):
+        st.session_state["creators_api_unavailable"] = True
+        st.session_state["creators_api_reason"] = "account_not_eligible"
+    return status
+
+
+def _affiliate_search_url(keyword: str) -> str:
+    return amazon_api.build_amazon_search_link(keyword, partner_tag=amazon_api.get_partner_tag())
+
+
+def render_api_fallback_search(keyword: str) -> None:
+    clean_keyword = " ".join(str(keyword or "").strip().split()) or "offerte Amazon"
+    url = _affiliate_search_url(clean_keyword)
+    st.markdown(
+        (
+            "<div class='api-fallback-box'>"
+            "<div class='api-fallback-title'>Ricerca automatica temporaneamente non disponibile</div>"
+            "<div class='api-fallback-text'>Puoi continuare la ricerca direttamente su Amazon. "
+            "Il collegamento mantiene il tag affiliato del sito.</div>"
+            f"<a class='amazon-search-direct' href='{html.escape(url, quote=True)}' "
+            "target='_blank' rel='noopener noreferrer sponsored'>"
+            f"🔍 Cerca “{html.escape(clean_keyword)}” su Amazon</a>"
+            "</div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_vetrina_fallback() -> None:
+    categories = (
+        ("💻 Tecnologia", "offerte tecnologia"),
+        ("🏠 Casa e cucina", "offerte casa cucina"),
+        ("🎧 Audio", "offerte cuffie bluetooth"),
+        ("⌚ Smartwatch", "offerte smartwatch"),
+        ("🏃 Sport", "offerte sport fitness"),
+        ("🧴 Cura persona", "offerte cura persona"),
+    )
+    links = []
+    for label, keyword in categories:
+        url = _affiliate_search_url(keyword)
+        links.append(
+            f"<a class='fallback-category-link' href='{html.escape(url, quote=True)}' "
+            "target='_blank' rel='noopener noreferrer sponsored'>"
+            f"{html.escape(label)}</a>"
+        )
+    st.markdown(
+        (
+            "<div class='api-fallback-box'>"
+            "<div class='api-fallback-title'>Scopri offerte su Amazon</div>"
+            "<div class='api-fallback-text'>Le schede automatiche non sono disponibili in questo momento. "
+            "Puoi comunque aprire le categorie Amazon tramite i link affiliati del sito.</div>"
+            "<div class='fallback-category-grid'>" + "".join(links) + "</div></div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
 def _perform_search(target_count: int) -> None:
     cfg = st.session_state["last_search"]
     target_count = max(10, min(int(target_count), MAX_RESULTS))
+
+    if st.session_state.get("creators_api_unavailable") is True:
+        st.session_state["offerte"] = []
+        st.session_state["item_count"] = target_count
+        st.session_state["has_searched"] = True
+        st.session_state["search_notice"] = ""
+        return
 
     with st.spinner("Ricerca prodotti su Amazon..."):
         results = amazon_api.ottieni_offerte_avanzate(
@@ -534,24 +631,19 @@ def _perform_search(target_count: int) -> None:
     st.session_state["has_searched"] = True
 
     if not results:
-        api_status = amazon_api.get_last_api_status()
-        status_code = api_status.get("status_code")
-        operation = api_status.get("operation") or "Creators API"
-
-        if status_code and status_code != 200:
+        api_status = _remember_api_availability()
+        if amazon_api.is_associate_not_eligible(api_status):
+            st.session_state["search_notice"] = ""
+            return
+        if api_status.get("status_code") and api_status.get("status_code") != 200:
             st.session_state["search_notice"] = (
-                f"Amazon non ha restituito prodotti. "
-                f"Errore tecnico {operation}: HTTP {status_code}."
+                "La ricerca automatica Amazon non è disponibile al momento. "
+                "Puoi usare il collegamento diretto qui sotto."
             )
         else:
-            st.session_state["search_notice"] = (
-                "Nessun prodotto trovato. Prova una ricerca più generica."
-            )
+            st.session_state["search_notice"] = "Nessun prodotto trovato. Prova una ricerca più generica."
     elif len(results) < target_count:
-        st.session_state["search_notice"] = (
-            f"Amazon ha restituito {len(results)} prodotti disponibili "
-            "per questi criteri."
-        )
+        st.session_state["search_notice"] = f"Amazon ha restituito {len(results)} prodotti disponibili per questi criteri."
     else:
         st.session_state["search_notice"] = ""
 
@@ -906,6 +998,7 @@ if active_tab == "vetrina":
     if (
         st.session_state.get("vetrina_loaded_token") != current_token
         and partner_tag
+        and st.session_state.get("creators_api_unavailable") is not True
     ):
         with st.spinner("Aggiornamento offerte Amazon..."):
             showcase = amazon_api.ottieni_vetrina_casuale(
@@ -915,6 +1008,7 @@ if active_tab == "vetrina":
 
         st.session_state["offerte_vetrina"] = list(showcase or [])
         st.session_state["vetrina_loaded_token"] = current_token
+        _remember_api_availability()
 
     showcase = st.session_state.get("offerte_vetrina", [])
 
@@ -922,15 +1016,19 @@ if active_tab == "vetrina":
         for product in showcase:
             render_product_card(product)
     else:
-        api_status = amazon_api.get_last_api_status()
-        status_code = api_status.get("status_code")
-        operation = api_status.get("operation") or "Creators API"
+        api_status = _remember_api_availability()
 
-        if status_code and status_code != 200:
-            st.warning(
-                f"Vetrina non disponibile: {operation} ha risposto HTTP {status_code}. "
-                "Controlla i log di Streamlit e le credenziali Creators API."
+        if (
+            st.session_state.get("creators_api_unavailable") is True
+            or amazon_api.is_associate_not_eligible(api_status)
+        ):
+            render_vetrina_fallback()
+        elif api_status.get("status_code") and api_status.get("status_code") != 200:
+            st.info(
+                "Le offerte automatiche non sono disponibili al momento. "
+                "Puoi comunque usare i collegamenti Amazon qui sotto."
             )
+            render_vetrina_fallback()
         else:
             st.info("Nessun prodotto disponibile in vetrina al momento.")
 
@@ -1047,7 +1145,16 @@ elif active_tab == "cerca":
         )
 
     elif st.session_state.get("has_searched"):
-        st.warning("Nessun prodotto trovato.")
+        last_keyword = str(st.session_state.get("last_search", {}).get("keyword") or "").strip()
+
+        if st.session_state.get("creators_api_unavailable") is True:
+            render_api_fallback_search(last_keyword)
+        else:
+            api_status = amazon_api.get_last_api_status()
+            if api_status.get("status_code") and api_status.get("status_code") != 200:
+                render_api_fallback_search(last_keyword)
+            else:
+                st.warning("Nessun prodotto trovato.")
 
 elif active_tab == "privacy":
     st.markdown(

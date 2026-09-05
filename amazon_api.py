@@ -65,6 +65,26 @@ def get_last_api_status() -> dict[str, Any]:
     return dict(_LAST_API_STATUS)
 
 
+def is_associate_not_eligible(status: Optional[dict[str, Any]] = None) -> bool:
+    current = status or get_last_api_status()
+    code = current.get("status_code")
+    message = str(current.get("message") or "").strip().lower()
+    return code == 403 and "associatenoteligible" in message.replace(" ", "")
+
+
+def build_amazon_search_link(
+    keyword: str,
+    partner_tag: Optional[str] = None,
+) -> str:
+    """Crea una ricerca Amazon.it con il Partner Tag configurato."""
+    tag = str(partner_tag or get_partner_tag()).strip()
+    clean_keyword = " ".join(str(keyword or "").strip().split()) or "offerte"
+    query = {"k": clean_keyword}
+    if tag:
+        query["tag"] = tag
+    return f"https://www.amazon.it/s?{urlencode(query)}"
+
+
 def _amazon_secrets() -> dict[str, Any]:
     try:
         return dict(st.secrets.get("amazon_api", {}))

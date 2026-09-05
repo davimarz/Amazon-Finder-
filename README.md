@@ -42,3 +42,14 @@ Correzioni:
 - se un singolo GetItems fallisce, la scheda resta visibile senza prezzo inventato.
 - aggiunta diagnostica HTTP priva di secrets.
 - pulsante Cerca forzato azzurro; hover verde.
+
+
+## V4 - fallback per account Creators API temporaneamente non idoneo
+
+- Niente errore HTTP tecnico mostrato all'utente.
+- Vetrina con categorie Amazon affiliate quando le schede automatiche non sono disponibili.
+- Ricerca con pulsante diretto alla keyword su Amazon.it.
+- Link con Partner Tag dai Secrets.
+- Nessun prezzo, prodotto, recensione o vendita inventati.
+- Dopo il primo 403 della sessione l'app evita chiamate ripetute.
+- In una nuova sessione l'app riprova automaticamente Creators API.
