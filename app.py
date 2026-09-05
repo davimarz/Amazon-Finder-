@@ -81,7 +81,7 @@ st.markdown("""
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER */
+    /* 1. HEADER COMPATTO */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,22 +133,24 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. SEGMENTED CONTROL: BLOCCO TOTALE SU UN'UNICA RIGA ORIZZONTALE ANCHE SU MOBILE */
+    /* 2. SEGMENTED CONTROL: CORNICE LUMINOSA E PULSANTI SU UNICA RIGA (ZERO SFONDO NERO) */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: stretch !important;
         gap: 4px !important;
-        background: #0f172a !important;
-        border: 1px solid #334155 !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        border: 1.5px solid rgba(2, 132, 199, 0.25) !important;
         border-radius: 10px !important;
         padding: 3px !important;
         width: 100% !important;
         margin-bottom: 6px !important;
+        box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08) !important;
     }
 
-    /* FORZA 33.333% PER COLONNA DISATTIVANDO IL COLLASSO VERTICALE DI STREAMLIT */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) > div,
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) div[data-testid="column"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) div[data-testid="stColumn"] {
@@ -187,6 +189,7 @@ st.markdown("""
         border-radius: 7px !important;
         border: none !important;
         box-shadow: none !important;
+        transition: all 0.2s ease !important;
     }
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button p {
         font-size: 0.78rem !important;
@@ -194,31 +197,33 @@ st.markdown("""
         margin: 0 !important;
     }
 
-    /* STATI DEI PULSANTI NEL MENU (ZERO ROSSO) */
+    /* PULSANTE ATTIVO: AZZURRO OCEANO */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-primary"] {
         background-color: #0284c7 !important;
-        background: #0284c7 !important;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45) !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
     }
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"] p {
         color: #ffffff !important;
         font-weight: 800 !important;
     }
+
+    /* PULSANTI INATTIVI: SFONDO TRASPARENTE, TESTO BLU OCEANO (NO NERO/GRIGIO) */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-secondary"] {
         background-color: transparent !important;
         background: transparent !important;
-        color: #94a3b8 !important;
+        color: #0369a1 !important;
         border: none !important;
     }
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"]:hover {
-        background: #1e293b !important;
-        color: #ffffff !important;
+        background: rgba(224, 242, 254, 0.85) !important;
+        color: #0284c7 !important;
     }
 
-    /* 3. ALTRI PULSANTI DI SISTEMA (es. PAGINAZIONE / TORNA IN ALTO) */
+    /* 3. PULSANTI SISTEMA (PAGINAZIONE / TORNA IN ALTO) */
     button[data-testid="stBaseButton-primary"]:not(div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button) {
         background-color: #0284c7 !important;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
@@ -597,62 +602,62 @@ def valida_campi_contatto(nome, telefono, email, note):
     note_clean = note.strip()
 
     if not nome_clean or not tel_digits or not email_clean or not note_clean:
-        return False, "Tutti i campi sono obbligatori."
+        return False, "Tutti i campi sono obbligatori."[cite: 3]
     if len(nome_clean) < 3:
-        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."
+        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."[cite: 3]
     if tel_digits.startswith("39") and len(tel_digits) == 12:
-        tel_digits = tel_digits[2:]
+        tel_digits = tel_digits[2:][cite: 3]
     if len(tel_digits) != 10:
-        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."
+        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."[cite: 3]
     if not EMAIL_REGEX.match(email_clean):
-        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."
+        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."[cite: 3]
     if len(note_clean) < 10:
-        return False, "Il messaggio deve contenere almeno 10 caratteri."
-    return True, "OK"
+        return False, "Il messaggio deve contenere almeno 10 caratteri."[cite: 3]
+    return True, "OK"[cite: 3]
 
 def init_rate_limit_db():
-    conn = sqlite3.connect("rate_limit.db")
-    c = conn.cursor()
+    conn = sqlite3.connect("rate_limit.db")[cite: 3]
+    c = conn.cursor()[cite: 3]
     c.execute("""
         CREATE TABLE IF NOT EXISTS invii_contatti (
             email TEXT,
             data_invio TEXT
         )
-    """)
-    conn.commit()
-    conn.close()
+    """)[cite: 3]
+    conn.commit()[cite: 3]
+    conn.close()[cite: 3]
 
 def verifica_puo_inviare(email):
-    init_rate_limit_db()
-    today_str = date.today().isoformat()
-    conn = sqlite3.connect("rate_limit.db")
-    c = conn.cursor()
-    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))
-    count = c.fetchone()[0]
-    conn.close()
-    return count == 0
+    init_rate_limit_db()[cite: 3]
+    today_str = date.today().isoformat()[cite: 3]
+    conn = sqlite3.connect("rate_limit.db")[cite: 3]
+    c = conn.cursor()[cite: 3]
+    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))[cite: 3]
+    count = c.fetchone()[0][cite: 3]
+    conn.close()[cite: 3]
+    return count == 0[cite: 3]
 
 def registra_invio_completato(email):
-    init_rate_limit_db()
-    today_str = date.today().isoformat()
-    conn = sqlite3.connect("rate_limit.db")
-    c = conn.cursor()
-    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))
-    conn.commit()
-    conn.close()
+    init_rate_limit_db()[cite: 3]
+    today_str = date.today().isoformat()[cite: 3]
+    conn = sqlite3.connect("rate_limit.db")[cite: 3]
+    c = conn.cursor()[cite: 3]
+    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))[cite: 3]
+    conn.commit()[cite: 3]
+    conn.close()[cite: 3]
 
 def invia_email_smtp_diretta(nome, telefono, email, note):
-    destinatario = "davimarz.social@gmail.com"
-    email_cfg = st.secrets.get("email", {})
-    sender = email_cfg.get("sender", "davimarz.social@gmail.com")
-    app_pwd = email_cfg.get("app_password", "").replace(" ", "")
+    destinatario = "davimarz.social@gmail.com"[cite: 3]
+    email_cfg = st.secrets.get("email", {})[cite: 3]
+    sender = email_cfg.get("sender", "davimarz.social@gmail.com")[cite: 3]
+    app_pwd = email_cfg.get("app_password", "").replace(" ", "")[cite: 3]
 
     if not app_pwd:
-        return False, "Password per le app non configurata nei Secrets di Streamlit."
+        return False, "Password per le app non configurata nei Secrets di Streamlit."[cite: 3]
 
-    msg = MIMEMultipart()
-    msg['From'] = f"Scala dei Turchi <{sender}>"
-    msg['To'] = destinatario
+    msg = MIMEMultipart()[cite: 3]
+    msg['From'] = f"Scala dei Turchi <{sender}>"[cite: 3]
+    msg['To'] = destinatario[cite: 3]
     msg['Subject'] = f"🔵 [SCALA DEI TURCHI] Messaggio da {nome}"
 
     corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
@@ -663,8 +668,8 @@ def invia_email_smtp_diretta(nome, telefono, email, note):
 
 Messaggio / Note:
 {note}
-"""
-    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
+"""[cite: 3]
+    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))[cite: 3]
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:
