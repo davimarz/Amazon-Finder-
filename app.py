@@ -81,7 +81,7 @@ st.markdown("""
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER COMPATTO */
+    /* 1. HEADER */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,39 +133,8 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. OVERRIDE TOTALE DEI BOTTONI: ZERO ROSSO */
-    button[data-testid="stBaseButton-primary"],
-    button[kind="primary"],
-    .stButton > button[kind="primary"] {
-        background-color: #0284c7 !important;
-        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
-        border: 1px solid #0284c7 !important;
-        color: #ffffff !important;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
-        font-weight: 800 !important;
-    }
-    button[data-testid="stBaseButton-primary"]:hover,
-    button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #0369a1 0%, #075985 100%) !important;
-        border-color: #0369a1 !important;
-        color: #ffffff !important;
-    }
-    button[data-testid="stBaseButton-secondary"],
-    button[kind="secondary"] {
-        background-color: #ffffff !important;
-        color: #0369a1 !important;
-        border: 1.5px solid #cbd5e1 !important;
-        font-weight: 700 !important;
-    }
-    button[data-testid="stBaseButton-secondary"]:hover,
-    button[kind="secondary"]:hover {
-        background-color: #f0f9ff !important;
-        border-color: #0284c7 !important;
-        color: #0284c7 !important;
-    }
-
-    /* 3. SEGMENTED CONTROL ORIZZONTALE */
-    div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
+    /* 2. SEGMENTED CONTROL: BLOCCO TOTALE SU UN'UNICA RIGA ORIZZONTALE ANCHE SU MOBILE */
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
@@ -178,26 +147,36 @@ st.markdown("""
         width: 100% !important;
         margin-bottom: 6px !important;
     }
-    div.nav-bar-wrapper div[data-testid="column"] {
+
+    /* FORZA 33.333% PER COLONNA DISATTIVANDO IL COLLASSO VERTICALE DI STREAMLIT */
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) > div,
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) div[data-testid="column"],
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) div[data-testid="stColumn"] {
         width: 33.333% !important;
         min-width: 0 !important;
+        max-width: 33.333% !important;
         flex: 1 1 33.333% !important;
         margin: 0 !important;
         padding: 0 !important;
     }
+
     @media (max-width: 900px) {
-        div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
+        div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
         }
-        div.nav-bar-wrapper div[data-testid="column"] {
+        div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) > div,
+        div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) div[data-testid="column"],
+        div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) div[data-testid="stColumn"] {
             width: 33.333% !important;
             min-width: 0 !important;
+            max-width: 33.333% !important;
             flex: 1 1 33.333% !important;
         }
     }
-    div.nav-bar-wrapper button {
+
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button {
         width: 100% !important;
         white-space: nowrap !important;
         font-size: 0.78rem !important;
@@ -208,6 +187,51 @@ st.markdown("""
         border-radius: 7px !important;
         border: none !important;
         box-shadow: none !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button p {
+        font-size: 0.78rem !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+    }
+
+    /* STATI DEI PULSANTI NEL MENU (ZERO ROSSO) */
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"],
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-primary"] {
+        background-color: #0284c7 !important;
+        background: #0284c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45) !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"] p {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"],
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-secondary"] {
+        background-color: transparent !important;
+        background: transparent !important;
+        color: #94a3b8 !important;
+        border: none !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"]:hover {
+        background: #1e293b !important;
+        color: #ffffff !important;
+    }
+
+    /* 3. ALTRI PULSANTI DI SISTEMA (es. PAGINAZIONE / TORNA IN ALTO) */
+    button[data-testid="stBaseButton-primary"]:not(div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button) {
+        background-color: #0284c7 !important;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+        border: 1px solid #0284c7 !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+        font-weight: 800 !important;
+    }
+    button[data-testid="stBaseButton-secondary"]:not(div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button) {
+        background-color: #ffffff !important;
+        color: #0369a1 !important;
+        border: 1.5px solid #cbd5e1 !important;
+        font-weight: 700 !important;
     }
 
     /* 4. SEARCH BAR CON LENTE */
@@ -242,7 +266,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH: ZERO ROSSO */
+    /* 5. FILTER CHIPS TOUCH */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -283,7 +307,7 @@ st.markdown("""
         display: none !important;
     }
 
-    /* 6. CHECKBOX PRIME AZZURRO E COMPATTO */
+    /* 6. CHECKBOX PRIME */
     div[data-testid="stCheckbox"] {
         background: #ffffff !important;
         border: 1.5px solid #bae6fd !important;
@@ -298,7 +322,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO: FOTO RADDOPPIATA E BARRA AZIONI UNIFICATA */
+    /* 7. SCHEDA PRODOTTO */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -721,7 +745,6 @@ def esegui_ricerca(increment=False):
 st.markdown("""<div id="top_page"></div><div class="brand-header-box"><div class="brand-title-single">Scala dei Turchi</div><div class="brand-subtitle-single"><span class="badge-ai-pill">AI DEALS</span><span class="brand-author">by <strong>Davide Marziano</strong></span></div></div>""", unsafe_allow_html=True)
 
 # 2. SEGMENTED CONTROL ORIZZONTALE
-st.markdown('<div class="nav-bar-wrapper">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
     is_t1 = (active_tab == "vetrina")
@@ -732,7 +755,6 @@ with col_tab2:
 with col_tab3:
     is_t3 = (active_tab == "contatti")
     st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
