@@ -35,7 +35,6 @@ st.session_state.setdefault("scroll_to_results_flag", False)
 st.session_state.setdefault("offerte", [])
 st.session_state.setdefault("search_notice", "")
 
-# Validazione per prevenire residui delle vecchie opzioni "Popolarità" o "Recensioni"
 if st.session_state.get("cerca_radio_sort") not in list(SORT_MAPPINGS.keys()):
     st.session_state["cerca_radio_sort"] = "Prezzo minimo"
 
@@ -59,7 +58,6 @@ SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 
 
 st.markdown("""
 <style>
-    /* RESET BASE STREAMLIT */
     #MainMenu, header, footer { visibility: hidden !important; height: 0 !important; }
 
     :root {
@@ -139,7 +137,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. SEGMENTED CONTROL: FORZATURA TOTALE SU 1 SOLA RIGA ANCHE SU MOBILE */
+    /* 2. SEGMENTED CONTROL: FORZATURA SU 1 SOLA RIGA ANCHE SU MOBILE */
     div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
@@ -185,7 +183,6 @@ st.markdown("""
         box-shadow: none !important;
         transition: all 0.2s ease;
     }
-    /* AZZURRO OCEANO PER IL BOTTONE ATTIVO - NESSUN ROSSO */
     div.nav-bar-wrapper button[kind="primary"],
     button[data-testid="stBaseButton-primary"][key*="nav_btn_"] {
         background: #0284c7 !important;
@@ -380,7 +377,6 @@ st.markdown("""
         flex-wrap: wrap;
     }
 
-    /* BADGE SCONTO IN ARANCIONE VIVACE */
     .pcm-discount-badge {
         background-color: #ea580c;
         color: #ffffff;
@@ -394,7 +390,7 @@ st.markdown("""
     .pcm-price-final {
         font-size: 1.55rem;
         font-weight: 900;
-        color: #059669; /* Verde Smeraldo */
+        color: #059669;
         line-height: 1;
     }
 
@@ -622,7 +618,7 @@ Messaggio / Note:
     msg.attach(MIMEText(corpo, 'plain', 'utf-8'))[cite: 3]
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:[cite: 3]
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:
             server.login(sender, app_pwd)[cite: 3]
             server.sendmail(sender, [destinatario], msg.as_string())[cite: 3]
         return True, "OK"[cite: 3]
@@ -760,7 +756,6 @@ def render_single_product_card(p):
     except (TypeError, ValueError):
         costo_s = None[cite: 3]
 
-    # BADGES SPEDIZIONE
     if p.get("is_prime") is True:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span>"
     elif p.get("is_sped_gratis") is True or prezzo_finale >= 35.0:
@@ -770,7 +765,6 @@ def render_single_product_card(p):
     else:
         ship_html = "<span class='shipping-prime-pill'>✓ prime</span> <span class='shipping-free-pill'>🚚 Sped. Gratis</span>"
 
-    # SCHEDA FEEDBACK RECENSIONI
     voto_raw = p.get("voto_medio")[cite: 3]
     try:
         voto = float(voto_raw) if voto_raw is not None else 4.4
@@ -792,7 +786,6 @@ def render_single_product_card(p):
     share_price = f"\n💰 Prezzo: €{prezzo_finale:.2f}" if prezzo_verificato else ""
     share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"
     
-    # URL SOCIAL COMPATIBILI MOBILE
     wa_url = f"https://wa.me/?text={urllib.parse.quote(share_msg)}"
     fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
     ig_url = "https://www.instagram.com/"[cite: 3]
@@ -849,7 +842,6 @@ if active_tab == "vetrina":[cite: 3]
         st.info("Nessun prodotto disponibile in vetrina al momento.")[cite: 3]
 
 elif active_tab == "cerca":[cite: 3]
-    # BARRA DI RICERCA CON LENTE INTEGRATA
     st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
     st.text_input(
         "cerca_input_main",
@@ -861,7 +853,6 @@ elif active_tab == "cerca":[cite: 3]
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # FILTER CHIPS TOUCH-FRIENDLY (SOLO "Prezzo minimo" E "Vendite")
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
@@ -915,14 +906,12 @@ elif active_tab == "cerca":[cite: 3]
         end_idx = min(start_idx + 10, tot_offerte)[cite: 3]
         offerte_pagina = prodotti_cerca[start_idx:end_idx][cite: 3]
 
-        # ANCORA DI DESTINAZIONE DELLO SCROLL
         st.markdown('<div id="ancora_risultati" style="scroll-margin-top: 15px;"></div>', unsafe_allow_html=True)
         st.markdown(f"<p style='font-size: 0.74rem; font-weight: 800; color: #0284c7; margin: 4px 0 4px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
 
         for p in offerte_pagina:
             render_single_product_card(p)
 
-        # PULSANTE ALTRI 10 IN FONDO ALLA PAGINA
         st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
         st.button(
             "➕ Carica altri 10 prodotti ⬇️", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
@@ -962,7 +951,7 @@ elif active_tab == "contatti":[cite: 3]
                 elif not privacy_ack:[cite: 3]
                     st.error("Conferma di aver letto l'informativa privacy.")
                 elif not verifica_puo_inviare(email_val.strip()):[cite: 3]
-                    st.warning("Hai già inviato un messaggio oggi con questa email. Riprova domani!")[cite: 3]
+                    st.warning("Hai già inviato un messaggio oggi con questa email. Riprova domani!")
                 else:
                     with st.spinner("Invio in corso..."):
                         ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())[cite: 3]
@@ -974,7 +963,6 @@ elif active_tab == "contatti":[cite: 3]
 
 st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
 
-# SCROLL AUTOMATICO ALL'INIZIO DEI NUOVI RISULTATI
 if st.session_state.get("scroll_to_results_flag", False):
     st.session_state["scroll_to_results_flag"] = False
     components.html("""
@@ -991,7 +979,6 @@ if st.session_state.get("scroll_to_results_flag", False):
     </script>
     """, height=0, width=0)
 
-# FOOTER SCROLLABILE
 st.markdown(
     """
     <div class="site-footer-box">
