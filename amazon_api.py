@@ -47,6 +47,23 @@ if not LOGGER.handlers:
 LOGGER.setLevel(logging.INFO)
 LOGGER.propagate = False
 
+_LAST_API_STATUS: dict[str, Any] = {
+    "operation": "",
+    "status_code": None,
+    "message": "",
+}
+
+
+def _set_api_status(operation: str, status_code: Optional[int], message: str = "") -> None:
+    _LAST_API_STATUS["operation"] = str(operation or "")
+    _LAST_API_STATUS["status_code"] = status_code
+    _LAST_API_STATUS["message"] = str(message or "")[:240]
+
+
+def get_last_api_status() -> dict[str, Any]:
+    """Stato tecnico dell'ultima chiamata, senza token o credenziali."""
+    return dict(_LAST_API_STATUS)
+
 
 def _amazon_secrets() -> dict[str, Any]:
     try:
@@ -190,8 +207,11 @@ def _api_post(operation: str, payload: dict[str, Any]) -> Optional[dict[str, Any
 
         if response.status_code == 200:
             try:
-                return response.json()
+                data = response.json()
+                _set_api_status(operation, 200, "OK")
+                return data
             except ValueError:
+                _set_api_status(operation, 200, "Risposta non JSON")
                 LOGGER.error("Creators API %s: risposta non JSON.", operation)
                 return None
 
@@ -217,6 +237,7 @@ def _api_post(operation: str, payload: dict[str, Any]) -> Optional[dict[str, Any
         except ValueError:
             pass
 
+        _set_api_status(operation, response.status_code, reason or "Errore API")
         LOGGER.error(
             "Creators API %s: HTTP %s%s",
             operation,
@@ -425,6 +446,47 @@ def _item_to_product(
     }
 
 
+
+def _search_item_to_product(
+    item: dict[str, Any],
+    partner_tag: str,
+) -> Optional[dict[str, Any]]:
+    """Scheda di fallback basata su SearchItems, senza inventare il prezzo."""
+    asin = str(item.get("asin") or "").strip().upper()
+    if len(asin) != 10:
+        return None
+
+    title = str(
+        (((item.get("itemInfo") or {}).get("title") or {}).get("displayValue"))
+        or "Prodotto Amazon"
+    )
+
+    image_url = str(
+        (((item.get("images") or {}).get("primary") or {}).get("medium") or {}).get("url")
+        or ""
+    )
+
+    detail_url = str(item.get("detailPageURL") or "")
+
+    return {
+        "asin": asin,
+        "titolo": title,
+        "immagine_url": image_url,
+        "prezzo_iniziale": None,
+        "prezzo_finale": None,
+        "prezzo_verificato": False,
+        "sconto": "",
+        "sconto_val": 0,
+        "saving_basis_label": "",
+        "is_prime_exclusive": False,
+        "prime_filter_match": False,
+        "tipo_offerta": "",
+        "sales_rank": None,
+        "sales_rank_category": "",
+        "link_affiliato": _affiliate_detail_url(detail_url, asin, partner_tag),
+        "source": "creators_api_searchitems_fallback",
+    }
+
 def _passes_local_filters(
     product: dict[str, Any],
     min_price: Optional[float],
@@ -453,8 +515,8 @@ def _search_page_cached(
     min_price: Optional[float],
     max_price: Optional[float],
     cache_buster: str,
-) -> tuple[str, ...]:
-    # cache_buster è usato solo come chiave della cache.
+) -> tuple[dict[str, Any], ...]:
+    # cache_buster serve unicamente a forzare il refresh della Vetrina.
     del cache_buster
 
     payload: dict[str, Any] = {
@@ -465,6 +527,12 @@ def _search_page_cached(
         "itemCount": 10,
         "itemPage": page,
         "sortBy": sort_value,
+        # Metadati minimi: consentono di mostrare comunque la scheda
+        # se GetItems fallisce per un singolo ASIN.
+        "resources": [
+            "images.primary.medium",
+            "itemInfo.title",
+        ],
     }
 
     if prime_only:
@@ -479,16 +547,21 @@ def _search_page_cached(
     data = _api_post("searchItems", payload)
     items = (((data or {}).get("searchResult") or {}).get("items") or [])
 
-    asins: list[str] = []
+    clean_items: list[dict[str, Any]] = []
     seen: set[str] = set()
 
     for item in items:
-        asin = str(item.get("asin") or "").strip().upper()
-        if len(asin) == 10 and asin not in seen:
-            seen.add(asin)
-            asins.append(asin)
+        if not isinstance(item, dict):
+            continue
 
-    return tuple(asins)
+        asin = str(item.get("asin") or "").strip().upper()
+        if len(asin) != 10 or asin in seen:
+            continue
+
+        seen.add(asin)
+        clean_items.append(item)
+
+    return tuple(clean_items)
 
 
 GET_ITEMS_RESOURCES = [
@@ -503,7 +576,6 @@ GET_ITEMS_RESOURCES = [
     "offersV2.listings.merchantInfo",
     "offersV2.listings.price",
     "offersV2.listings.type",
-    "offersV2.listings.violatesMAP",
 ]
 
 
@@ -524,7 +596,17 @@ def _get_items_cached(
     }
 
     data = _api_post("getItems", payload)
-    items = (((data or {}).get("itemsResult") or {}).get("items") or [])
+    response_data = data or {}
+
+    # Creators API attuale usa "itemResults".
+    # "itemsResult" è mantenuto solo come compatibilità difensiva.
+    container = (
+        response_data.get("itemResults")
+        or response_data.get("itemsResult")
+        or {}
+    )
+    items = (container.get("items") or [])
+
     return tuple(item for item in items if isinstance(item, dict))
 
 
@@ -570,7 +652,7 @@ def ottieni_offerte_avanzate(
     )
 
     for page in range(1, required_pages + 1):
-        asins = _search_page_cached(
+        search_items = _search_page_cached(
             query,
             sort_value,
             bool(solo_spedizione_gratuita),
@@ -580,8 +662,14 @@ def ottieni_offerte_avanzate(
             max_price,
             cache_buster,
         )
-        if not asins:
+        if not search_items:
             break
+
+        asins = tuple(
+            str(item.get("asin") or "").strip().upper()
+            for item in search_items
+            if len(str(item.get("asin") or "").strip()) == 10
+        )
 
         exact_items = _get_items_cached(asins, partner_tag)
         by_asin = {
@@ -589,20 +677,26 @@ def ottieni_offerte_avanzate(
             for item in exact_items
         }
 
-        for asin in asins:
-            if asin in seen_asins:
+        for search_item in search_items:
+            asin = str(search_item.get("asin") or "").strip().upper()
+            if not asin or asin in seen_asins:
                 continue
+
             seen_asins.add(asin)
 
-            item = by_asin.get(asin)
-            if not item:
-                continue
+            exact_item = by_asin.get(asin)
+            if exact_item:
+                product = _item_to_product(
+                    exact_item,
+                    partner_tag,
+                    prime_filter_applied=bool(solo_spedizione_gratuita),
+                )
+            else:
+                # Non perdiamo l'intero risultato se GetItems ha un errore
+                # parziale: mostriamo titolo/immagine/link e chiediamo di
+                # verificare il prezzo su Amazon.
+                product = _search_item_to_product(search_item, partner_tag)
 
-            product = _item_to_product(
-                item,
-                partner_tag,
-                prime_filter_applied=bool(solo_spedizione_gratuita),
-            )
             if not product:
                 continue
 

@@ -30,3 +30,15 @@ Inserisci le credenziali reali solo nei Secrets di Streamlit Cloud.
 Non è un conteggio di pezzi venduti.
 Il valore ufficiale disponibile è il Best Sellers Rank Amazon:
 un numero più basso indica un posizionamento vendite migliore.
+
+
+## Fix V3 - nessun prodotto in Vetrina/Cerca
+
+Correzioni:
+- `GetItems` legge `itemResults` (nome corrente nella Creators API).
+- compatibilità difensiva anche con `itemsResult`.
+- rimossa la resource non ammessa `offersV2.listings.violatesMAP`.
+- SearchItems conserva titolo, immagine e detailPageURL.
+- se un singolo GetItems fallisce, la scheda resta visibile senza prezzo inventato.
+- aggiunta diagnostica HTTP priva di secrets.
+- pulsante Cerca forzato azzurro; hover verde.

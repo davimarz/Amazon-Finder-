@@ -180,6 +180,23 @@ button[data-testid="stBaseButton-secondary"]:hover {
     border-color: #0284c7 !important;
 }
 
+/* Il submit del form Cerca non deve ereditare il rosso del tema Streamlit. */
+div[data-testid="stFormSubmitButton"] button,
+.stFormSubmitButton button {
+    background: linear-gradient(135deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%) !important;
+    border: 1px solid #0284c7 !important;
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    box-shadow: 0 2px 7px rgba(2, 132, 199, 0.30) !important;
+}
+
+div[data-testid="stFormSubmitButton"] button:hover,
+.stFormSubmitButton button:hover {
+    background: linear-gradient(135deg, #22c55e 0%, #059669 100%) !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
 /* RICERCA */
 div[data-testid="stTextInput"] input {
     border-radius: 9px !important;
@@ -517,9 +534,19 @@ def _perform_search(target_count: int) -> None:
     st.session_state["has_searched"] = True
 
     if not results:
-        st.session_state["search_notice"] = (
-            "Nessun prodotto trovato. Prova una ricerca più generica."
-        )
+        api_status = amazon_api.get_last_api_status()
+        status_code = api_status.get("status_code")
+        operation = api_status.get("operation") or "Creators API"
+
+        if status_code and status_code != 200:
+            st.session_state["search_notice"] = (
+                f"Amazon non ha restituito prodotti. "
+                f"Errore tecnico {operation}: HTTP {status_code}."
+            )
+        else:
+            st.session_state["search_notice"] = (
+                "Nessun prodotto trovato. Prova una ricerca più generica."
+            )
     elif len(results) < target_count:
         st.session_state["search_notice"] = (
             f"Amazon ha restituito {len(results)} prodotti disponibili "
@@ -895,7 +922,17 @@ if active_tab == "vetrina":
         for product in showcase:
             render_product_card(product)
     else:
-        st.info("Nessun prodotto disponibile in vetrina al momento.")
+        api_status = amazon_api.get_last_api_status()
+        status_code = api_status.get("status_code")
+        operation = api_status.get("operation") or "Creators API"
+
+        if status_code and status_code != 200:
+            st.warning(
+                f"Vetrina non disponibile: {operation} ha risposto HTTP {status_code}. "
+                "Controlla i log di Streamlit e le credenziali Creators API."
+            )
+        else:
+            st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 elif active_tab == "cerca":
     st.markdown(
