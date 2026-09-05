@@ -81,7 +81,7 @@ st.markdown("""
         margin: 0 auto !important;
     }
 
-    /* 1. HEADER COMPATTO */
+    /* 1. HEADER */
     .brand-header-box {
         text-align: center;
         padding: 4px 6px;
@@ -133,21 +133,21 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. SEGMENTED CONTROL: CORNICE LUMINOSA E PULSANTI SU UNICA RIGA (ZERO SFONDO NERO) */
+    /* 2. SEGMENTED CONTROL: SFONDO BIANCO LUMINOSO / SATINATO (ZERO NERO) */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
         align-items: stretch !important;
         gap: 4px !important;
-        background: rgba(255, 255, 255, 0.85) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
         backdrop-filter: blur(8px) !important;
         -webkit-backdrop-filter: blur(8px) !important;
-        border: 1.5px solid rgba(2, 132, 199, 0.25) !important;
+        border: 1.5px solid #bae6fd !important;
         border-radius: 10px !important;
         padding: 3px !important;
         width: 100% !important;
-        margin-bottom: 6px !important;
+        margin-bottom: 8px !important;
         box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08) !important;
     }
 
@@ -181,28 +181,22 @@ st.markdown("""
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button {
         width: 100% !important;
         white-space: nowrap !important;
-        font-size: 0.78rem !important;
-        font-weight: 700 !important;
-        padding: 4px 1px !important;
-        min-height: 34px !important;
-        height: 34px !important;
-        border-radius: 7px !important;
-        border: none !important;
+        font-size: 0.80rem !important;
+        font-weight: 800 !important;
+        padding: 5px 2px !important;
+        min-height: 36px !important;
+        height: 36px !important;
+        border-radius: 8px !important;
         box-shadow: none !important;
-        transition: all 0.2s ease !important;
-    }
-    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button p {
-        font-size: 0.78rem !important;
-        white-space: nowrap !important;
-        margin: 0 !important;
+        transition: all 0.15s ease !important;
     }
 
-    /* PULSANTE ATTIVO: AZZURRO OCEANO */
+    /* BOTTONE ATTIVO: BLU OCEANO LUMINOSO */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-primary"] {
-        background-color: #0284c7 !important;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
         color: #ffffff !important;
+        border: 1px solid #0284c7 !important;
         box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
     }
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"] p {
@@ -210,20 +204,24 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    /* PULSANTI INATTIVI: SFONDO TRASPARENTE, TESTO BLU OCEANO (NO NERO/GRIGIO) */
+    /* BOTTONI INATTIVI: SFONDO BIANCO PULITO, TESTO BLU OCEANO (ZERO NERO) */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-secondary"] {
-        background-color: transparent !important;
-        background: transparent !important;
+        background: #ffffff !important;
         color: #0369a1 !important;
-        border: none !important;
+        border: 1px solid #e0f2fe !important;
     }
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"]:hover {
-        background: rgba(224, 242, 254, 0.85) !important;
+        background: #f0f9ff !important;
+        border-color: #0284c7 !important;
         color: #0284c7 !important;
     }
+    div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"] p {
+        color: #0369a1 !important;
+        font-weight: 700 !important;
+    }
 
-    /* 3. PULSANTI SISTEMA (PAGINAZIONE / TORNA IN ALTO) */
+    /* 3. ALTRI PULSANTI DI SISTEMA (PAGINAZIONE / TORNA IN ALTO) */
     button[data-testid="stBaseButton-primary"]:not(div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button) {
         background-color: #0284c7 !important;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
@@ -271,7 +269,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH */
+    /* 5. FILTER CHIPS TOUCH: NESSUN PALLINO ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -308,7 +306,8 @@ st.markdown("""
         font-weight: 800 !important;
     }
     div[data-testid="stRadio"] div[role="radiogroup"] label input[type="radio"],
-    div[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child {
+    div[data-testid="stRadio"] div[role="radiogroup"] label > div:first-child,
+    div[data-testid="stRadio"] div[role="radiogroup"] label > div:first-of-type {
         display: none !important;
     }
 
@@ -327,7 +326,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO */
+    /* 7. SCHEDA PRODOTTO: FOTO RADDOPPIATA E BARRA AZIONI UNIFICATA */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -602,62 +601,62 @@ def valida_campi_contatto(nome, telefono, email, note):
     note_clean = note.strip()
 
     if not nome_clean or not tel_digits or not email_clean or not note_clean:
-        return False, "Tutti i campi sono obbligatori."[cite: 3]
+        return False, "Tutti i campi sono obbligatori."
     if len(nome_clean) < 3:
-        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."[cite: 3]
+        return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."
     if tel_digits.startswith("39") and len(tel_digits) == 12:
-        tel_digits = tel_digits[2:][cite: 3]
+        tel_digits = tel_digits[2:]
     if len(tel_digits) != 10:
-        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."[cite: 3]
+        return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."
     if not EMAIL_REGEX.match(email_clean):
-        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."[cite: 3]
+        return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."
     if len(note_clean) < 10:
-        return False, "Il messaggio deve contenere almeno 10 caratteri."[cite: 3]
-    return True, "OK"[cite: 3]
+        return False, "Il messaggio deve contenere almeno 10 caratteri."
+    return True, "OK"
 
 def init_rate_limit_db():
-    conn = sqlite3.connect("rate_limit.db")[cite: 3]
-    c = conn.cursor()[cite: 3]
+    conn = sqlite3.connect("rate_limit.db")
+    c = conn.cursor()
     c.execute("""
         CREATE TABLE IF NOT EXISTS invii_contatti (
             email TEXT,
             data_invio TEXT
         )
-    """)[cite: 3]
-    conn.commit()[cite: 3]
-    conn.close()[cite: 3]
+    """)
+    conn.commit()
+    conn.close()
 
 def verifica_puo_inviare(email):
-    init_rate_limit_db()[cite: 3]
-    today_str = date.today().isoformat()[cite: 3]
-    conn = sqlite3.connect("rate_limit.db")[cite: 3]
-    c = conn.cursor()[cite: 3]
-    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))[cite: 3]
-    count = c.fetchone()[0][cite: 3]
-    conn.close()[cite: 3]
-    return count == 0[cite: 3]
+    init_rate_limit_db()
+    today_str = date.today().isoformat()
+    conn = sqlite3.connect("rate_limit.db")
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*) FROM invii_contatti WHERE lower(email) = lower(?) AND data_invio = ?", (email.strip(), today_str))
+    count = c.fetchone()[0]
+    conn.close()
+    return count == 0
 
 def registra_invio_completato(email):
-    init_rate_limit_db()[cite: 3]
-    today_str = date.today().isoformat()[cite: 3]
-    conn = sqlite3.connect("rate_limit.db")[cite: 3]
-    c = conn.cursor()[cite: 3]
-    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))[cite: 3]
-    conn.commit()[cite: 3]
-    conn.close()[cite: 3]
+    init_rate_limit_db()
+    today_str = date.today().isoformat()
+    conn = sqlite3.connect("rate_limit.db")
+    c = conn.cursor()
+    c.execute("INSERT INTO invii_contatti (email, data_invio) VALUES (?, ?)", (email.strip().lower(), today_str))
+    conn.commit()
+    conn.close()
 
 def invia_email_smtp_diretta(nome, telefono, email, note):
-    destinatario = "davimarz.social@gmail.com"[cite: 3]
-    email_cfg = st.secrets.get("email", {})[cite: 3]
-    sender = email_cfg.get("sender", "davimarz.social@gmail.com")[cite: 3]
-    app_pwd = email_cfg.get("app_password", "").replace(" ", "")[cite: 3]
+    destinatario = "davimarz.social@gmail.com"
+    email_cfg = st.secrets.get("email", {})
+    sender = email_cfg.get("sender", "davimarz.social@gmail.com")
+    app_pwd = email_cfg.get("app_password", "").replace(" ", "")
 
     if not app_pwd:
-        return False, "Password per le app non configurata nei Secrets di Streamlit."[cite: 3]
+        return False, "Password per le app non configurata nei Secrets di Streamlit."
 
-    msg = MIMEMultipart()[cite: 3]
-    msg['From'] = f"Scala dei Turchi <{sender}>"[cite: 3]
-    msg['To'] = destinatario[cite: 3]
+    msg = MIMEMultipart()
+    msg['From'] = f"Scala dei Turchi <{sender}>"
+    msg['To'] = destinatario
     msg['Subject'] = f"🔵 [SCALA DEI TURCHI] Messaggio da {nome}"
 
     corpo = f"""Nuova richiesta o suggerimento ricevuto dal sito Scala dei Turchi:
@@ -668,8 +667,8 @@ def invia_email_smtp_diretta(nome, telefono, email, note):
 
 Messaggio / Note:
 {note}
-"""[cite: 3]
-    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))[cite: 3]
+"""
+    msg.attach(MIMEText(corpo, 'plain', 'utf-8'))
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=5) as server:
@@ -749,7 +748,7 @@ def esegui_ricerca(increment=False):
 # 1. HEADER
 st.markdown("""<div id="top_page"></div><div class="brand-header-box"><div class="brand-title-single">Scala dei Turchi</div><div class="brand-subtitle-single"><span class="badge-ai-pill">AI DEALS</span><span class="brand-author">by <strong>Davide Marziano</strong></span></div></div>""", unsafe_allow_html=True)
 
-# 2. SEGMENTED CONTROL ORIZZONTALE
+# 2. SEGMENTED CONTROL: SFONDO BIANCO LUMINOSO E TESTO BLU OCEANO
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
     is_t1 = (active_tab == "vetrina")
