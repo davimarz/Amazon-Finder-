@@ -293,6 +293,7 @@ def _filter_product(
 
 
 def _fetch_html(url: str, timeout: int = 10) -> Optional[str]:
+    # 1. Tentativo con curl_cffi simulando browser reali
     if HAS_CURL:
         for imp in ["chrome120", "chrome119", "safari17_0"]:
             try:
@@ -314,26 +315,7 @@ def _fetch_html(url: str, timeout: int = 10) -> Optional[str]:
             except Exception:
                 pass
 
-    try:
-        s = requests.Session()
-        headers = {
-            "User-Agent": random.choice(USER_AGENTS),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Upgrade-Insecure-Requests": "1",
-            "Referer": "https://www.google.it/",
-            "DNT": "1",
-        }
-        cookies = {
-            "lc-acbit": "it_IT",
-            "i18n-prefs": "EUR",
-        }
-        r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
-        if r.status_code == 200 and r.text and len(r.text) > 2000 and "Robot Check" not in r.text:
-            return r.text
-    except Exception:
-        pass
-
+    # 2. Tentativo con requests standard simulando mobile (aggira i WAF datacenter)
     try:
         mobile_headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
@@ -435,14 +417,22 @@ def _extract_products_from_html(
     if not items or len(items) < 2:
         items = [d for d in soup.select("div[data-asin]") if len(d.get("data-asin", "").strip()) == 10]
     if not items:
-        items = soup.select("div.s-result-item")
+        items = soup.select("div.s-result-item, li.s-result-item")
 
     products: List[Dict[str, Any]] = []
     seen_asins = set()
 
     for item in items:
         asin = item.get("data-asin", "").strip().upper()
-        if len(asin) != 10 or asin in seen_asins:
+        if not asin or len(asin) != 10 or asin in seen_asins:
+            # Cerca asin all'interno dei link se non è nell'attributo del div
+            link_asin = item.select_one("a[href*='/dp/']")
+            if link_asin:
+                m_asin = RE_ASIN.search(link_asin.get("href", ""))
+                if m_asin:
+                    asin = m_asin.group(1).upper()
+        
+        if not asin or len(asin) != 10 or asin in seen_asins:
             continue
 
         title = ""
@@ -542,113 +532,6 @@ def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]
             target.append(product)
 
 
-def _get_item_from_creators_api(
-    asin: str,
-    partner_tag: str,
-    min_price: Optional[float],
-    max_price: Optional[float],
-    require_free_or_prime: bool = False,
-) -> Optional[Dict[str, Any]]:
-    payload = {
-        "itemIds": [asin],
-        "itemIdType": "ASIN",
-        "marketplace": MARKETPLACE,
-        "partnerTag": partner_tag,
-        "resources": [
-            "images.primary.large",
-            "itemInfo.title",
-            "offersV2.listings.price",
-            "offersV2.listings.dealDetails",
-        ],
-    }
-    data = _creators_api_call("getItems", payload)
-    if not data:
-        return None
-
-    items = data.get("itemsResult", {}).get("items", []) or []
-    if not items:
-        return None
-
-    product = _api_item_to_product(items[0], partner_tag, prime_filter_applied=False)
-    if not product:
-        return None
-
-    if not _filter_product(
-        product,
-        min_price,
-        max_price,
-        require_free_or_prime=require_free_or_prime,
-    ):
-        return None
-    return product
-
-
-def _search_creators_api(
-    keyword: str,
-    sort_type: str,
-    partner_tag: str,
-    solo_spedizione_gratuita: bool,
-    min_price: Optional[float],
-    max_price: Optional[float],
-    item_count: int,
-) -> Optional[List[Dict[str, Any]]]:
-    if not get_creators_access_token():
-        return None
-
-    collected: List[Dict[str, Any]] = []
-    seen_asins: set[str] = set()
-
-    pages_needed = max(1, min(MAX_CREATORS_PAGES, (item_count + 9) // 10))
-    for page in range(1, pages_needed + 1):
-        payload: Dict[str, Any] = {
-            "partnerTag": partner_tag,
-            "keywords": keyword,
-            "searchIndex": "All",
-            "marketplace": MARKETPLACE,
-            "itemCount": 10,
-            "itemPage": page,
-            "resources": [
-                "images.primary.large",
-                "itemInfo.title",
-                "offersV2.listings.price",
-                "offersV2.listings.dealDetails",
-            ],
-        }
-
-        if min_price is not None:
-            payload["minPrice"] = max(1, int(round(min_price * 100)))
-        if max_price is not None:
-            payload["maxPrice"] = max(1, int(round(max_price * 100)))
-        if solo_spedizione_gratuita:
-            payload["deliveryFlags"] = ["Prime"]
-
-        data = _creators_api_call("searchItems", payload)
-        if data is None:
-            return None if not collected else collected
-
-        items = data.get("searchResult", {}).get("items", []) or []
-        if not items:
-            break
-
-        parsed_page: List[Dict[str, Any]] = []
-        for item in items:
-            product = _api_item_to_product(
-                item,
-                partner_tag,
-                prime_filter_applied=solo_spedizione_gratuita,
-            )
-            if not product:
-                continue
-            if _filter_product(product, min_price, max_price):
-                parsed_page.append(product)
-
-        _append_unique(collected, parsed_page, seen_asins)
-        if len(collected) >= item_count:
-            break
-
-    return collected[:item_count]
-
-
 def _search_html_fallback(
     keyword: str,
     sort_type: str,
@@ -658,16 +541,19 @@ def _search_html_fallback(
     max_price: Optional[float],
     item_count: int,
 ) -> List[Dict[str, Any]]:
-    query_encoded = urllib.parse.quote_plus(keyword.strip())
+    clean_kw = keyword.strip()
+    query_encoded = urllib.parse.quote_plus(clean_kw)
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
-    max_pages = min(4, max(2, (item_count + 9) // 10 + 1))
+    max_pages = min(3, max(1, (item_count + 9) // 10))
     for page in range(1, max_pages + 1):
+        # 1. URL standard
         url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
         html_text = _get_search_html_cached(url)
 
+        # 2. URL alternativo di ricerca generale se il primo non produce risultati
         if not html_text:
             url_alt = f"https://www.amazon.it/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords={query_encoded}&page={page}"
             html_text = _get_search_html_cached(url_alt)
@@ -709,15 +595,6 @@ def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int =
         random.shuffle(products)
         return products[:item_count]
 
-    fallback = ottieni_offerte_avanzate(
-        keyword="offerte del giorno",
-        sort_type="Vendite",
-        item_count=item_count * 2,
-        _partner_tag_override=configured_tag,
-    )
-    if fallback:
-        random.shuffle(fallback)
-        return fallback[:item_count]
     return []
 
 
@@ -736,91 +613,53 @@ def ottieni_offerte_avanzate(
 
     partner_tag = get_partner_tag() or str(_partner_tag_override or "").strip()
     item_count = max(1, min(int(item_count or 10), MAX_RESULTS))
-
     clean_keyword = (keyword or "").strip()
 
-    is_direct_asin = False
-    asin_matched = None
+    if not clean_keyword:
+        clean_keyword = "offerte del giorno"
 
-    if "http://" in clean_keyword.lower() or "https://" in clean_keyword.lower():
-        match = RE_ASIN.search(clean_keyword)
-        if match:
-            is_direct_asin = True
-            asin_matched = match.group(1).upper()
-    elif re.fullmatch(r"^B0[A-Z0-9]{8}$", clean_keyword, re.IGNORECASE) or re.fullmatch(r"^\d{9}[\dX]$", clean_keyword, re.IGNORECASE):
-        is_direct_asin = True
-        asin_matched = clean_keyword.upper()
-
-    if is_direct_asin and asin_matched:
-        api_product = _get_item_from_creators_api(
-            asin_matched,
-            partner_tag,
-            min_price,
-            max_price,
-            require_free_or_prime=solo_spedizione_gratuita,
-        )
-        if api_product:
-            return [api_product]
-
-        fallback_products = _search_html_fallback(
-            asin_matched,
-            "Vendite",
-            partner_tag,
-            solo_spedizione_gratuita,
-            min_price,
-            max_price,
-            10,
-        )
-        for product in fallback_products:
-            if product.get("asin") == asin_matched:
-                return [product]
-        return []
-
-    query = clean_keyword or "offerte del giorno"
-
-    # 1. Ricerca tramite HTML Fallback prioritario per brand popolari (come iPhone, Samsung, Nike)
-    # Questo scavalca i filtri rigidi di restrizione della Creator API su alcuni marchi elettronici
+    # Interrogazione diretta tramite motore di ricerca HTML avanzato (garantisce risultati per iPhone, Nike, Lotto, ecc.)
     collected = _search_html_fallback(
-        query,
+        clean_keyword,
         sort_type,
         partner_tag,
         solo_spedizione_gratuita,
         min_price,
         max_price,
-        item_count * 2,
+        item_count,
     )
 
-    # 2. Se l'HTML non basta, integra con la Creator API
+    # Integrazione secondaria con la Creator API se disponibile
     if len(collected) < item_count:
-        api_products = _search_creators_api(
-            query,
-            sort_type,
-            partner_tag,
-            solo_spedizione_gratuita,
-            min_price,
-            max_price,
-            item_count,
-        )
-        if api_products:
-            seen_asins = {p["asin"] for p in collected if p.get("asin")}
-            for ap in api_products:
-                if ap.get("asin") not in seen_asins:
-                    collected.append(ap)
-                    seen_asins.add(ap["asin"])
-                if len(collected) >= item_count:
-                    break
-
-    if not collected and solo_spedizione_gratuita:
-        html_products_relax = _search_html_fallback(
-            query,
-            sort_type,
-            partner_tag,
-            solo_spedizione_gratuita=False,
-            min_price=None,
-            max_price=None,
-            item_count=item_count,
-        )
-        collected = html_products_relax
+        try:
+            api_payload = {
+                "partnerTag": partner_tag,
+                "keywords": clean_keyword,
+                "searchIndex": "All",
+                "marketplace": MARKETPLACE,
+                "itemCount": 10,
+                "itemPage": 1,
+                "resources": [
+                    "images.primary.large",
+                    "itemInfo.title",
+                    "offersV2.listings.price",
+                    "offersV2.listings.dealDetails",
+                ],
+            }
+            api_data = _creators_api_call("searchItems", api_payload)
+            if api_data:
+                api_items = api_data.get("searchResult", {}).get("items", []) or []
+                seen_asins = {p["asin"] for p in collected if p.get("asin")}
+                for item in api_items:
+                    prod = _api_item_to_product(item, partner_tag, prime_filter_applied=solo_spedizione_gratuita)
+                    if prod and prod.get("asin") not in seen_asins:
+                        if _filter_product(prod, min_price, max_price, require_free_or_prime=solo_spedizione_gratuita):
+                            collected.append(prod)
+                            seen_asins.add(prod["asin"])
+                    if len(collected) >= item_count:
+                        break
+        except Exception:
+            pass
 
     if sort_type == "Vendite":
         collected.sort(key=lambda p: int(p.get("num_recensioni") or 0), reverse=True)
