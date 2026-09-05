@@ -73,17 +73,60 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.20rem 0.35rem 0.80rem 0.35rem !important;
+        padding: 0.25rem 0.40rem 90px 0.40rem !important;
         max-width: 100% !important;
     }
 
+    /* --- HEADER COMPATTO --- */
+    .hero-compact {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 6px;
+        margin-bottom: 4px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(2, 132, 199, 0.2);
+        border-radius: 8px;
+    }
+    .hero-compact-left {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+    .hero-compact-title {
+        font-size: 1.15rem;
+        font-weight: 900;
+        margin: 0;
+        background: linear-gradient(90deg, #0369a1 0%, #0284c7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+    }
+    .hero-compact-badge {
+        background: #0284c7;
+        color: #ffffff;
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 2px 5px;
+        border-radius: 4px;
+        line-height: 1;
+    }
+    .hero-compact-author {
+        font-size: 0.65rem;
+        color: #475569;
+        font-weight: 600;
+        margin: 0;
+    }
+    .hero-compact-author strong { color: #0369a1; }
+
+    /* --- SEGMENTED CONTROL ORIZZONTALE --- */
     .nav-bar-container [data-testid="stHorizontalBlock"] {
-        background: rgba(255, 255, 255, 0.85) !important;
-        padding: 2px 4px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        padding: 2px !important;
         border-radius: 8px !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
-        gap: 4px !important;
-        margin-bottom: 4px !important;
+        gap: 3px !important;
+        margin-bottom: 6px !important;
         display: flex !important;
         width: 100% !important;
     }
@@ -93,275 +136,141 @@ st.markdown("""
         color: #0369a1 !important;
         font-weight: 800 !important;
         font-size: 0.76rem !important;
-        background: rgba(255, 255, 255, 0.85) !important;
-        border: 1px solid rgba(2, 132, 199, 0.2) !important;
+        background: transparent !important;
+        border: none !important;
         border-radius: 6px !important;
         padding: 4px 5px !important;
-        min-height: 28px !important;
-        height: 28px !important;
+        min-height: 30px !important;
+        height: 30px !important;
         text-align: center !important;
         justify-content: center !important;
         white-space: nowrap !important;
         box-shadow: none !important;
-    }
-
-    .nav-bar-container button:hover {
-        background: rgba(224, 242, 254, 0.9) !important;
-        border-color: #0284c7 !important;
+        transition: all 0.2s ease;
     }
 
     .nav-bar-container button[kind="primary"] {
         color: #ffffff !important;
-        background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
-        border-color: #0284c7 !important;
-        box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+        background: #0284c7 !important;
+        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.4) !important;
     }
 
     .nav-bar-container button[kind="primary"] p {
         color: #ffffff !important;
-        font-weight: 900 !important;
+        font-weight: 800 !important;
     }
 
+    /* --- SEARCH BAR COMPATTA CON LENTE INTEGRATA --- */
+    .search-box-native {
+        position: relative;
+        width: 100%;
+        margin-bottom: 4px;
+    }
+    div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) input {
+        border-radius: 8px !important;
+        border: 1.5px solid #0284c7 !important;
+        padding-right: 36px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        height: 34px !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.15) !important;
+    }
+    .search-lens-inside {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #0284c7;
+        font-size: 0.85rem;
+        font-weight: 900;
+        z-index: 5;
+    }
+
+    /* --- FILTER CHIPS TOUCH-FRIENDLY (ORIZZONTALI) --- */
+    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
+        color: #0369a1 !important;
+        font-size: 0.72rem !important;
+        font-weight: 800 !important;
+        margin-bottom: 2px !important;
+    }
+    div[data-testid="stRadio"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"] {
+        background: #ffffff !important;
+        padding: 4px 10px !important;
+        border-radius: 9999px !important;
+        border: 1px solid #93c5fd !important;
+        margin: 0 !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        text-align: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) {
+        background: #0284c7 !important;
+        border-color: #0284c7 !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"]:has(input:checked) div p {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+    div[data-testid="stRadio"] label[data-baseweb="radio"] div p {
+        color: #0369a1 !important;
+        font-size: 0.70rem !important;
+        font-weight: 700 !important;
+    }
+    div[data-testid="stRadio"] input[type="radio"] {
+        display: none !important;
+    }
+
+    /* --- ACCORDION FILTRI SECONDARI --- */
+    div[data-testid="stExpander"] {
+        background: rgba(255, 255, 255, 0.8) !important;
+        border: 1px solid rgba(2, 132, 199, 0.25) !important;
+        border-radius: 8px !important;
+        margin-bottom: 6px !important;
+    }
+    div[data-testid="stExpander"] details summary p {
+        font-size: 0.74rem !important;
+        font-weight: 800 !important;
+        color: #0369a1 !important;
+    }
+
+    /* --- SCHEDE PRODOTTO & CONTENITORE --- */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.60) !important;
         backdrop-filter: blur(10px) !important;
         -webkit-backdrop-filter: blur(10px) !important;
-        border: 2px solid rgba(255, 255, 255, 0.85) !important;
-        border-radius: 12px !important;
-        padding: 6px !important;
-        margin-top: 2px !important;
-        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.12) !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+        border-radius: 10px !important;
+        padding: 5px !important;
+        box-shadow: 0 4px 16px rgba(2, 132, 199, 0.10) !important;
     }
-
-    .hero-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        margin: 0 auto 2px auto;
-        text-align: center;
-    }
-
-    .hero-title-main {
-        font-size: clamp(2.2rem, 7.8vw, 3.2rem);
-        font-weight: 900;
-        line-height: 0.95;
-        width: 100%;
-        text-align: center;
-        letter-spacing: -0.5px;
-        margin: 0;
-        background: linear-gradient(90deg, #0369a1 0%, #0284c7 50%, #1d4ed8 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .hero-subtitle-box {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        margin: 0 0 2px 0;
-    }
-
-    .hero-subtitle-text {
-        font-size: clamp(1.4rem, 5.0vw, 1.9rem);
-        font-weight: 800;
-        color: #0f172a;
-        font-variant: small-caps;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        line-height: 1;
-        margin: 0;
-    }
-
-    .ai-badge {
-        background: #0284c7;
-        color: #ffffff;
-        font-size: 0.72em;
-        font-weight: 900;
-        padding: 2px 6px;
-        border-radius: 5px;
-        line-height: 1;
-        margin: 0;
-    }
-
-    .hero-author-tag {
-        font-size: 0.70rem;
-        color: #334155;
-        font-weight: 600;
-        margin: 0 0 4px 0;
-        line-height: 1;
-    }
-
-    .hero-author-tag strong { color: #0369a1; }
 
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        background-color: #ffffff !important;
         background: linear-gradient(150deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%) !important;
-        border: 2px solid #059669 !important;
-        border-radius: 10px !important;
-        padding: 5px 6px !important;
-        margin-bottom: 6px !important;
-        box-shadow: 0 3px 12px rgba(5, 150, 105, 0.18) !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] {
-        gap: 0px !important;
-        row-gap: 0px !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"] > div {
-        margin: 0px !important;
-        padding: 0px !important;
-        gap: 0px !important;
-    }
-
-    div[data-testid="stTextInput"], div[data-testid="stTextArea"] {
-        margin: 0px 0px 3px 0px !important;
-        padding: 0px !important;
-    }
-
-    div[data-baseweb="input"] {
-        background-color: #ffffff !important;
-        border: 1.5px solid #10b981 !important;
-        border-radius: 5px !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12) !important;
-    }
-
-    div[data-baseweb="textarea"] {
-        background-color: #ffffff !important;
-        border: 1.5px solid #10b981 !important;
-        border-radius: 5px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.12) !important;
-    }
-
-    div[data-baseweb="input"]:focus-within,
-    div[data-baseweb="textarea"]:focus-within {
-        border-color: #047857 !important;
-    }
-
-    div[data-baseweb="input"] input,
-    div[data-baseweb="textarea"] textarea {
-        color: #064e3b !important;
-        font-weight: 700 !important;
-        font-size: 0.78rem !important;
-        padding: 4px 8px !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button {
-        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #0284c7 !important;
-        border-radius: 5px !important;
-        font-weight: 900 !important;
-        font-size: 0.78rem !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 0 2px 0 !important;
-        box-shadow: 0 1px 3px rgba(2, 132, 199, 0.3) !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(2) button p {
-        color: #ffffff !important;
-        font-weight: 900 !important;
-        font-size: 0.78rem !important;
-        line-height: 1 !important;
-        margin: 0 !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-        color: #ffffff !important;
-        border: 1px solid #10b981 !important;
-        border-radius: 5px !important;
-        font-weight: 900 !important;
-        font-size: 0.78rem !important;
-        min-height: 28px !important;
-        height: 28px !important;
-        width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.25) !important;
-    }
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:has(div[data-testid="stTextInput"]) div[data-testid="stElementContainer"]:nth-of-type(3) button p {
-        color: #ffffff !important;
-        font-weight: 900 !important;
-        font-size: 0.78rem !important;
-        line-height: 1 !important;
-        margin: 0 !important;
-    }
-
-    div[data-testid="stRadio"] {
-        display: flex !important;
-        flex-direction: column !important;
-        gap: 1px !important;
-        margin: 1px 0 2px 0 !important;
-    }
-
-    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
-        color: #064e3b !important;
-        font-size: 0.74rem !important;
-        font-weight: 800 !important;
-        margin-bottom: 2px !important;
-    }
-
-    div[data-testid="stRadio"] > div {
-        display: flex !important;
-        flex-direction: row !important;
-        flex-wrap: nowrap !important;
-        gap: 3px !important;
-        width: 100% !important;
-    }
-
-    div[data-testid="stRadio"] label[data-baseweb="radio"] {
-        background: #ffffff !important;
-        padding: 2px 4px !important;
-        border-radius: 5px !important;
-        border: 1px solid #a7f3d0 !important;
-        margin: 0 !important;
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        text-align: center !important;
-        justify-content: center !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-    }
-
-    div[data-testid="stRadio"] label[data-baseweb="radio"] div {
-        color: #064e3b !important;
-        font-size: 0.68rem !important;
-        font-weight: 700 !important;
-        white-space: nowrap !important;
-    }
-
-    div[data-testid="stCheckbox"] {
-        background: #ffffff !important;
-        padding: 3px 6px !important;
-        border-radius: 5px !important;
-        border: 1px solid #a7f3d0 !important;
-        min-height: 24px !important;
-        margin: 3px 0 1px 0 !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-    }
-
-    div[data-testid="stCheckbox"] label p {
-        font-size: 0.72rem !important;
-        font-weight: 800 !important;
-        color: #065f46 !important;
+        border: 1.5px solid #059669 !important;
+        border-radius: 8px !important;
+        padding: 4px 5px !important;
+        margin-bottom: 5px !important;
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.12) !important;
     }
 
     .product-img-wrapper-full {
         width: 100%;
-        height: 135px;
+        height: 125px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -369,8 +278,8 @@ st.markdown("""
         border: 1px solid #86efac;
         border-radius: 6px;
         overflow: hidden;
-        padding: 3px;
-        margin-bottom: 4px;
+        padding: 2px;
+        margin-bottom: 2px;
     }
 
     .product-img-wrapper-full img {
@@ -381,17 +290,16 @@ st.markdown("""
     }
 
     .deal-title {
-        font-size: 0.82rem !important;
+        font-size: 0.80rem !important;
         font-weight: 800 !important;
-        line-height: 1.25 !important;
+        line-height: 1.2 !important;
         color: #064e3b !important;
-        margin: 0 0 6px 0 !important;
+        margin: 0 0 4px 0 !important;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
-        min-height: 32px;
-        width: 100% !important;
+        min-height: 28px;
     }
 
     .buy-btn-action {
@@ -400,58 +308,56 @@ st.markdown("""
         justify-content: center;
         background-color: #ffd814;
         color: #0f1111 !important;
-        font-size: 0.76rem !important;
+        font-size: 0.74rem !important;
         font-weight: 800 !important;
         text-decoration: none !important;
-        padding: 2px 4px;
         border-radius: 6px;
         border: 1px solid #fcd200;
         width: 100% !important;
-        min-height: 28px;
-        height: 28px;
+        min-height: 26px;
+        height: 26px;
         margin-top: 3px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
     }
 
     .price-delivery-split-row {
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        gap: 6px !important;
-        margin: 4px 0 6px 0 !important;
+        gap: 4px !important;
+        margin: 2px 0 4px 0 !important;
     }
 
     .price-subgroup-left {
         display: flex !important;
         align-items: baseline !important;
-        gap: 4px !important;
+        gap: 3px !important;
         flex-wrap: wrap !important;
     }
 
     .deal-price-final {
-        font-size: 2.10rem !important;
+        font-size: 1.90rem !important;
         font-weight: 900 !important;
         color: #065f46 !important;
         line-height: 1 !important;
     }
 
     .deal-price-old {
-        font-size: 1.40rem !important;
+        font-size: 1.25rem !important;
         color: #4b5563 !important;
         text-decoration: line-through;
-        margin-left: 4px;
+        margin-left: 2px;
         line-height: 1 !important;
     }
 
     .deal-badge {
         background-color: #ef4444;
         color: white;
-        font-size: 1.30rem !important;
+        font-size: 1.15rem !important;
         font-weight: 800 !important;
-        padding: 2px 6px !important;
+        padding: 2px 5px !important;
         border-radius: 4px;
         line-height: 1 !important;
-        display: inline-block !important;
     }
 
     .shipping-badge-prime {
@@ -460,128 +366,48 @@ st.markdown("""
         justify-content: center !important;
         background: linear-gradient(135deg, #00a8e8 0%, #007eb9 100%) !important;
         color: #ffffff !important;
-        font-size: 0.70rem !important;
+        font-size: 0.68rem !important;
         font-weight: 900 !important;
         font-style: italic !important;
-        letter-spacing: 0.5px !important;
-        padding: 2px 7px !important;
+        padding: 2px 6px !important;
         border-radius: 4px !important;
-        box-shadow: 0 1px 3px rgba(0, 168, 232, 0.35) !important;
         line-height: 1 !important;
         text-transform: lowercase !important;
-    }
-
-    .shipping-badge-prime::before {
-        content: "✓ " !important;
-        font-style: normal !important;
-        font-weight: 900 !important;
-        color: #ff9900 !important;
-        margin-right: 2px !important;
     }
 
     .shipping-badge-free {
         background: rgba(255, 255, 255, 0.95);
         color: #065f46;
         border: 1px solid #6ee7b7;
-        padding: 2px 5px;
+        padding: 2px 4px;
         border-radius: 4px;
-        font-size: 0.68rem;
+        font-size: 0.66rem;
         font-weight: 800;
     }
-
-    .shipping-badge-paid {
-        background: rgba(255, 255, 255, 0.95);
-        color: #92400e;
-        border: 1px solid #fde68a;
-        padding: 2px 5px;
-        border-radius: 4px;
-        font-size: 0.68rem;
-        font-weight: 800;
-    }
-
-    .shipping-badge-unknown {
-        background: rgba(255, 255, 255, 0.95);
-        color: #475569;
-        border: 1px solid #cbd5e1;
-        padding: 2px 5px;
-        border-radius: 4px;
-        font-size: 0.68rem;
-        font-weight: 800;
-    }
-
-    .feedback-container {
-        background: #ffffff;
-        border-radius: 6px;
-        padding: 4px 6px;
-        color: #0f1111;
-        margin-top: 3px;
-        border: 1px solid #a7f3d0;
-    }
-
-    .feedback-title {
-        font-size: 0.72rem;
-        font-weight: 700;
-        margin-bottom: 1px;
-    }
-
-    .feedback-stars-row {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-    }
-
-    .feedback-stars { color: #ff6e00; font-size: 0.75rem; }
-    .feedback-score-text { font-size: 0.68rem; font-weight: 600; }
-    .feedback-subcount { font-size: 0.62rem; color: #565959; margin-bottom: 2px; }
-
-    .fb-row {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        margin-bottom: 1px;
-    }
-
-    .fb-label { width: 22px; color: #007185; font-size: 0.60rem; }
-    .fb-bar-bg { flex: 1; height: 6px; background-color: #f1f5f9; border-radius: 2px; overflow: hidden; }
-    .fb-bar-fill { height: 100%; background-color: #ff6e00; }
-    .fb-pct { width: 18px; text-align: right; color: #007185; font-size: 0.60rem; }
 
     .social-share-row-mobile {
         display: flex !important;
         flex-direction: row !important;
         justify-content: center !important;
         align-items: center !important;
-        gap: 5px !important;
-        margin-top: 5px !important;
+        gap: 4px !important;
+        margin-top: 4px !important;
         width: 100% !important;
-        flex-wrap: wrap !important;
     }
 
     .share-icon-btn {
-        width: 26px !important;
-        height: 26px !important;
-        min-width: 26px !important;
-        max-width: 26px !important;
-        flex-shrink: 0 !important;
-        border-radius: 5px !important;
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: 4px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         border: none !important;
         padding: 0 !important;
-        margin: 0 !important;
-        text-decoration: none !important;
         cursor: pointer !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
     }
 
-    .share-icon-btn svg {
-        width: 13px !important;
-        height: 13px !important;
-        fill: #ffffff !important;
-        pointer-events: none !important;
-    }
-
+    .share-icon-btn svg { width: 12px !important; height: 12px !important; fill: #ffffff !important; }
     .btn-wa { background-color: #25D366 !important; }
     .btn-fb { background-color: #1877F2 !important; }
     .btn-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important; }
@@ -589,59 +415,39 @@ st.markdown("""
     .btn-gmail { background-color: #EA4335 !important; }
     .btn-copy { background-color: #475569 !important; }
 
+    .price-source-note, .affiliate-note {
+        font-size: 0.58rem;
+        color: #475569;
+        margin-top: 2px;
+        line-height: 1.2;
+    }
+
+    /* --- DISCLAIMER FOOTER NON SOVRAPPOSTO (SCROLLABILE) --- */
+    .site-footer-box {
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(2, 132, 199, 0.25);
+        border-radius: 8px;
+        padding: 8px 10px;
+        margin: 15px 0 10px 0;
+        text-align: center;
+        color: #475569;
+        font-size: 11px;
+        line-height: 1.35;
+    }
+    .site-footer-box a { color: #0369a1; font-weight: 700; text-decoration: underline; }
+
     .btn-back-to-top {
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
-        gap: 8px !important;
-        padding: 8px 24px !important;
-        background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%) !important;
+        padding: 6px 18px !important;
+        background: #0284c7 !important;
         color: #ffffff !important;
         text-decoration: none !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         font-weight: 800 !important;
-        font-size: 0.82rem !important;
-        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
-        cursor: pointer !important;
-        transition: all 0.2s ease-in-out !important;
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        font-size: 0.76rem !important;
     }
-
-    .btn-back-to-top:hover {
-        background: linear-gradient(135deg, #0369a1 0%, #1e40af 100%) !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(2, 132, 199, 0.45) !important;
-        color: #ffffff !important;
-    }
-
-    .price-unverified {
-        font-size: 1.05rem;
-        font-weight: 900;
-        color: #065f46;
-        line-height: 1.15;
-        padding: 4px 0;
-    }
-
-    .price-source-note, .affiliate-note {
-        font-size: 0.62rem;
-        color: #475569;
-        margin-top: 2px;
-        line-height: 1.25;
-    }
-
-    .site-footer-box {
-        background: rgba(255,255,255,.82);
-        border: 1px solid rgba(2,132,199,.25);
-        border-radius: 8px;
-        padding: 8px 10px;
-        margin: 4px 0 10px 0;
-        text-align: center;
-        color: #334155;
-        font-size: .68rem;
-        line-height: 1.45;
-    }
-
-    .site-footer-box a { color: #0369a1; font-weight: 800; text-decoration: underline; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -655,22 +461,16 @@ def valida_campi_contatto(nome, telefono, email, note):
 
     if not nome_clean or not tel_digits or not email_clean or not note_clean:
         return False, "Tutti i campi sono obbligatori."
-
     if len(nome_clean) < 3:
         return False, "Inserisci un Nome e Cognome valido (almeno 3 caratteri)."
-
     if tel_digits.startswith("39") and len(tel_digits) == 12:
         tel_digits = tel_digits[2:]
-
     if len(tel_digits) != 10:
         return False, "Il numero di telefono deve essere composto esattamente da 10 cifre (es. 3401234567)."
-
     if not EMAIL_REGEX.match(email_clean):
         return False, "L'indirizzo email inserito non è valido (es. nome@dominio.it)."
-
     if len(note_clean) < 10:
         return False, "Il messaggio deve contenere almeno 10 caratteri."
-
     return True, "OK"
 
 def init_rate_limit_db():
@@ -798,7 +598,6 @@ def esegui_ricerca(increment=False):
     if increment:
         merged = []
         merged_asins = set()
-
         for prodotto in list(vecchi_risultati) + list(prodotti_unici):
             asin = str(prodotto.get("asin") or "").strip().upper()
             if asin and asin not in merged_asins:
@@ -806,11 +605,8 @@ def esegui_ricerca(increment=False):
                 merged.append(prodotto)
 
         st.session_state["offerte"] = merged[:target_count]
-
         if len(st.session_state["offerte"]) > len(vecchi_risultati):
-            st.session_state["current_page"] = max(
-                1, (len(st.session_state["offerte"]) + 9) // 10
-            )
+            st.session_state["current_page"] = max(1, (len(st.session_state["offerte"]) + 9) // 10)
         else:
             st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."
     else:
@@ -818,15 +614,15 @@ def esegui_ricerca(increment=False):
 
     st.session_state["scroll_to_top_flag"] = True
 
+# --- INTESTAZIONE COMPATTA SOTTO I 200PX ---
 st.markdown("""
-<div id="top_page" style="position: absolute; top: 0; left: 0; height: 1px; width: 1px;"></div>
-<div class="hero-container">
-    <h1 class="hero-title-main">Scala dei Turchi</h1>
-    <div class="hero-subtitle-box">
-        <span class="hero-subtitle-text">Offerte Amazon</span>
-        <span class="ai-badge">AI</span>
+<div id="top_page"></div>
+<div class="hero-compact">
+    <div class="hero-compact-left">
+        <h1 class="hero-compact-title">Scala dei Turchi</h1>
+        <span class="hero-compact-badge">AI DEALS</span>
     </div>
-    <div class="hero-author-tag">Realizzato da <strong>Davide Marziano</strong></div>
+    <div class="hero-compact-author">by <strong>Davide Marziano</strong></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -848,7 +644,7 @@ if st.session_state.get("scroll_to_top_flag", False):
     </script>
     """, unsafe_allow_html=True)
 
-# BARRA DI NAVIGAZIONE A 3 SCHEDE
+# --- SEGMENTED CONTROL ORIZZONTALE (VETRINA / CERCA / CONTATTI) ---
 st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
@@ -918,14 +714,14 @@ def render_product_card(p, tab_key="main"):
 
                 st.markdown(
                     f"<div class='price-delivery-split-row'>{prices_sub_html}{ship_html}</div>"
-                    "<div class='price-source-note'>Prezzo rilevato tramite Amazon Creators API. Prezzi e disponibilità possono variare.</div>",
+                    "<div class='price-source-note'>Prezzi e disponibilità possono variare.</div>",
                     unsafe_allow_html=True,
                 )
                 buy_label = "🛒 Acquista su Amazon"
             else:
                 st.markdown(
                     "<div class='price-unverified'>Vedi prezzo su Amazon</div>"
-                    "<div class='price-source-note'>Prezzo, sconto e disponibilità confermati direttamente su Amazon.</div>",
+                    "<div class='price-source-note'>Prezzo verificato su Amazon.</div>",
                     unsafe_allow_html=True,
                 )
                 buy_label = "🛒 Vedi su Amazon"
@@ -933,12 +729,7 @@ def render_product_card(p, tab_key="main"):
             if link:
                 st.markdown(
                     f"<a href='{safe_link_attr}' target='_blank' rel='noopener noreferrer sponsored' class='buy-btn-action' aria-label='{html.escape(buy_label, quote=True)}: {safe_title_attr}'>{buy_label}</a>"
-                    "<div class='affiliate-note'>(link a pagamento)</div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    "<span class='buy-btn-action' style='opacity:.55;cursor:not-allowed;'>🛒 Link non disponibile</span>",
+                    "<div class='affiliate-note'>(link affiliato)</div>",
                     unsafe_allow_html=True,
                 )
 
@@ -950,7 +741,7 @@ def render_product_card(p, tab_key="main"):
             ig_url = "https://www.instagram.com/"
             tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"
             gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"
-            copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato negli appunti!');}});"
+            copy_action = f"navigator.clipboard.writeText({json.dumps(link)}).then(function(){{alert('Link copiato!');}});"
 
             st.markdown(
                 f"""
@@ -991,7 +782,7 @@ def render_product_card(p, tab_key="main"):
             else:
                 feedback_html = (
                     "<div class='feedback-container'><div class='feedback-stars-row'>"
-                    "<span class='feedback-score-text'>Recensioni: verifica su Amazon</span></div></div>"
+                    "<span class='feedback-score-text'>Recensioni su Amazon</span></div></div>"
                 )
             st.markdown(feedback_html, unsafe_allow_html=True)
 
@@ -999,8 +790,8 @@ st.markdown('<div class="tab-content-panel">', unsafe_allow_html=True)
 
 if active_tab == "vetrina":
     st.markdown("""
-        <h2 style='font-size: 0.95rem; font-weight: 800; color: #064e3b; margin: 4px 0 2px 2px;'>🔥 Offerte Vetrina Amazon</h2>
-        <p style='font-size: 0.74rem; font-weight: 600; color: #334155; margin: 0 0 10px 2px; font-style: italic;'>*Prezzi e disponibilità possono variare su Amazon in base a variante, taglia, colore e momento dell'acquisto.*</p>
+        <h2 style='font-size: 0.90rem; font-weight: 800; color: #064e3b; margin: 2px 0 2px 2px;'>🔥 Offerte in Vetrina</h2>
+        <p style='font-size: 0.70rem; color: #475569; margin: 0 0 6px 2px;'>Prezzi e sconti confermati su Amazon al momento dell'acquisto.</p>
     """, unsafe_allow_html=True)
 
     vetrina_items = st.session_state.get("offerte_vetrina", [])
@@ -1019,42 +810,46 @@ elif active_tab == "cerca":
     if st.session_state.get("cerca_radio_sort") == "Numero di vendite":
         st.session_state["cerca_radio_sort"] = "Popolarità"
 
-    with st.container(border=True):
-        st.text_input(
-            "Cerca:",
-            placeholder="Cosa cerchi? (es. cuffie, smartphone, macchina caffe)...",
-            key="cerca_keyword_input",
-            label_visibility="collapsed",
-            on_change=esegui_ricerca,
-            args=(False,)
-        )
-        st.button("🔍 Cerca", key="btn_cerca_submit", on_click=esegui_ricerca, args=(False,), use_container_width=True)
-        st.button(
-            "➕ Altri 10", key="btn_altri_10_top", on_click=esegui_ricerca, args=(True,),
-            use_container_width=True, disabled=int(st.session_state.get("item_count", 10)) >= MAX_RESULTS
-        )
+    # --- BARRA DI RICERCA UNIFICATA CON LENTE INTEGRATA ---
+    st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
+    st.text_input(
+        "cerca_input_main",
+        placeholder="Cosa cerchi su Amazon? Scrivi e premi Invio...",
+        key="cerca_keyword_input",
+        label_visibility="collapsed",
+        on_change=esegui_ricerca,
+        args=(False,)
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    with st.container(border=True):
-        st.radio(
-            "🏷️ Ordinamento:",
-            list(SORT_MAPPINGS.keys()),
-            index=0,
-            horizontal=True,
-            key="cerca_radio_sort"
-        )
+    # --- FILTER CHIPS: ORDINAMENTO DIRETTO ---
+    st.radio(
+        "Ordinamento:",
+        list(SORT_MAPPINGS.keys()),
+        index=0,
+        horizontal=True,
+        key="cerca_radio_sort",
+        on_change=esegui_ricerca,
+        args=(False,)
+    )
 
+    # --- FILTRI SECONDARI RACCHIUSI IN ACCORDION ---
+    with st.expander("⚙️ Filtri avanzati (Sconto & Prime)"):
         st.radio(
-            "🔥 Sconto:",
+            "Fascia Sconto:",
             list(OPZIONI_SCONTO.keys()),
             index=0,
             horizontal=True,
-            key="cerca_radio_disc"
+            key="cerca_radio_disc",
+            on_change=esegui_ricerca,
+            args=(False,)
         )
-
         st.checkbox(
-            "🚚 Spedizione gratuita / Prime",
+            "🚚 Spedizione Prime / Consegna gratuita",
             value=False,
-            key="cerca_check_sped_gratis"
+            key="cerca_check_sped_gratis",
+            on_change=esegui_ricerca,
+            args=(False,)
         )
 
     if st.session_state.get("search_notice"):
@@ -1066,13 +861,13 @@ elif active_tab == "cerca":
         tot_pagine = max(1, (tot_offerte + 9) // 10)
 
         if tot_pagine > 1:
-            st.markdown("<div style='margin-top: 6px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
             cols_pag = st.columns([1] * tot_pagine + [max(1, 10 - tot_pagine)])
             for p_num in range(1, tot_pagine + 1):
                 with cols_pag[p_num - 1]:
                     is_active = (st.session_state.get("current_page", 1) == p_num)
                     btn_type = "primary" if is_active else "secondary"
-                    if st.button(f"Pagina {p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
+                    if st.button(f"P.{p_num}", key=f"btn_page_{p_num}", type=btn_type, use_container_width=True):
                         st.session_state["current_page"] = p_num
                         st.session_state["current_tab"] = "cerca"
                         st.session_state["scroll_to_top_flag"] = True
@@ -1082,7 +877,7 @@ elif active_tab == "cerca":
         end_idx = min(start_idx + 10, tot_offerte)
         offerte_pagina = prodotti_cerca[start_idx:end_idx]
 
-        st.markdown(f"<p style='font-size: 0.72rem; font-weight: 700; color: #0369a1; margin: 4px 0 2px 2px;'>Visualizzati {start_idx + 1}-{end_idx} di {tot_offerte} prodotti (Pagina {st.session_state.get('current_page', 1)} di {tot_pagine}):</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='font-size: 0.70rem; font-weight: 700; color: #0369a1; margin: 4px 0 2px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
 
         for idx in range(0, len(offerte_pagina), 2):
             col_l, col_r = st.columns(2)
@@ -1092,39 +887,37 @@ elif active_tab == "cerca":
                 with col_r:
                     render_product_card(offerte_pagina[idx + 1], tab_key=f"cerca_p{st.session_state.get('current_page', 1)}_{idx + 1}")
 
-        st.markdown("<div style='margin-top: 10px; margin-bottom: 5px;'></div>", unsafe_allow_html=True)
+        # --- PULSANTE '+ ALTRI 10' MOSTRATO ESCLUSIVAMENTE IN FONDO ---
+        st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
         st.button(
-            "➕ Altri 10", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
+            "➕ Carica altri 10 prodotti ⬇️", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
             use_container_width=True, disabled=int(st.session_state.get("item_count", 10)) >= MAX_RESULTS
         )
 
     elif st.session_state.get("has_searched", False):
-        st.warning("Nessun prodotto trovato con i filtri selezionati. Prova a inserire un termine diverso o a impostare lo Sconto su 'Tutti'.")
+        st.warning("Nessun prodotto trovato. Prova con una parola chiave più generica o imposta lo Sconto su 'Tutti'.")
 
 elif active_tab == "privacy":
     st.markdown("""
-    <h2 style='font-size:1.05rem;color:#064e3b;margin:4px 0 8px 2px;'>Informativa privacy</h2>
-    <div style='font-size:.78rem;line-height:1.55;color:#334155;padding:4px 6px;'>
-    <p><strong>Titolare e contatti.</strong> I dati inviati tramite il modulo di contatto sono gestiti dal responsabile del sito Scala dei Turchi. Per richieste relative ai dati personali puoi utilizzare l'indirizzo <strong>davimarz.social@gmail.com</strong>.</p>
-    <p><strong>Dati trattati.</strong> Il modulo raccoglie nome e cognome, numero di telefono, indirizzo email e contenuto del messaggio esclusivamente per ricevere e gestire la richiesta inviata.</p>
-    <p><strong>Finalità e conservazione.</strong> I dati vengono utilizzati per rispondere alla richiesta e conservati solo per il tempo necessario alla sua gestione. Non vengono utilizzati per profilazione pubblicitaria.</p>
-    <p><strong>Destinatari.</strong> I dati possono transitare attraverso i servizi tecnici necessari all'hosting e all'invio email. Non vengono ceduti a terzi.</p>
-    <p><strong>Diritti.</strong> Puoi chiedere informazioni, accesso, rettifica o cancellazione dei dati scrivendo all'indirizzo sopra indicato.</p>
-    <p><strong>Affiliazione Amazon.</strong> I pulsanti verso Amazon contengono link affiliati con il tracking ID del Programma di Affiliazione Amazon.</p>
+    <h2 style='font-size:1.00rem;color:#064e3b;margin:4px 0 6px 2px;'>Informativa privacy</h2>
+    <div style='font-size:.76rem;line-height:1.5;color:#334155;padding:4px 6px;'>
+    <p><strong>Titolare e contatti:</strong> davimarz.social@gmail.com.</p>
+    <p><strong>Finalità:</strong> I dati inseriti nel modulo contatti servono solo per rispondere al tuo messaggio e non vengono ceduti a terzi.</p>
+    <p><strong>Affiliazione Amazon:</strong> Questo sito partecipa al Programma di Affiliazione Amazon, un programma pubblicitario che consente di percepire commissioni pubblicitarie collegando a Amazon.it.</p>
     </div>
     """, unsafe_allow_html=True)
     st.button("← Torna alla vetrina", key="privacy_back", on_click=set_tab, args=("vetrina",))
 
 elif active_tab == "contatti":
     with st.container(border=True):
-        st.markdown("<p style='font-size: 0.82rem; font-weight: 700; color: #064e3b; margin-bottom: 6px;'>Inviaci un messaggio, una richiesta di prodotto o un suggerimento (Tutti i campi sono obbligatori):</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 0.80rem; font-weight: 700; color: #064e3b; margin-bottom: 4px;'>Inviaci un messaggio o una richiesta (Campi obbligatori):</p>", unsafe_allow_html=True)
         with st.form("form_scheda_contatti", clear_on_submit=True):
             nome_val = st.text_input("Nome e Cognome*", placeholder="Es. Mario Rossi")
             tel_val = st.text_input("Numero di telefono (10 cifre)*", placeholder="Es. 3401234567")
             email_val = st.text_input("Email*", placeholder="Es. mario.rossi@email.com")
-            note_val = st.text_area("Note / Suggerimento / Richiesta*", placeholder="Scrivi qui il tuo messaggio (minimo 10 caratteri)...", height=120)
-            privacy_ack = st.checkbox("Ho letto l'informativa privacy relativa al modulo di contatto.*")
-            st.markdown("<small><a href='?privacy=1' target='_self'>Leggi l'informativa privacy completa</a></small>", unsafe_allow_html=True)
+            note_val = st.text_area("Messaggio*", placeholder="Scrivi qui il tuo messaggio...", height=110)
+            privacy_ack = st.checkbox("Accetto l'informativa privacy.*")
+            st.markdown("<small><a href='?privacy=1' target='_self'>Leggi privacy</a></small>", unsafe_allow_html=True)
             
             btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)
             if btn_send_form:
@@ -1132,27 +925,27 @@ elif active_tab == "contatti":
                 if not valido:
                     st.error(msg_validazione)
                 elif not privacy_ack:
-                    st.error("Per inviare il messaggio devi confermare di aver letto l'informativa privacy.")
+                    st.error("Conferma di aver letto l'informativa privacy.")
                 elif not verifica_puo_inviare(email_val.strip()):
-                    st.warning("Hai già inviato una richiesta oggi con questa email. È consentito un solo messaggio al giorno per utente. Riprova domani!")
+                    st.warning("Hai già inviato un messaggio oggi con questa email. Riprova domani!")
                 else:
-                    with st.spinner("Invio messaggio in corso..."):
+                    with st.spinner("Invio in corso..."):
                         ok, msg_err = invia_email_smtp_diretta(nome_val.strip(), tel_val.strip(), email_val.strip(), note_val.strip())
                     if ok:
                         registra_invio_completato(email_val.strip())
-                        st.success("Messaggio inviato con successo a davimarz.social@gmail.com! Il nostro team lo prenderà in carico.")
+                        st.success("Messaggio inviato correttamente!")
                     else:
-                        st.error(f"Errore di invio: {msg_err}")
+                        st.error(f"Errore: {msg_err}")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
+# --- DISCLAIMER FOOTER NON INVASIVO (SCROLLABILE) ---
 st.markdown(
     """
     <div class="site-footer-box">
         <strong>In qualità di Affiliato Amazon io ricevo un guadagno dagli acquisti idonei.</strong><br>
-        I link verso Amazon presenti nelle schede prodotto possono essere link a pagamento.
-        Prezzi e disponibilità fanno fede su Amazon al momento dell'acquisto.<br>
-        <a href="?privacy=1" target="_self">Informativa privacy</a>
+        I link verso Amazon sono link affiliati a pagamento. Prezzi e disponibilità sono soggetti a variazione.<br>
+        <a href="?privacy=1" target="_self">Informativa Privacy</a>
     </div>
     """,
     unsafe_allow_html=True,
@@ -1160,19 +953,9 @@ st.markdown(
 
 st.markdown(
     """
-    <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 15px 0 20px 0;">
-        <a href="#top_page" target="_self" onclick="(function(){
-            try {
-                const stContainer = window.parent.document.querySelector('[data-testid=\\'stAppViewContainer\\']') || window.parent.document.querySelector('section.main') || document.querySelector('[data-testid=\\'stAppViewContainer\\']');
-                if(stContainer) { stContainer.scrollTo({top: 0, behavior: 'smooth'}); }
-            } catch(e) {}
-            try {
-                const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
-                if(el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-            } catch(e) {}
-            try { window.scrollTo({top: 0, behavior: 'smooth'}); } catch(e) {}
-        })" class="btn-back-to-top">
-            ⬆️ Torna all'inizio
+    <div style="display: flex; justify-content: center; align-items: center; width: 100%; margin: 10px 0 15px 0;">
+        <a href="#top_page" target="_self" class="btn-back-to-top">
+            ⬆️ Torna in alto
         </a>
     </div>
     """,
