@@ -4,6 +4,7 @@ import html
 import logging
 import re
 import smtplib
+import time
 import urllib.parse
 from email.message import EmailMessage
 
@@ -13,14 +14,13 @@ import amazon_api
 
 
 st.set_page_config(
-    page_title="Scala dei Turchi | Offerte Amazon",
+    page_title="Scaladeiturchi | Offerte Amazon AI",
     page_icon="🛍️",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 LOGGER = logging.getLogger("amazon_affiliate_app")
-
 MAX_RESULTS = amazon_api.MAX_RESULTS
 SORT_MAPPINGS = amazon_api.SORT_MAPPINGS
 
@@ -32,9 +32,17 @@ st.session_state.setdefault("offerte", [])
 st.session_state.setdefault("search_notice", "")
 st.session_state.setdefault(
     "last_search",
-    {"keyword": "", "sort": "Rilevanza", "prime_only": False},
+    {"keyword": "", "sort": "Prezzo minimo", "prime_only": False},
 )
 st.session_state.setdefault("contact_sent_session", False)
+st.session_state.setdefault("offerte_vetrina", [])
+st.session_state.setdefault("vetrina_refresh_token", str(time.time_ns()))
+st.session_state.setdefault("vetrina_loaded_token", None)
+
+# La scheda Contatti resta nel codice ma non è visibile/raggiungibile
+# dalla navigazione pubblica.
+if st.session_state.get("current_tab") == "contatti":
+    st.session_state["current_tab"] = "vetrina"
 
 try:
     if str(st.query_params.get("privacy", "")) == "1":
@@ -45,136 +53,426 @@ except Exception:
 
 CSS = """
 <style>
-#MainMenu, footer {visibility:hidden;}
-header {background:transparent;}
+#MainMenu, header, footer {
+    visibility: hidden !important;
+    height: 0 !important;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box !important;
+}
+
+html {
+    scroll-behavior: smooth !important;
+}
 
 .stApp {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 55%, #f0fdf4 100%);
-    color: #0f172a;
+    background: linear-gradient(
+        135deg,
+        #f0f9ff 0%,
+        #e0f2fe 50%,
+        #f0fdf4 100%
+    ) !important;
+    background-attachment: fixed !important;
+    color: #0f172a !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
 .block-container {
-    max-width: 900px;
-    padding-top: .5rem;
-    padding-bottom: 4rem;
+    padding: 0.20rem 0.35rem 80px 0.35rem !important;
+    max-width: 860px !important;
+    margin: 0 auto !important;
 }
 
-.brand-box {
-    background: rgba(255,255,255,.92);
-    border: 1px solid #bae6fd;
-    border-radius: 14px;
-    padding: 10px 14px;
-    margin-bottom: 8px;
+/* HEADER: stile ripreso dal codice precedente */
+.brand-header-box {
     text-align: center;
-    box-shadow: 0 4px 18px rgba(2,132,199,.08);
+    padding: 5px 7px;
+    margin: 0 auto 6px auto;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(2, 132, 199, 0.25);
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.09);
 }
 
-.brand-title {
-    margin: 0;
-    font-size: clamp(1.45rem, 5vw, 2rem);
+.brand-title-single {
+    font-size: clamp(1.30rem, 6vw, 1.95rem) !important;
+    font-weight: 900 !important;
+    background: linear-gradient(
+        90deg,
+        #0369a1 0%,
+        #0284c7 60%,
+        #0ea5e9 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2 !important;
+    letter-spacing: -0.3px;
+}
+
+.brand-subtitle-single {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    margin-top: 2px !important;
+}
+
+.badge-ai-pill {
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 0.65rem;
     font-weight: 900;
+    padding: 3px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    box-shadow: 0 1px 4px rgba(2, 132, 199, 0.25);
+}
+
+.brand-author {
+    font-size: 0.72rem;
+    color: #334155;
+    font-weight: 600;
+}
+
+.brand-author strong {
     color: #0369a1;
-    line-height: 1.1;
 }
 
-.brand-subtitle {
-    margin-top: 4px;
-    font-size: .78rem;
-    color: #475569;
+/* NAV VETRINA / CERCA */
+.nav-wrap {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1.5px solid #bae6fd;
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
 }
 
-[data-testid="stVerticalBlockBorderWrapper"] {
-    background: rgba(255,255,255,.94);
-    border-color: #dbeafe !important;
-    border-radius: 13px !important;
-    box-shadow: 0 3px 14px rgba(15,23,42,.05);
+button[data-testid="stBaseButton-primary"] {
+    background: linear-gradient(
+        135deg,
+        #0284c7 0%,
+        #0369a1 100%
+    ) !important;
+    border: 1px solid #0284c7 !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.30) !important;
+    font-weight: 800 !important;
 }
 
-.product-title {
-    font-size: .93rem;
+button[data-testid="stBaseButton-secondary"] {
+    background-color: #ffffff !important;
+    color: #0369a1 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+}
+
+button[data-testid="stBaseButton-secondary"]:hover {
+    background: #f0f9ff !important;
+    border-color: #0284c7 !important;
+}
+
+/* RICERCA */
+div[data-testid="stTextInput"] input {
+    border-radius: 9px !important;
+    border: 1.5px solid #0284c7 !important;
+    font-size: 0.84rem !important;
+    font-weight: 600 !important;
+    min-height: 38px !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 1px 4px rgba(2, 132, 199, 0.12) !important;
+}
+
+div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
+    color: #0369a1 !important;
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    width: 100% !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] label {
+    background: #ffffff !important;
+    padding: 5px 14px !important;
+    border-radius: 9999px !important;
+    border: 1.5px solid #93c5fd !important;
+    margin: 0 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    text-align: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) {
+    background: #0284c7 !important;
+    border-color: #0284c7 !important;
+}
+
+div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p,
+div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) span {
+    color: #ffffff !important;
+    font-weight: 800 !important;
+}
+
+div[data-testid="stCheckbox"] {
+    background: #ffffff !important;
+    border: 1.5px solid #bae6fd !important;
+    border-radius: 8px !important;
+    padding: 4px 10px !important;
+}
+
+/* PANNELLO */
+.tab-content-panel {
+    background: rgba(255, 255, 255, 0.64);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1.5px solid rgba(255, 255, 255, 0.90);
+    border-radius: 12px;
+    padding: 6px;
+    box-shadow: 0 4px 18px rgba(2, 132, 199, 0.10);
+}
+
+/* SCHEDA PRODOTTO: palette più ricca come il vecchio sito */
+.product-card-modern {
+    background:
+        linear-gradient(
+            150deg,
+            #ffffff 0%,
+            #f0fdf4 52%,
+            #ecfeff 100%
+        );
+    border: 1.5px solid #86efac;
+    border-radius: 11px;
+    padding: 8px;
+    margin-bottom: 8px;
+    box-shadow: 0 3px 12px rgba(5, 150, 105, 0.13);
+}
+
+.pcm-top {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.pcm-img-box {
+    width: 160px;
+    height: 160px;
+    min-width: 160px;
+    background: #ffffff;
+    border: 1px solid #bfdbfe;
+    border-radius: 9px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.pcm-img-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.pcm-details {
+    min-width: 0;
+    flex: 1;
+}
+
+.pcm-title {
+    font-size: 0.87rem;
     font-weight: 800;
-    line-height: 1.3;
-    color: #0f172a;
-    margin: 0 0 8px 0;
+    line-height: 1.28;
+    color: #064e3b;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 7px;
 }
 
-.price-row {
-    display:flex;
-    align-items:baseline;
-    flex-wrap:wrap;
-    gap:7px;
-    margin: 4px 0 7px 0;
+.pcm-prices {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-.price-now {
-    font-size: 1.65rem;
+.pcm-discount-badge {
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 0.90rem;
     font-weight: 900;
-    color: #047857;
+    padding: 3px 7px;
+    border-radius: 5px;
 }
 
-.price-old {
-    font-size: .95rem;
+.pcm-price-final {
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: #059669;
+    line-height: 1;
+}
+
+.pcm-price-old {
+    font-size: 1.03rem;
     color: #64748b;
     text-decoration: line-through;
 }
 
-.discount {
-    background:#ea580c;
-    color:white;
-    font-weight:900;
-    font-size:.78rem;
-    border-radius:5px;
-    padding:3px 7px;
+.pcm-note {
+    color: #64748b;
+    font-size: 0.65rem;
+    line-height: 1.35;
+    margin-top: 6px;
 }
 
-.price-note {
-    font-size:.69rem;
-    color:#64748b;
-    margin-top:2px;
+.pcm-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
 }
 
-.share-row {
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-    margin-top:8px;
+.sales-rank-pill {
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    color: #c2410c;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 0.66rem;
+    font-weight: 800;
 }
 
-.share-chip {
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    min-height:28px;
-    padding:4px 9px;
-    border-radius:7px;
-    background:#f8fafc;
-    border:1px solid #cbd5e1;
-    color:#334155 !important;
-    text-decoration:none !important;
-    font-size:.70rem;
-    font-weight:700;
+.prime-pill {
+    background: linear-gradient(135deg, #00a8e8 0%, #007eb9 100%);
+    color: #ffffff;
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 0.66rem;
+    font-weight: 900;
 }
 
-.site-footer {
-    margin-top:18px;
-    padding:10px 12px;
-    border-radius:10px;
-    background:rgba(255,255,255,.90);
-    border:1px solid #bae6fd;
-    color:#475569;
-    text-align:center;
-    font-size:.72rem;
-    line-height:1.45;
+.pcm-bottom-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 7px;
+    margin-top: 8px;
+    border-top: 1px solid #d1fae5;
 }
 
-.site-footer a {
-    color:#0369a1;
-    font-weight:800;
+.pcm-buy-btn-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 6px 18px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #0f172a !important;
+    border: 1px solid #f59e0b;
+    font-size: 0.80rem;
+    font-weight: 900;
+    text-decoration: none !important;
+    box-shadow: 0 2px 5px rgba(245, 158, 11, 0.24);
 }
 
-@media (max-width: 600px) {
-    .block-container {padding-left:.55rem; padding-right:.55rem;}
-    .price-now {font-size:1.4rem;}
+.pcm-buy-btn-compact:hover {
+    transform: translateY(-1px);
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.pcm-social-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.soc-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 6px;
+    color: #ffffff !important;
+    text-decoration: none !important;
+    font-size: 0.62rem;
+    font-weight: 800;
+}
+
+.soc-wa { background: #25D366; }
+.soc-fb { background: #1877F2; }
+.soc-tg { background: #229ED9; }
+.soc-mail { background: #EA4335; }
+
+.site-footer-box {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(2, 132, 199, 0.25);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin: 15px 0 10px 0;
+    text-align: center;
+    color: #475569;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.site-footer-box a {
+    color: #0369a1;
+    font-weight: 800;
+}
+
+@media (max-width: 580px) {
+    .block-container {
+        padding-left: 0.32rem !important;
+        padding-right: 0.32rem !important;
+    }
+
+    .pcm-img-box {
+        width: 126px;
+        height: 126px;
+        min-width: 126px;
+    }
+
+    .pcm-top {
+        gap: 8px;
+    }
+
+    .pcm-price-final {
+        font-size: 1.42rem;
+    }
+
+    .pcm-title {
+        font-size: 0.79rem;
+        -webkit-line-clamp: 3;
+    }
+
+    .pcm-bottom-bar {
+        align-items: stretch;
+    }
+
+    .pcm-buy-btn-compact {
+        width: 100%;
+    }
 }
 </style>
 """
@@ -182,12 +480,24 @@ header {background:transparent;}
 st.markdown(CSS, unsafe_allow_html=True)
 
 
-def set_tab(tab_name: str) -> None:
-    st.session_state["current_tab"] = tab_name
+def _clear_query_params() -> None:
     try:
         st.query_params.clear()
     except Exception:
         pass
+
+
+def set_tab(tab_name: str) -> None:
+    st.session_state["current_tab"] = tab_name
+    _clear_query_params()
+
+
+def open_vetrina() -> None:
+    """Apre la vetrina e forza una nuova SearchItems."""
+    st.session_state["current_tab"] = "vetrina"
+    st.session_state["vetrina_refresh_token"] = str(time.time_ns())
+    st.session_state["vetrina_loaded_token"] = None
+    _clear_query_params()
 
 
 def _perform_search(target_count: int) -> None:
@@ -221,6 +531,7 @@ def _perform_search(target_count: int) -> None:
 
 def _load_more() -> None:
     current_target = int(st.session_state.get("item_count", 10) or 10)
+
     if current_target >= MAX_RESULTS:
         st.session_state["search_notice"] = (
             f"Limite di {MAX_RESULTS} prodotti raggiunto."
@@ -232,151 +543,199 @@ def _load_more() -> None:
     _perform_search(new_target)
 
     new_count = len(st.session_state.get("offerte", []))
+
     if new_count > previous_count:
         st.session_state["current_page"] = max(1, (new_count + 9) // 10)
-    elif new_count <= previous_count:
+    else:
         st.session_state["search_notice"] = (
             "Non risultano altri prodotti disponibili per questa ricerca."
         )
 
 
 def _format_eur(value: float) -> str:
-    return f"{value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return (
+        f"{value:,.2f}"
+        .replace(",", "X")
+        .replace(".", ",")
+        .replace("X", ".")
+    )
 
 
-def _share_links(title: str, link: str, price: float | None) -> str:
+def _share_urls(title: str, link: str, price: Optional[float]) -> dict[str, str]:
     message = title.strip()
+
     if price is not None and price > 0:
         message += f"\nPrezzo: €{_format_eur(price)}"
+
     message += f"\n{link}"
 
-    wa = f"https://wa.me/?text={urllib.parse.quote(message)}"
-    tg = (
-        "https://t.me/share/url?"
-        f"url={urllib.parse.quote(link)}&text={urllib.parse.quote(message)}"
-    )
-    fb = (
-        "https://www.facebook.com/sharer/sharer.php?"
-        f"u={urllib.parse.quote(link)}"
-    )
-    mail = (
-        "mailto:?subject="
-        f"{urllib.parse.quote('Offerta Amazon')}"
-        "&body="
-        f"{urllib.parse.quote(message)}"
-    )
+    return {
+        "wa": f"https://wa.me/?text={urllib.parse.quote(message)}",
+        "tg": (
+            "https://t.me/share/url?"
+            f"url={urllib.parse.quote(link)}&text={urllib.parse.quote(message)}"
+        ),
+        "fb": (
+            "https://www.facebook.com/sharer/sharer.php?"
+            f"u={urllib.parse.quote(link)}"
+        ),
+        "mail": (
+            "mailto:?subject="
+            f"{urllib.parse.quote('Offerta Amazon')}"
+            "&body="
+            f"{urllib.parse.quote(message)}"
+        ),
+    }
 
-    return (
-        "<div class='share-row'>"
-        f"<a class='share-chip' href='{html.escape(wa, quote=True)}' "
-        "target='_blank' rel='noopener noreferrer'>WhatsApp</a>"
-        f"<a class='share-chip' href='{html.escape(tg, quote=True)}' "
-        "target='_blank' rel='noopener noreferrer'>Telegram</a>"
-        f"<a class='share-chip' href='{html.escape(fb, quote=True)}' "
-        "target='_blank' rel='noopener noreferrer'>Facebook</a>"
-        f"<a class='share-chip' href='{html.escape(mail, quote=True)}'>Email</a>"
-        "</div>"
-    )
+
+IMG_FALLBACK_SVG = (
+    "data:image/svg+xml;utf8,"
+    "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' "
+    "viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='1.5'>"
+    "<rect x='2' y='3' width='20' height='14' rx='2'></rect>"
+    "<line x1='8' y1='21' x2='16' y2='21'></line>"
+    "<line x1='12' y1='17' x2='12' y2='21'></line>"
+    "</svg>"
+)
 
 
 def render_product_card(product: dict) -> None:
     title = str(product.get("titolo") or "Prodotto Amazon")
-    image_url = str(product.get("immagine_url") or "")
     link = str(product.get("link_affiliato") or "")
+    image_url = str(product.get("immagine_url") or IMG_FALLBACK_SVG)
+
+    safe_title = html.escape(title)
+    safe_title_attr = html.escape(title, quote=True)
+    safe_link = html.escape(link, quote=True)
+    safe_image = html.escape(image_url, quote=True)
+    safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)
+
     verified = product.get("prezzo_verificato") is True
 
-    final_price_raw = product.get("prezzo_finale")
-    old_price_raw = product.get("prezzo_iniziale")
+    final_price = None
+    old_price = None
 
     try:
-        final_price = (
-            float(final_price_raw)
-            if final_price_raw is not None
-            else None
-        )
+        if product.get("prezzo_finale") is not None:
+            final_price = float(product["prezzo_finale"])
     except (TypeError, ValueError):
         final_price = None
 
     try:
-        old_price = (
-            float(old_price_raw)
-            if old_price_raw is not None
-            else None
-        )
+        if product.get("prezzo_iniziale") is not None:
+            old_price = float(product["prezzo_iniziale"])
     except (TypeError, ValueError):
         old_price = None
 
-    with st.container(border=True):
-        image_col, info_col = st.columns([1.05, 2.95], vertical_alignment="center")
+    if verified and final_price is not None and final_price > 0:
+        discount = html.escape(str(product.get("sconto") or ""))
 
-        with image_col:
-            if image_url:
-                st.image(image_url, use_container_width=True)
-            else:
-                st.markdown(
-                    "<div style='height:130px;display:flex;align-items:center;"
-                    "justify-content:center;color:#94a3b8;'>Immagine non disponibile</div>",
-                    unsafe_allow_html=True,
-                )
+        discount_html = (
+            f"<span class='pcm-discount-badge'>{discount}</span>"
+            if discount
+            else ""
+        )
 
-        with info_col:
-            st.markdown(
-                f"<div class='product-title'>{html.escape(title)}</div>",
-                unsafe_allow_html=True,
+        old_html = ""
+        if old_price is not None and old_price > final_price:
+            old_html = (
+                f"<span class='pcm-price-old'>€{_format_eur(old_price)}</span>"
             )
 
-            if verified and final_price is not None and final_price > 0:
-                discount = html.escape(str(product.get("sconto") or ""))
-                discount_html = (
-                    f"<span class='discount'>{discount}</span>"
-                    if discount
-                    else ""
-                )
+        price_html = (
+            f"{discount_html}"
+            f"<span class='pcm-price-final'>€{_format_eur(final_price)}</span>"
+            f"{old_html}"
+        )
+    else:
+        price_html = (
+            "<span class='pcm-price-final' style='font-size:1.05rem;'>"
+            "Verifica prezzo su Amazon"
+            "</span>"
+        )
 
-                old_html = ""
-                if (
-                    old_price is not None
-                    and old_price > final_price
-                ):
-                    old_html = (
-                        f"<span class='price-old'>€{_format_eur(old_price)}</span>"
-                    )
+    badge_parts = []
 
-                st.markdown(
-                    "<div class='price-row'>"
-                    f"{discount_html}"
-                    f"<span class='price-now'>€{_format_eur(final_price)}</span>"
-                    f"{old_html}"
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
+    sales_rank = product.get("sales_rank")
+    if sales_rank:
+        try:
+            rank_int = int(sales_rank)
+            rank_category = html.escape(
+                str(product.get("sales_rank_category") or "Amazon")
+            )
+            badge_parts.append(
+                f"<span class='sales-rank-pill'>"
+                f"Vendite rank #{rank_int:,} · {rank_category}"
+                f"</span>"
+            )
+        except (TypeError, ValueError):
+            pass
 
-                basis_label = str(product.get("saving_basis_label") or "").strip()
-                note = "Prezzo Buy Box verificato tramite Amazon Creators API."
-                if basis_label and old_price is not None and old_price > final_price:
-                    note += f" Prezzo di riferimento: {html.escape(basis_label)}."
-                st.markdown(
-                    f"<div class='price-note'>{note}</div>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.info("Prezzo non disponibile via API. Verificalo su Amazon.")
+    if product.get("is_prime_exclusive") is True:
+        badge_parts.append(
+            "<span class='prime-pill'>✓ Prime esclusiva</span>"
+        )
 
-            if product.get("is_prime_exclusive") is True:
-                st.caption("Offerta Prime esclusiva indicata da Amazon.")
+    badges_html = "".join(badge_parts)
 
-            if link:
-                st.link_button(
-                    "🛒 Vedi su Amazon",
-                    link,
-                    type="primary",
-                    use_container_width=True,
-                )
-                st.caption("Link affiliato a pagamento.")
-                st.markdown(
-                    _share_links(title, link, final_price if verified else None),
-                    unsafe_allow_html=True,
-                )
+    note = "Prezzo Buy Box verificato tramite Amazon Creators API."
+    saving_basis_label = str(product.get("saving_basis_label") or "").strip()
+
+    if (
+        saving_basis_label
+        and old_price is not None
+        and final_price is not None
+        and old_price > final_price
+    ):
+        note += f" Rif.: {html.escape(saving_basis_label)}."
+
+    if sales_rank:
+        note += " Il rank vendite non indica il numero esatto di unità vendute."
+
+    share = _share_urls(
+        title,
+        link,
+        final_price if verified else None,
+    )
+
+    card_html = (
+        "<div class='product-card-modern'>"
+        "<div class='pcm-top'>"
+        "<div class='pcm-img-box'>"
+        f"<img src='{safe_image}' loading='lazy' "
+        f"alt='{safe_title_attr}' "
+        f"onerror=\"this.onerror=null;this.src='{safe_fallback}';\">"
+        "</div>"
+        "<div class='pcm-details'>"
+        f"<div class='pcm-title'>{safe_title}</div>"
+        f"<div class='pcm-prices'>{price_html}</div>"
+        f"<div class='pcm-badges-row'>{badges_html}</div>"
+        f"<div class='pcm-note'>{html.escape(note)}</div>"
+        "</div>"
+        "</div>"
+        "<div class='pcm-bottom-bar'>"
+        f"<a class='pcm-buy-btn-compact' href='{safe_link}' "
+        "target='_blank' rel='noopener noreferrer sponsored'>"
+        "🛒 Acquista su Amazon"
+        "</a>"
+        "<div class='pcm-social-row'>"
+        f"<a class='soc-chip soc-wa' href='{html.escape(share['wa'], quote=True)}' "
+        "target='_blank' rel='noopener noreferrer'>WA</a>"
+        f"<a class='soc-chip soc-fb' href='{html.escape(share['fb'], quote=True)}' "
+        "target='_blank' rel='noopener noreferrer'>FB</a>"
+        f"<a class='soc-chip soc-tg' href='{html.escape(share['tg'], quote=True)}' "
+        "target='_blank' rel='noopener noreferrer'>TG</a>"
+        f"<a class='soc-chip soc-mail' href='{html.escape(share['mail'], quote=True)}'>"
+        "Mail</a>"
+        "</div>"
+        "</div>"
+        "<div class='pcm-note' style='margin-top:5px;'>"
+        "Link affiliato a pagamento."
+        "</div>"
+        "</div>"
+    )
+
+    st.markdown(card_html, unsafe_allow_html=True)
 
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -443,49 +802,54 @@ def send_contact_email(
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=8) as server:
             server.login(sender, app_password)
             server.send_message(mail)
+
         return True, ""
     except Exception as exc:
         LOGGER.error("Invio email fallito: %s", type(exc).__name__)
         return False, "Invio non riuscito. Riprova più tardi."
 
 
+# HEADER
 st.markdown(
     """
-    <div class="brand-box">
-        <h1 class="brand-title">Scala dei Turchi</h1>
-        <div class="brand-subtitle">Offerte Amazon selezionate tramite Creators API</div>
+    <div id="top_page"></div>
+    <div class="brand-header-box">
+        <div class="brand-title-single">Scala dei Turchi</div>
+        <div class="brand-subtitle-single">
+            <span class="badge-ai-pill">AI DEALS</span>
+            <span class="brand-author">by <strong>Davide Marziano</strong></span>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 active_tab = st.session_state.get("current_tab", "vetrina")
-nav1, nav2, nav3 = st.columns(3)
+
+# NAV PUBBLICA: Contatti volutamente nascosta.
+st.markdown("<div class='nav-wrap'>", unsafe_allow_html=True)
+nav1, nav2 = st.columns(2)
 
 with nav1:
     st.button(
         "🔥 Vetrina",
+        key="nav_btn_vetrina",
         type="primary" if active_tab == "vetrina" else "secondary",
-        on_click=set_tab,
-        args=("vetrina",),
+        on_click=open_vetrina,
         use_container_width=True,
     )
+
 with nav2:
     st.button(
         "🔍 Cerca",
+        key="nav_btn_cerca",
         type="primary" if active_tab == "cerca" else "secondary",
         on_click=set_tab,
         args=("cerca",),
         use_container_width=True,
     )
-with nav3:
-    st.button(
-        "✉️ Contatti",
-        type="primary" if active_tab == "contatti" else "secondary",
-        on_click=set_tab,
-        args=("contatti",),
-        use_container_width=True,
-    )
+
+st.markdown("</div>", unsafe_allow_html=True)
 
 partner_tag = amazon_api.get_partner_tag()
 
@@ -496,55 +860,92 @@ if not partner_tag:
     )
 
 active_tab = st.session_state.get("current_tab", "vetrina")
+st.markdown("<div class='tab-content-panel'>", unsafe_allow_html=True)
 
 if active_tab == "vetrina":
-    st.subheader("Offerte in vetrina")
+    st.markdown(
+        """
+        <h2 style='font-size:.94rem;font-weight:900;color:#0369a1;
+        margin:2px 0 2px 2px;'>🔥 Offerte in Vetrina</h2>
+        <p style='font-size:.70rem;color:#64748b;margin:0 0 7px 2px;'>
+        La Vetrina viene aggiornata quando ricarichi la pagina o premi Vetrina.
+        </p>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    if partner_tag:
-        with st.spinner("Aggiornamento vetrina..."):
-            showcase = amazon_api.ottieni_vetrina_casuale(item_count=10)
+    current_token = str(st.session_state["vetrina_refresh_token"])
 
-        if showcase:
-            for product in showcase:
-                render_product_card(product)
-        else:
-            st.info("Nessun prodotto disponibile in vetrina al momento.")
+    if (
+        st.session_state.get("vetrina_loaded_token") != current_token
+        and partner_tag
+    ):
+        with st.spinner("Aggiornamento offerte Amazon..."):
+            showcase = amazon_api.ottieni_vetrina_casuale(
+                item_count=10,
+                refresh_token=current_token,
+            )
+
+        st.session_state["offerte_vetrina"] = list(showcase or [])
+        st.session_state["vetrina_loaded_token"] = current_token
+
+    showcase = st.session_state.get("offerte_vetrina", [])
+
+    if showcase:
+        for product in showcase:
+            render_product_card(product)
+    else:
+        st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 elif active_tab == "cerca":
-    st.subheader("Cerca su Amazon")
+    st.markdown(
+        """
+        <h2 style='font-size:.94rem;font-weight:900;color:#0369a1;
+        margin:2px 0 5px 2px;'>🔍 Cerca su Amazon</h2>
+        """,
+        unsafe_allow_html=True,
+    )
 
     previous = st.session_state.get("last_search", {})
+    sort_keys = list(SORT_MAPPINGS.keys())
+    previous_sort = str(previous.get("sort") or "Prezzo minimo")
+    if previous_sort not in sort_keys:
+        previous_sort = "Prezzo minimo"
 
     with st.form("search_form", border=False):
-        keyword = st.text_input(
-            "Prodotto",
-            value=str(previous.get("keyword") or ""),
-            placeholder="Es. cuffie bluetooth, robot aspirapolvere, smartwatch...",
-        )
+        search_col, button_col = st.columns([5, 1])
+
+        with search_col:
+            keyword = st.text_input(
+                "Prodotto",
+                value=str(previous.get("keyword") or ""),
+                placeholder="Cosa cerchi su Amazon? Es. iPhone, scarpe, cuffie...",
+                label_visibility="collapsed",
+            )
+
+        with button_col:
+            submitted = st.form_submit_button(
+                "🔍 Cerca",
+                type="primary",
+                use_container_width=True,
+            )
 
         sort_choice = st.radio(
-            "Ordina per",
-            list(SORT_MAPPINGS.keys()),
-            index=max(
-                0,
-                list(SORT_MAPPINGS.keys()).index(
-                    previous.get("sort", "Rilevanza")
-                )
-                if previous.get("sort", "Rilevanza") in SORT_MAPPINGS
-                else 0,
-            ),
+            "Ordinamento:",
+            sort_keys,
+            index=sort_keys.index(previous_sort),
             horizontal=True,
         )
 
-        prime_only = st.checkbox(
-            "Mostra solo risultati compatibili con il filtro Prime di Amazon",
-            value=bool(previous.get("prime_only", False)),
-        )
+        if sort_choice == "Quantità vendite":
+            st.caption(
+                "Quantità vendite = ordinamento tramite Best Sellers Rank Amazon. "
+                "Amazon non espone il numero esatto di unità vendute."
+            )
 
-        submitted = st.form_submit_button(
-            "🔍 Cerca",
-            type="primary",
-            use_container_width=True,
+        prime_only = st.checkbox(
+            "🚚 Solo risultati compatibili con il filtro Prime di Amazon",
+            value=bool(previous.get("prime_only", False)),
         )
 
     if submitted:
@@ -573,11 +974,16 @@ elif active_tab == "cerca":
 
         if pages > 1:
             page_cols = st.columns(pages)
+
             for page_number, col in enumerate(page_cols, start=1):
                 with col:
                     if st.button(
-                        f"{page_number}",
-                        type="primary" if page_number == current_page else "secondary",
+                        f"P.{page_number}",
+                        type=(
+                            "primary"
+                            if page_number == current_page
+                            else "secondary"
+                        ),
                         key=f"page_{page_number}",
                         use_container_width=True,
                     ):
@@ -586,13 +992,18 @@ elif active_tab == "cerca":
 
         start = (current_page - 1) * 10
         end = min(start + 10, total)
-        st.caption(f"Prodotti {start + 1}-{end} di {total}")
+
+        st.markdown(
+            f"<p style='font-size:.74rem;font-weight:800;color:#0284c7;"
+            f"margin:5px 0;'>Prodotti {start + 1}-{end} di {total}</p>",
+            unsafe_allow_html=True,
+        )
 
         for product in results[start:end]:
             render_product_card(product)
 
         st.button(
-            "➕ Altri 10 prodotti",
+            "➕ Carica altri 10 prodotti ⬇️",
             on_click=_load_more,
             use_container_width=True,
             disabled=int(st.session_state.get("item_count", 10)) >= MAX_RESULTS,
@@ -602,7 +1013,11 @@ elif active_tab == "cerca":
         st.warning("Nessun prodotto trovato.")
 
 elif active_tab == "privacy":
-    st.subheader("Informativa privacy")
+    st.markdown(
+        "<h2 style='font-size:.94rem;color:#0369a1;'>Informativa privacy</h2>",
+        unsafe_allow_html=True,
+    )
+
     st.markdown(
         """
         I dati inseriti nel modulo contatti vengono utilizzati esclusivamente
@@ -613,12 +1028,14 @@ elif active_tab == "privacy":
         Streamlit e non devono essere pubblicate nel repository GitHub.
         """
     )
+
     st.button(
         "← Torna alla vetrina",
-        on_click=set_tab,
-        args=("vetrina",),
+        on_click=open_vetrina,
     )
 
+# Il ramo resta deliberatamente nel codice, ma non esiste alcun pulsante pubblico
+# che imposti current_tab="contatti".
 elif active_tab == "contatti":
     st.subheader("Contatti")
 
@@ -631,10 +1048,6 @@ elif active_tab == "contatti":
         user_email = st.text_input("Email*")
         message = st.text_area("Messaggio*", height=120)
         privacy_ack = st.checkbox("Ho letto l'informativa privacy.*")
-        st.markdown(
-            "<small><a href='?privacy=1' target='_self'>Leggi informativa privacy</a></small>",
-            unsafe_allow_html=True,
-        )
 
         send = st.form_submit_button(
             "✉️ Invia messaggio",
@@ -669,10 +1082,14 @@ elif active_tab == "contatti":
             else:
                 st.error(error_message)
 
+st.markdown("</div>", unsafe_allow_html=True)
+
 st.markdown(
     """
-    <div class="site-footer">
-        <strong>In qualità di Affiliato Amazon io ricevo un guadagno dagli acquisti idonei.</strong><br>
+    <div class="site-footer-box">
+        <strong>
+        In qualità di Affiliato Amazon io ricevo un guadagno dagli acquisti idonei.
+        </strong><br>
         I link verso Amazon sono link affiliati a pagamento.
         Prezzi e disponibilità possono variare su Amazon.<br>
         <a href="?privacy=1" target="_self">Informativa privacy</a>

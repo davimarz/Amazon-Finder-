@@ -1,46 +1,32 @@
-# Amazon Affiliate Streamlit - versione ottimizzata
+# Scala dei Turchi - Amazon Affiliate Streamlit v2
 
-## File
-- `app.py`: UI, ricerca, paginazione, contatti e privacy.
-- `amazon_api.py`: integrazione Amazon Creators API.
-- `requirements.txt`: dipendenze minime.
-- `.gitignore`: impedisce di pubblicare secrets e file locali.
-- `.streamlit/secrets.example.toml`: schema di configurazione senza credenziali reali.
+## Modifiche richieste
+- Scheda Contatti nascosta dalla navigazione pubblica; il codice è mantenuto.
+- Vetrina ricaricata all'avvio di una nuova sessione/browser refresh.
+- Click su Vetrina forza una nuova richiesta SearchItems.
+- Ordinamento predefinito: Prezzo minimo.
+- Rimossi Rilevanza e Popolarità dalla UI.
+- Aggiunto "Quantità vendite".
+- "Quantità vendite" usa `browseNodeInfo.websiteSalesRank` (Best Sellers Rank)
+  perché Amazon non espone il numero esatto di unità vendute.
+- Ripristinata la palette grafica del vecchio sito:
+  azzurro/blu, verde, arancione, sfondo sfumato e badge `AI DEALS`.
+- Restano eliminati scraping HTML, recensioni inventate e spedizioni inventate.
 
-## Modifiche principali
-1. Eliminato lo scraping HTML Amazon come fonte dati.
-2. Eliminati `beautifulsoup4` e `curl_cffi`.
-3. `SearchItems` trova gli ASIN; `GetItems` verifica i dettagli in batch da 10.
-4. Prezzo mostrato solo dalla Buy Box verificata via `OffersV2`.
-5. Nessuna recensione, vendita o spedizione inventata.
-6. Nessun Partner Tag hardcoded nel codice.
-7. Retry controllato su 429/5xx e refresh token su 401.
-8. Cache separata: risultati ricerca 10 minuti, prezzi 2 minuti.
-9. Ricerca progressiva 10 -> 20 -> 30 -> 40 -> 50.
-10. Rimosso SQLite locale per il rate-limit del form contatti.
-11. Errori SMTP non esposti integralmente all'utente.
-12. Dipendenze con range di versione per ridurre rotture improvvise.
+## Flusso dati
+SearchItems -> ASIN -> GetItems -> OffersV2 Buy Box
+                              -> WebsiteSalesRank
 
-## Streamlit Cloud
-Imposta i Secrets dal pannello dell'app, non nel repository GitHub.
+## Deploy
+Carica su GitHub:
+- app.py
+- amazon_api.py
+- requirements.txt
+- .gitignore
 
-Esempio:
+Inserisci le credenziali reali solo nei Secrets di Streamlit Cloud.
 
-```toml
-[amazon_api]
-partner_tag = "..."
-client_id = "..."
-client_secret = "..."
-
-[email]
-sender = "..."
-app_password = "..."
-recipient = "..."
-```
-
-Dopo il commit dei file, esegui un Reboot dell'app.
-
-## Nota sui prezzi
-Amazon può mostrare a un cliente specifico un prezzo diverso per account,
-indirizzo di consegna, coupon o promozioni. Il sito usa la Buy Box disponibile
-tramite Creators API e non tenta di ricavare prezzi dal markup HTML.
+## Nota "Quantità vendite"
+Non è un conteggio di pezzi venduti.
+Il valore ufficiale disponibile è il Best Sellers Rank Amazon:
+un numero più basso indica un posizionamento vendite migliore.

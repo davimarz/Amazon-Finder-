@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import math
 import threading
@@ -22,10 +23,12 @@ SEARCH_CACHE_TTL = 10 * 60
 PRICE_CACHE_TTL = 2 * 60
 HTTP_TIMEOUT = 8
 
+# In UI restano solo le due opzioni richieste.
+# "Quantità vendite" usa il WebsiteSalesRank/Best Sellers Rank di Amazon:
+# NON rappresenta il numero esatto di unità vendute.
 SORT_MAPPINGS = {
-    "Rilevanza": "Relevance",
-    "Popolarità": "Featured",
     "Prezzo minimo": "Price:LowToHigh",
+    "Quantità vendite": "Featured",
 }
 
 _TOKEN_CACHE: dict[str, Any] = {
@@ -53,11 +56,7 @@ def _amazon_secrets() -> dict[str, Any]:
 
 
 def get_partner_tag() -> str:
-    """Restituisce il Partner Tag configurato nei Secrets.
-
-    Nessun fallback hardcoded: se manca la configurazione è meglio fermarsi
-    esplicitamente che generare link con un tag sbagliato.
-    """
+    """Restituisce il Partner Tag configurato nei Secrets."""
     return str(_amazon_secrets().get("partner_tag", "")).strip()
 
 
@@ -230,7 +229,7 @@ def _api_post(operation: str, payload: dict[str, Any]) -> Optional[dict[str, Any
 
 
 def _affiliate_detail_url(detail_url: str, asin: str, partner_tag: str) -> str:
-    """Preserva i parametri Amazon (es. variante th/psc) e forza il Partner Tag."""
+    """Preserva i parametri Amazon e forza il Partner Tag."""
     fallback = f"https://www.amazon.it/dp/{asin}"
 
     try:
@@ -255,9 +254,20 @@ def _affiliate_detail_url(detail_url: str, asin: str, partner_tag: str) -> str:
 def _money_amount(data: Any) -> Optional[float]:
     if not isinstance(data, dict):
         return None
+
     try:
         value = data.get("amount")
         return float(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_int(value: Any) -> Optional[int]:
+    try:
+        if value is None:
+            return None
+        parsed = int(value)
+        return parsed if parsed > 0 else None
     except (TypeError, ValueError):
         return None
 
@@ -296,8 +306,6 @@ def _select_featured_listing(item: dict[str, Any]) -> Optional[dict[str, Any]]:
     if not winners:
         return None
 
-    # Quando possibile evita di mostrare come prezzo standard un
-    # Subscribe & Save o un'offerta Prime esclusiva.
     regular = [
         listing
         for listing in winners
@@ -306,6 +314,7 @@ def _select_featured_listing(item: dict[str, Any]) -> Optional[dict[str, Any]]:
             ((listing.get("dealDetails") or {}).get("accessType") or "")
         ).upper() != "PRIME_EXCLUSIVE"
     ]
+
     return regular[0] if regular else winners[0]
 
 
@@ -349,6 +358,7 @@ def _item_to_product(
 
         saving_basis = price_block.get("savingBasis") or {}
         candidate_old = _money_amount(saving_basis.get("money") or {})
+
         if (
             candidate_old is not None
             and final_price is not None
@@ -383,6 +393,16 @@ def _item_to_product(
         is_prime_exclusive = access_type == "PRIME_EXCLUSIVE"
         offer_type = str(listing.get("type") or "")
 
+    website_rank = (
+        ((item.get("browseNodeInfo") or {}).get("websiteSalesRank") or {})
+    )
+    sales_rank = _safe_int(website_rank.get("salesRank"))
+    sales_rank_category = str(
+        website_rank.get("contextFreeName")
+        or website_rank.get("displayName")
+        or ""
+    )
+
     verified = final_price is not None and final_price > 0
 
     return {
@@ -398,6 +418,8 @@ def _item_to_product(
         "is_prime_exclusive": is_prime_exclusive,
         "prime_filter_match": bool(prime_filter_applied),
         "tipo_offerta": offer_type,
+        "sales_rank": sales_rank,
+        "sales_rank_category": sales_rank_category,
         "link_affiliato": _affiliate_detail_url(detail_url, asin, partner_tag),
         "source": "creators_api_getitems",
     }
@@ -421,7 +443,7 @@ def _passes_local_filters(
     return True
 
 
-@st.cache_data(ttl=SEARCH_CACHE_TTL, show_spinner=False, max_entries=256)
+@st.cache_data(ttl=SEARCH_CACHE_TTL, show_spinner=False, max_entries=512)
 def _search_page_cached(
     keyword: str,
     sort_value: str,
@@ -430,7 +452,11 @@ def _search_page_cached(
     partner_tag: str,
     min_price: Optional[float],
     max_price: Optional[float],
+    cache_buster: str,
 ) -> tuple[str, ...]:
+    # cache_buster è usato solo come chiave della cache.
+    del cache_buster
+
     payload: dict[str, Any] = {
         "partnerTag": partner_tag,
         "marketplace": MARKETPLACE,
@@ -466,6 +492,7 @@ def _search_page_cached(
 
 
 GET_ITEMS_RESOURCES = [
+    "browseNodeInfo.websiteSalesRank",
     "images.primary.large",
     "images.primary.medium",
     "itemInfo.title",
@@ -503,7 +530,7 @@ def _get_items_cached(
 
 def ottieni_offerte_avanzate(
     keyword: str = "",
-    sort_type: str = "Rilevanza",
+    sort_type: str = "Prezzo minimo",
     solo_spedizione_gratuita: bool = False,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
@@ -511,6 +538,7 @@ def ottieni_offerte_avanzate(
     categoria: str = "",
     sottocategoria: str = "",
     _partner_tag_override: Optional[str] = None,
+    _cache_buster: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     del categoria, sottocategoria
 
@@ -521,16 +549,24 @@ def ottieni_offerte_avanzate(
 
     target = max(1, min(int(item_count or 10), MAX_RESULTS))
     query = str(keyword or "").strip() or "offerte del giorno"
-    sort_value = SORT_MAPPINGS.get(sort_type, "Relevance")
+
+    # SearchItems non offre un ordinamento per numero di unità vendute.
+    # Per "Quantità vendite" usiamo Featured come set di candidati e poi
+    # ordiniamo localmente sul WebsiteSalesRank ottenuto da GetItems.
+    sort_value = SORT_MAPPINGS.get(sort_type, "Price:LowToHigh")
+    cache_buster = str(_cache_buster or "normal-search")
 
     products: list[dict[str, Any]] = []
     seen_asins: set[str] = set()
 
-    # SearchItems restituisce massimo 10 elementi per pagina.
-    # Ogni pagina viene verificata subito con un singolo GetItems batch.
+    if sort_type == "Quantità vendite":
+        candidate_target = min(MAX_RESULTS, target + 20)
+    else:
+        candidate_target = target
+
     required_pages = min(
         MAX_SEARCH_PAGES,
-        max(1, math.ceil(target / 10) + 2),
+        max(1, math.ceil(candidate_target / 10) + 2),
     )
 
     for page in range(1, required_pages + 1):
@@ -542,6 +578,7 @@ def ottieni_offerte_avanzate(
             partner_tag,
             min_price,
             max_price,
+            cache_buster,
         )
         if not asins:
             break
@@ -573,10 +610,17 @@ def ottieni_offerte_avanzate(
                 continue
 
             products.append(product)
-            if len(products) >= target:
+
+            if sort_type != "Quantità vendite" and len(products) >= target:
                 break
 
-        if len(products) >= target:
+            if sort_type == "Quantità vendite" and len(products) >= candidate_target:
+                break
+
+        if sort_type != "Quantità vendite" and len(products) >= target:
+            break
+
+        if sort_type == "Quantità vendite" and len(products) >= candidate_target:
             break
 
     if sort_type == "Prezzo minimo":
@@ -586,14 +630,23 @@ def ottieni_offerte_avanzate(
                 float(product.get("prezzo_finale") or float("inf")),
             )
         )
+    elif sort_type == "Quantità vendite":
+        products.sort(
+            key=lambda product: (
+                product.get("sales_rank") is None,
+                int(product.get("sales_rank") or 10**12),
+                float(product.get("prezzo_finale") or float("inf")),
+            )
+        )
 
     return products[:target]
 
 
-@st.cache_data(ttl=10 * 60, show_spinner=False, max_entries=8)
+@st.cache_data(ttl=10 * 60, show_spinner=False, max_entries=64)
 def ottieni_vetrina_casuale(
     partner_tag: Optional[str] = None,
     item_count: int = 10,
+    refresh_token: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     configured_tag = get_partner_tag() or str(partner_tag or "").strip()
     if not configured_tag:
@@ -603,19 +656,23 @@ def ottieni_vetrina_casuale(
         "offerte tecnologia",
         "offerte casa cucina",
         "offerte cuffie bluetooth",
-        "offerte sport",
+        "offerte smartwatch",
+        "offerte sport fitness",
         "offerte cura persona",
         "offerte accessori smartphone",
+        "offerte elettrodomestici",
+        "offerte scarpe",
+        "offerte zaini accessori",
     )
 
-    # Rotazione deterministica: tutti gli utenti condividono la stessa
-    # vetrina per 10 minuti, migliorando la cache e riducendo le API call.
-    slot = int(time.time() // (10 * 60))
-    keyword = keywords[slot % len(keywords)]
+    selector = str(refresh_token or int(time.time() // (10 * 60)))
+    digest = hashlib.sha256(selector.encode("utf-8")).digest()
+    keyword = keywords[int.from_bytes(digest[:4], "big") % len(keywords)]
 
     return ottieni_offerte_avanzate(
         keyword=keyword,
-        sort_type="Popolarità",
+        sort_type="Quantità vendite",
         item_count=max(1, min(int(item_count or 10), 10)),
         _partner_tag_override=configured_tag,
+        _cache_buster=f"vetrina:{selector}",
     )
