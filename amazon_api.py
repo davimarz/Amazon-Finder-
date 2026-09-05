@@ -292,10 +292,9 @@ def _filter_product(
     return True
 
 
-def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
-    # 1. Tentativo con curl_cffi se disponibile
+def _fetch_html(url: str, timeout: int = 10) -> Optional[str]:
     if HAS_CURL:
-        for imp in ["chrome120", "chrome119"]:
+        for imp in ["chrome120", "chrome119", "safari17_0"]:
             try:
                 r = c_requests.get(
                     url,
@@ -315,7 +314,6 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
             except Exception:
                 pass
 
-    # 2. Tentativo con requests standard e Client-Hints completi
     try:
         s = requests.Session()
         headers = {
@@ -323,19 +321,12 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
             "Upgrade-Insecure-Requests": "1",
+            "Referer": "https://www.google.it/",
             "DNT": "1",
-            "Sec-Ch-Ua": '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
-            "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": '"Windows"',
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
         }
         cookies = {
             "lc-acbit": "it_IT",
             "i18n-prefs": "EUR",
-            "session-id": f"260-{random.randint(1000000, 9999999)}-{random.randint(1000000, 9999999)}",
         }
         r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
         if r.status_code == 200 and r.text and len(r.text) > 2000 and "Robot Check" not in r.text:
@@ -343,15 +334,11 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
     except Exception:
         pass
 
-    # 3. Canale Mobile di Emergenza (supera i filtri anti-bot restrittivi su server Cloud)
     try:
         mobile_headers = {
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "it-IT,it;q=0.9",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
         }
         r_mob = requests.get(url, headers=mobile_headers, timeout=timeout)
         if r_mob.status_code == 200 and r_mob.text and len(r_mob.text) > 1500 and "Robot Check" not in r_mob.text:
@@ -458,7 +445,6 @@ def _extract_products_from_html(
         if len(asin) != 10 or asin in seen_asins:
             continue
 
-        # Estrazione titolo completa (non tronca le parti del marchio nelle calzature/moda)
         title = ""
         h2 = item.select_one("h2")
         if h2:
@@ -629,7 +615,6 @@ def _search_creators_api(
             ],
         }
 
-        # NESSUN sortBy su searchIndex='All': evita l'errore 400 Bad Request di Amazon
         if min_price is not None:
             payload["minPrice"] = max(1, int(round(min_price * 100)))
         if max_price is not None:
@@ -680,11 +665,9 @@ def _search_html_fallback(
 
     max_pages = min(4, max(2, (item_count + 9) // 10 + 1))
     for page in range(1, max_pages + 1):
-        # Query diretta con formato compatibile per brand e termini composti
         url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
         html_text = _get_search_html_cached(url)
 
-        # Fallback all'endpoint field-keywords se il primo non risponde
         if not html_text:
             url_alt = f"https://www.amazon.it/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords={query_encoded}&page={page}"
             html_text = _get_search_html_cached(url_alt)
@@ -704,7 +687,6 @@ def _search_html_fallback(
         if len(collected) >= item_count:
             break
 
-    # Ordinamento sicuro eseguito in memoria (evita blocchi URL di Amazon)
     if sort_type == "Prezzo minimo":
         collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
     elif sort_type == "Vendite":
@@ -757,7 +739,6 @@ def ottieni_offerte_avanzate(
 
     clean_keyword = (keyword or "").strip()
 
-    # Rilevamento ASIN diretto da codice o da URL
     is_direct_asin = False
     asin_matched = None
 
@@ -797,37 +778,38 @@ def ottieni_offerte_avanzate(
 
     query = clean_keyword or "offerte del giorno"
 
-    api_products = _search_creators_api(
+    # 1. Ricerca tramite HTML Fallback prioritario per brand popolari (come iPhone, Samsung, Nike)
+    # Questo scavalca i filtri rigidi di restrizione della Creator API su alcuni marchi elettronici
+    collected = _search_html_fallback(
         query,
         sort_type,
         partner_tag,
         solo_spedizione_gratuita,
         min_price,
         max_price,
-        item_count,
+        item_count * 2,
     )
 
-    collected = list(api_products) if api_products else []
-
+    # 2. Se l'HTML non basta, integra con la Creator API
     if len(collected) < item_count:
-        html_products = _search_html_fallback(
+        api_products = _search_creators_api(
             query,
             sort_type,
             partner_tag,
             solo_spedizione_gratuita,
             min_price,
             max_price,
-            item_count * 2,
+            item_count,
         )
-        seen_asins = {p["asin"] for p in collected if p.get("asin")}
-        for hp in html_products:
-            if hp.get("asin") not in seen_asins:
-                collected.append(hp)
-                seen_asins.add(hp["asin"])
-            if len(collected) >= item_count:
-                break
+        if api_products:
+            seen_asins = {p["asin"] for p in collected if p.get("asin")}
+            for ap in api_products:
+                if ap.get("asin") not in seen_asins:
+                    collected.append(ap)
+                    seen_asins.add(ap["asin"])
+                if len(collected) >= item_count:
+                    break
 
-    # Rilassamento della spedizione gratuita se nessun risultato è trovato
     if not collected and solo_spedizione_gratuita:
         html_products_relax = _search_html_fallback(
             query,
