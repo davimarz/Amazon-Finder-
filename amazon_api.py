@@ -23,16 +23,14 @@ CACHE_TTL_SECONDS = 120
 MAX_CREATORS_PAGES = 10
 MAX_RESULTS = 50
 
-# Mappatura ordinamento: solo Prezzo minimo e Vendite
 SORT_MAPPINGS = {
     "Prezzo minimo": "Price:LowToHigh",
-    "Vendite": "Featured",
+    "Vendite": "Vendite",
 }
 
 SORT_FALLBACK_MAP = {
     "Prezzo minimo": "price-asc-rank",
-    "Vendite": "exact-aware-popularity-rank",
-    "Numero di vendite": "exact-aware-popularity-rank",
+    "Vendite": "",
 }
 
 RE_ASIN = re.compile(r"(?:/dp/|/gp/product/|/d/|^)([A-Z0-9]{10})(?:[/?&#]|$)", re.IGNORECASE)
@@ -259,7 +257,6 @@ def _api_item_to_product(
     deal = listing.get("dealDetails", {}) or {}
     access_type = str(deal.get("accessType", "")).upper()
     
-    # Riconoscimento avanzato Prime & Spedizione Gratuita
     is_prime = True if prime_filter_applied or "PRIME" in access_type or "PRIME" in str(item).upper() else None
     is_free = True if (is_prime or price >= 35.0) else None
 
@@ -589,8 +586,6 @@ def _search_creators_api(
     if not get_creators_access_token():
         return None
 
-    sort_value = SORT_MAPPINGS.get(sort_type, "Featured")
-
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
@@ -604,7 +599,6 @@ def _search_creators_api(
             "currencyOfPreference": "EUR",
             "itemCount": 10,
             "itemPage": page,
-            "sortBy": sort_value,
             "resources": [
                 "images.primary.large",
                 "itemInfo.title",
@@ -612,6 +606,10 @@ def _search_creators_api(
                 "offersV2.listings.dealDetails",
             ],
         }
+
+        # Con searchIndex "All", Creators API accetta solo Price:LowToHigh oppure nessun sortBy
+        if sort_type == "Prezzo minimo":
+            payload["sortBy"] = "Price:LowToHigh"
 
         if min_price is not None:
             payload["minPrice"] = max(1, int(round(min_price * 100)))
@@ -661,17 +659,17 @@ def _search_html_fallback(
     item_count: int,
 ) -> List[Dict[str, Any]]:
     query_encoded = urllib.parse.quote_plus(keyword)
-    sort_param = SORT_FALLBACK_MAP.get(sort_type, "exact-aware-popularity-rank")
+    s_param = "&s=price-asc-rank" if sort_type == "Prezzo minimo" else ""
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
     max_pages = min(5, max(2, (item_count + 9) // 10 + 2))
     for page in range(1, max_pages + 1):
-        url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}&s={sort_param}"
+        url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}{s_param}"
         html_text = _fetch_html_cached(url)
         if not html_text:
-            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&s={sort_param}"
+            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}{s_param}"
             html_text = _fetch_html_cached(url)
         if not html_text:
             url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
@@ -695,6 +693,8 @@ def _search_html_fallback(
 
     if sort_type == "Prezzo minimo":
         collected.sort(key=lambda product: float(product.get("prezzo_finale") or float("inf")))
+    elif sort_type == "Vendite":
+        collected.sort(key=lambda product: int(product.get("num_recensioni") or 0), reverse=True)
 
     return collected[:item_count]
 
@@ -839,5 +839,10 @@ def ottieni_offerte_avanzate(
             item_count=item_count,
         )
         collected = html_products_relax
+
+    if sort_type == "Vendite":
+        collected.sort(key=lambda p: int(p.get("num_recensioni") or 0), reverse=True)
+    elif sort_type == "Prezzo minimo":
+        collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
 
     return collected[:item_count]
