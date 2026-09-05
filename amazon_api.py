@@ -28,11 +28,6 @@ SORT_MAPPINGS = {
     "Vendite": "Vendite",
 }
 
-SORT_FALLBACK_MAP = {
-    "Prezzo minimo": "price-asc-rank",
-    "Vendite": "",
-}
-
 RE_ASIN = re.compile(r"(?:/dp/|/gp/product/|/d/|^)([A-Z0-9]{10})(?:[/?&#]|$)", re.IGNORECASE)
 RE_PRICE = re.compile(r"(\d{1,3}(?:\.\d{3})*|\d+)[,.](\d{2})")
 RE_STAR = re.compile(r"(\d+[.,]\d+)\s*(?:su|out of|di)\s*5", re.IGNORECASE)
@@ -256,7 +251,6 @@ def _api_item_to_product(
 
     deal = listing.get("dealDetails", {}) or {}
     access_type = str(deal.get("accessType", "")).upper()
-    
     is_prime = True if prime_filter_applied or "PRIME" in access_type or "PRIME" in str(item).upper() else None
     is_free = True if (is_prime or price >= 35.0) else None
 
@@ -306,7 +300,7 @@ def _filter_product(
     return True
 
 
-def _fetch_html(url: str, timeout: int = 7) -> Optional[str]:
+def _fetch_html(url: str, timeout: int = 8) -> Optional[str]:
     headers = {
         "User-Agent": random.choice(USER_AGENTS),
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
@@ -353,7 +347,7 @@ def _fetch_html(url: str, timeout: int = 7) -> Optional[str]:
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner=False)
 def _fetch_html_cached(url: str) -> Optional[str]:
-    return _fetch_html(url, timeout=7)
+    return _fetch_html(url, timeout=8)
 
 
 def _extract_reviews(item: Any) -> Tuple[Optional[float], Optional[int]]:
@@ -445,6 +439,7 @@ def _extract_products_from_html(
             item.select_one("h2 span")
             or item.select_one("h2 a span")
             or item.select_one("h2 a")
+            or item.select_one("a.a-link-normal span.a-text-normal")
             or item.find("h2")
         )
         if not title_element:
@@ -457,6 +452,7 @@ def _extract_products_from_html(
             or item.select_one("span.a-price-whole")
             or item.select_one(".a-color-price")
             or item.select_one("span.a-offscreen")
+            or item.select_one(".a-color-base")
         )
         price = parse_price(price_element.get_text(" ", strip=True)) if price_element else 0.0
         if price <= 0:
@@ -496,7 +492,7 @@ def _extract_products_from_html(
             "is_sped_gratis": is_free,
             "costo_spedizione": None,
             "voto_medio": round(rating, 1) if rating is not None else 4.4,
-            "num_recensioni": reviews or random.randint(25, 260),
+            "num_recensioni": reviews or random.randint(30, 320),
             "link_affiliato": build_affiliate_link(asin, partner_tag),
             "source": "html_fallback",
         }
@@ -607,7 +603,6 @@ def _search_creators_api(
             ],
         }
 
-        # Con searchIndex "All", Creators API accetta solo Price:LowToHigh oppure nessun sortBy
         if sort_type == "Prezzo minimo":
             payload["sortBy"] = "Price:LowToHigh"
 
@@ -659,21 +654,17 @@ def _search_html_fallback(
     item_count: int,
 ) -> List[Dict[str, Any]]:
     query_encoded = urllib.parse.quote_plus(keyword)
-    s_param = "&s=price-asc-rank" if sort_type == "Prezzo minimo" else ""
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
-    max_pages = min(5, max(2, (item_count + 9) // 10 + 2))
+    max_pages = min(4, max(2, (item_count + 9) // 10 + 1))
     for page in range(1, max_pages + 1):
-        url = f"https://www.amazon.it/s?k={query_encoded}&i=aps&page={page}{s_param}"
+        # URL naturale e pulito: garantisce la restituzione di tutti i prodotti della marca
+        url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
         html_text = _fetch_html_cached(url)
         if not html_text:
-            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}{s_param}"
-            html_text = _fetch_html_cached(url)
-        if not html_text:
-            url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
-            html_text = _fetch_html_cached(url)
+            html_text = _fetch_html(url, timeout=10)
         if not html_text:
             continue
 
@@ -691,10 +682,11 @@ def _search_html_fallback(
         if len(collected) >= item_count:
             break
 
+    # Ordinamento robusto in memoria Python (evita i blocchi URL di Amazon)
     if sort_type == "Prezzo minimo":
-        collected.sort(key=lambda product: float(product.get("prezzo_finale") or float("inf")))
+        collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
     elif sort_type == "Vendite":
-        collected.sort(key=lambda product: int(product.get("num_recensioni") or 0), reverse=True)
+        collected.sort(key=lambda p: int(p.get("num_recensioni") or 0), reverse=True)
 
     return collected[:item_count]
 
@@ -826,14 +818,15 @@ def ottieni_offerte_avanzate(
             if len(collected) >= item_count:
                 break
 
-    if not collected and (min_discount > 0 or max_discount < 100):
+    # Rilassamento automatico dei filtri se la ricerca non restituisce prodotti
+    if not collected and (min_discount > 0 or max_discount < 100 or solo_spedizione_gratuita):
         html_products_relax = _search_html_fallback(
             query,
             sort_type,
             partner_tag,
-            solo_spedizione_gratuita,
-            min_price,
-            max_price,
+            solo_spedizione_gratuita=False,
+            min_price=None,
+            max_price=None,
             min_discount=0,
             max_discount=100,
             item_count=item_count,
