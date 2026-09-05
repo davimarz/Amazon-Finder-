@@ -1,68 +1,51 @@
+from __future__ import annotations
+
 import logging
-import random
-import re
+import math
+import threading
 import time
-import urllib.parse
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Optional
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import requests
 import streamlit as st
-from bs4 import BeautifulSoup
 
-try:
-    from curl_cffi import requests as c_requests
-    HAS_CURL = True
-except ImportError:
-    c_requests = None
-    HAS_CURL = False
 
 MARKETPLACE = "www.amazon.it"
 CREATORS_API_BASE = "https://creatorsapi.amazon/catalog/v1"
 DEFAULT_EU_TOKEN_URL = "https://api.amazon.co.uk/auth/o2/token"
-CACHE_TTL_SECONDS = 180
+TOKEN_SCOPE = "creatorsapi::default"
+
 MAX_RESULTS = 50
+MAX_SEARCH_PAGES = 10
+SEARCH_CACHE_TTL = 10 * 60
+PRICE_CACHE_TTL = 2 * 60
+HTTP_TIMEOUT = 8
 
 SORT_MAPPINGS = {
+    "Rilevanza": "Relevance",
+    "Popolarità": "Featured",
     "Prezzo minimo": "Price:LowToHigh",
-    "Vendite": "Vendite",
 }
 
-RE_ASIN = re.compile(r"(?:/dp/|/gp/product/|/d/|^)([A-Z0-9]{10})(?:[/?&#]|$)", re.IGNORECASE)
-RE_PRICE = re.compile(r"(\d{1,3}(?:\.\d{3})*|\d+)[,.](\d{2})")
-RE_STAR = re.compile(r"(\d+[.,]\d+)\s*(?:su|out of|di)\s*5", re.IGNORECASE)
-RE_DIGITS = re.compile(r"[^\d]")
-
-_TOKEN_CACHE: Dict[str, Any] = {"access_token": None, "expires_at": 0.0}
-_HTML_CACHE: Dict[str, Tuple[float, str]] = {}
-_HTTP_SESSION = requests.Session()
+_TOKEN_CACHE: dict[str, Any] = {
+    "access_token": None,
+    "expires_at": 0.0,
+}
+_TOKEN_LOCK = threading.Lock()
 
 LOGGER = logging.getLogger("amazon_affiliate")
 if not LOGGER.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s amazon_affiliate: %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s amazon_affiliate: %(message)s")
+    )
     LOGGER.addHandler(handler)
 LOGGER.setLevel(logging.INFO)
 LOGGER.propagate = False
 
-USER_AGENTS = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-]
 
-KEYWORDS_VETRINA = [
-    "offerte lampo tecnologia",
-    "offerte scarpe sneaker",
-    "smartwatch offerte del giorno",
-    "cuffie bluetooth offerta",
-    "elettrodomestici cucina sconti",
-    "accessori smartphone offerte",
-    "cura della persona sconti",
-    "abbigliamento sportivo offerte",
-]
-
-
-def _amazon_secrets() -> Dict[str, Any]:
+def _amazon_secrets() -> dict[str, Any]:
     try:
         return dict(st.secrets.get("amazon_api", {}))
     except Exception:
@@ -70,74 +53,115 @@ def _amazon_secrets() -> Dict[str, Any]:
 
 
 def get_partner_tag() -> str:
-    tag = str(_amazon_secrets().get("partner_tag", "")).strip()
-    return tag if tag else "eiapromo-21"
+    """Restituisce il Partner Tag configurato nei Secrets.
+
+    Nessun fallback hardcoded: se manca la configurazione è meglio fermarsi
+    esplicitamente che generare link con un tag sbagliato.
+    """
+    return str(_amazon_secrets().get("partner_tag", "")).strip()
 
 
-def build_affiliate_link(asin: str, partner_tag: Optional[str] = None) -> str:
-    asin_clean = (asin or "").strip().upper()
-    tag = (partner_tag or get_partner_tag()).strip()
-    if not asin_clean or len(asin_clean) != 10 or not tag:
-        return ""
-    return f"https://www.amazon.it/dp/{asin_clean}?tag={urllib.parse.quote(tag, safe='-_.')}"
-
-
-def _creators_credentials() -> Tuple[str, str, str]:
+def _creators_credentials() -> tuple[str, str, str]:
     cfg = _amazon_secrets()
     client_id = str(cfg.get("client_id") or cfg.get("credential_id") or "").strip()
-    client_secret = str(cfg.get("client_secret") or cfg.get("credential_secret") or "").strip()
+    client_secret = str(
+        cfg.get("client_secret") or cfg.get("credential_secret") or ""
+    ).strip()
     token_url = str(cfg.get("token_url") or DEFAULT_EU_TOKEN_URL).strip()
     return client_id, client_secret, token_url
 
 
+def _retry_delay(response: requests.Response, attempt: int) -> float:
+    retry_after = response.headers.get("Retry-After")
+    if retry_after:
+        try:
+            return min(max(float(retry_after), 0.25), 5.0)
+        except ValueError:
+            pass
+    return min(0.5 * (2**attempt), 3.0)
+
+
 def get_creators_access_token(force_refresh: bool = False) -> Optional[str]:
     now = time.time()
+
     if (
         not force_refresh
         and _TOKEN_CACHE.get("access_token")
-        and now < float(_TOKEN_CACHE.get("expires_at", 0)) - 60
+        and now < float(_TOKEN_CACHE.get("expires_at", 0.0)) - 90
     ):
         return str(_TOKEN_CACHE["access_token"])
 
-    client_id, client_secret, token_url = _creators_credentials()
-    if not client_id or not client_secret:
-        return None
+    with _TOKEN_LOCK:
+        now = time.time()
 
-    payload = {
-        "grant_type": "client_credentials",
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "scope": "creatorsapi::default",
-    }
+        if (
+            not force_refresh
+            and _TOKEN_CACHE.get("access_token")
+            and now < float(_TOKEN_CACHE.get("expires_at", 0.0)) - 90
+        ):
+            return str(_TOKEN_CACHE["access_token"])
 
-    try:
-        response = _HTTP_SESSION.post(
-            token_url,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=5,
-        )
-        if response.status_code != 200:
+        client_id, client_secret, token_url = _creators_credentials()
+        if not client_id or not client_secret:
+            LOGGER.error("Credenziali Creators API mancanti nei Secrets.")
             return None
 
-        data = response.json()
-        token = data.get("access_token")
-        if not token:
+        payload = {
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": TOKEN_SCOPE,
+        }
+
+        for attempt in range(3):
+            try:
+                response = requests.post(
+                    token_url,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                    timeout=HTTP_TIMEOUT,
+                )
+            except requests.RequestException as exc:
+                if attempt < 2:
+                    time.sleep(0.5 * (2**attempt))
+                    continue
+                LOGGER.error("Errore rete token Creators API: %s", type(exc).__name__)
+                return None
+
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                except ValueError:
+                    LOGGER.error("Risposta token Creators API non JSON.")
+                    return None
+
+                token = data.get("access_token")
+                if not token:
+                    LOGGER.error("access_token assente nella risposta Amazon.")
+                    return None
+
+                expires_in = max(300, int(data.get("expires_in", 3600)))
+                _TOKEN_CACHE["access_token"] = str(token)
+                _TOKEN_CACHE["expires_at"] = now + expires_in
+                return str(token)
+
+            if response.status_code in {429, 500, 502, 503, 504} and attempt < 2:
+                time.sleep(_retry_delay(response, attempt))
+                continue
+
+            LOGGER.error("Token Creators API: HTTP %s", response.status_code)
             return None
 
-        expires_in = int(data.get("expires_in", 3600))
-        _TOKEN_CACHE["access_token"] = token
-        _TOKEN_CACHE["expires_at"] = now + max(60, expires_in)
-        return str(token)
-    except (requests.RequestException, ValueError, TypeError):
-        return None
+    return None
 
 
-def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+def _api_post(operation: str, payload: dict[str, Any]) -> Optional[dict[str, Any]]:
     endpoint = f"{CREATORS_API_BASE}/{operation}"
+    force_refresh = False
 
-    for attempt in range(2):
-        token = get_creators_access_token(force_refresh=(attempt == 1))
+    for attempt in range(3):
+        token = get_creators_access_token(force_refresh=force_refresh)
+        force_refresh = False
         if not token:
             return None
 
@@ -148,463 +172,338 @@ def _creators_api_call(operation: str, payload: Dict[str, Any]) -> Optional[Dict
         }
 
         try:
-            response = _HTTP_SESSION.post(endpoint, json=payload, headers=headers, timeout=6)
-        except requests.RequestException:
+            response = requests.post(
+                endpoint,
+                json=payload,
+                headers=headers,
+                timeout=HTTP_TIMEOUT,
+            )
+        except requests.RequestException as exc:
+            if attempt < 2:
+                time.sleep(0.5 * (2**attempt))
+                continue
+            LOGGER.error(
+                "Creators API %s: errore rete %s",
+                operation,
+                type(exc).__name__,
+            )
             return None
 
-        if response.status_code == 401 and attempt == 0:
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except ValueError:
+                LOGGER.error("Creators API %s: risposta non JSON.", operation)
+                return None
+
+        if response.status_code == 401 and attempt < 2:
             _TOKEN_CACHE["access_token"] = None
             _TOKEN_CACHE["expires_at"] = 0.0
+            force_refresh = True
             continue
 
-        if response.status_code != 200:
-            return None
+        if response.status_code in {429, 500, 502, 503, 504} and attempt < 2:
+            time.sleep(_retry_delay(response, attempt))
+            continue
 
+        reason = ""
         try:
-            return response.json()
+            error_data = response.json()
+            reason = str(
+                error_data.get("reason")
+                or error_data.get("message")
+                or error_data.get("error")
+                or ""
+            )
         except ValueError:
-            return None
+            pass
+
+        LOGGER.error(
+            "Creators API %s: HTTP %s%s",
+            operation,
+            response.status_code,
+            f" - {reason[:200]}" if reason else "",
+        )
+        return None
 
     return None
 
 
-def parse_price(text: Any) -> float:
-    if text is None:
-        return 0.0
+def _affiliate_detail_url(detail_url: str, asin: str, partner_tag: str) -> str:
+    """Preserva i parametri Amazon (es. variante th/psc) e forza il Partner Tag."""
+    fallback = f"https://www.amazon.it/dp/{asin}"
 
-    cleaned = str(text).replace("\xa0", " ").replace("&nbsp;", " ").strip()
-    match = RE_PRICE.search(cleaned)
-    if match:
-        whole = match.group(1).replace(".", "")
-        frac = match.group(2)
-        try:
-            value = float(f"{whole}.{frac}")
-            return value if value > 0 else 0.0
-        except ValueError:
-            pass
-
-    integer_match = re.search(r"(\d{1,3}(?:\.\d{3})*|\d+)\s*€", cleaned) or re.search(
-        r"€\s*(\d{1,3}(?:\.\d{3})*|\d+)", cleaned
-    )
-    if integer_match:
-        try:
-            value = float(integer_match.group(1).replace(".", ""))
-            return value if value > 0 else 0.0
-        except ValueError:
-            pass
-
-    return 0.0
-
-
-def _safe_float(value: Any) -> Optional[float]:
     try:
-        if value is None:
-            return None
-        return float(value)
+        parsed = urlparse(detail_url or fallback)
+        host = (parsed.hostname or "").lower()
+
+        if host not in {"amazon.it", "www.amazon.it"}:
+            parsed = urlparse(fallback)
+
+        query_pairs = [
+            (key, value)
+            for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+            if key.lower() != "tag"
+        ]
+        query_pairs.insert(0, ("tag", partner_tag))
+
+        return urlunparse(parsed._replace(query=urlencode(query_pairs)))
+    except Exception:
+        return f"{fallback}?tag={partner_tag}"
+
+
+def _money_amount(data: Any) -> Optional[float]:
+    if not isinstance(data, dict):
+        return None
+    try:
+        value = data.get("amount")
+        return float(value) if value is not None else None
     except (TypeError, ValueError):
         return None
 
 
-def _api_item_to_product(
-    item: Dict[str, Any],
+def _select_featured_listing(item: dict[str, Any]) -> Optional[dict[str, Any]]:
+    listings = ((item.get("offersV2") or {}).get("listings") or [])
+    candidates: list[dict[str, Any]] = []
+
+    for listing in listings:
+        if not isinstance(listing, dict):
+            continue
+
+        condition = str(((listing.get("condition") or {}).get("value") or "")).lower()
+        if condition and condition != "new":
+            continue
+
+        if listing.get("violatesMAP") is True:
+            continue
+
+        availability_type = str(
+            ((listing.get("availability") or {}).get("type") or "")
+        ).upper()
+        if availability_type in {"OUT_OF_STOCK", "UNAVAILABLE"}:
+            continue
+
+        candidates.append(listing)
+
+    if not candidates:
+        return None
+
+    winners = [
+        listing
+        for listing in candidates
+        if listing.get("isBuyBoxWinner") is True
+    ]
+    if not winners:
+        return None
+
+    # Quando possibile evita di mostrare come prezzo standard un
+    # Subscribe & Save o un'offerta Prime esclusiva.
+    regular = [
+        listing
+        for listing in winners
+        if str(listing.get("type") or "").upper() != "SUBSCRIBEAND_SAVE"
+        and str(
+            ((listing.get("dealDetails") or {}).get("accessType") or "")
+        ).upper() != "PRIME_EXCLUSIVE"
+    ]
+    return regular[0] if regular else winners[0]
+
+
+def _item_to_product(
+    item: dict[str, Any],
     partner_tag: str,
     prime_filter_applied: bool = False,
-) -> Optional[Dict[str, Any]]:
-    asin = str(item.get("asin", "")).strip().upper()
+) -> Optional[dict[str, Any]]:
+    asin = str(item.get("asin") or "").strip().upper()
     if len(asin) != 10:
         return None
 
-    title = (
-        item.get("itemInfo", {})
-        .get("title", {})
-        .get("displayValue", "Prodotto Amazon")
-    )
-    image_url = (
-        item.get("images", {})
-        .get("primary", {})
-        .get("large", {})
-        .get("url", "")
+    title = str(
+        (((item.get("itemInfo") or {}).get("title") or {}).get("displayValue"))
+        or "Prodotto Amazon"
     )
 
-    listings = item.get("offersV2", {}).get("listings", []) or []
-    listing = listings[0] if listings else {}
-    price_block = listing.get("price", {}) or {}
-
-    price = _safe_float(price_block.get("money", {}).get("amount")) or 0.0
-
-    saving_basis = _safe_float(
-        price_block.get("savingBasis", {}).get("money", {}).get("amount")
+    image_url = str(
+        (((item.get("images") or {}).get("primary") or {}).get("large") or {}).get(
+            "url"
+        )
+        or (((item.get("images") or {}).get("primary") or {}).get("medium") or {}).get(
+            "url"
+        )
+        or ""
     )
-    old_price = saving_basis if saving_basis and saving_basis > price else price
 
-    savings_pct = price_block.get("savings", {}).get("percentage")
-    try:
-        discount_value = int(round(float(savings_pct))) if savings_pct is not None else 0
-    except (TypeError, ValueError):
-        discount_value = 0
+    detail_url = str(item.get("detailPageURL") or "")
+    listing = _select_featured_listing(item)
 
-    if discount_value <= 0 and old_price > price and price > 0:
-        discount_value = int(round(((old_price - price) / old_price) * 100))
+    final_price: Optional[float] = None
+    old_price: Optional[float] = None
+    discount_value = 0
+    saving_basis_label = ""
+    is_prime_exclusive = False
+    offer_type = ""
 
-    deal = listing.get("dealDetails", {}) or {}
-    access_type = str(deal.get("accessType", "")).upper()
+    if listing:
+        price_block = listing.get("price") or {}
+        final_price = _money_amount(price_block.get("money") or {})
 
-    is_prime = True if prime_filter_applied or "PRIME" in access_type or "PRIME" in str(item).upper() else None
-    is_free = True if (is_prime or price >= 35.0) else None
+        saving_basis = price_block.get("savingBasis") or {}
+        candidate_old = _money_amount(saving_basis.get("money") or {})
+        if (
+            candidate_old is not None
+            and final_price is not None
+            and candidate_old > final_price
+        ):
+            old_price = candidate_old
+            saving_basis_label = str(
+                saving_basis.get("savingBasisTypeLabel")
+                or saving_basis.get("savingBasisType")
+                or ""
+            )
+
+        savings = price_block.get("savings") or {}
+        try:
+            discount_value = int(round(float(savings.get("percentage") or 0)))
+        except (TypeError, ValueError):
+            discount_value = 0
+
+        if (
+            discount_value <= 0
+            and old_price is not None
+            and final_price is not None
+            and old_price > final_price > 0
+        ):
+            discount_value = int(
+                round(((old_price - final_price) / old_price) * 100)
+            )
+
+        access_type = str(
+            ((listing.get("dealDetails") or {}).get("accessType") or "")
+        ).upper()
+        is_prime_exclusive = access_type == "PRIME_EXCLUSIVE"
+        offer_type = str(listing.get("type") or "")
+
+    verified = final_price is not None and final_price > 0
 
     return {
         "asin": asin,
-        "titolo": str(title or "Prodotto Amazon"),
-        "immagine_url": str(image_url or ""),
-        "prezzo_iniziale": float(old_price),
-        "prezzo_finale": float(price),
-        "prezzo_verificato": bool(price > 0),
-        "sconto": f"-{discount_value}%" if discount_value > 0 else "",
-        "sconto_val": discount_value,
-        "is_prime": is_prime,
-        "is_sped_gratis": is_free,
-        "costo_spedizione": None,
-        "voto_medio": 4.5,
-        "num_recensioni": 86,
-        "link_affiliato": build_affiliate_link(asin, partner_tag),
-        "source": "creators_api",
+        "titolo": title,
+        "immagine_url": image_url,
+        "prezzo_iniziale": old_price,
+        "prezzo_finale": final_price,
+        "prezzo_verificato": verified,
+        "sconto": f"-{discount_value}%" if verified and discount_value > 0 else "",
+        "sconto_val": discount_value if verified else 0,
+        "saving_basis_label": saving_basis_label,
+        "is_prime_exclusive": is_prime_exclusive,
+        "prime_filter_match": bool(prime_filter_applied),
+        "tipo_offerta": offer_type,
+        "link_affiliato": _affiliate_detail_url(detail_url, asin, partner_tag),
+        "source": "creators_api_getitems",
     }
 
 
-def _filter_product(
-    product: Dict[str, Any],
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    require_free_or_prime: bool = False,
+def _passes_local_filters(
+    product: dict[str, Any],
+    min_price: Optional[float],
+    max_price: Optional[float],
 ) -> bool:
-    price = float(product.get("prezzo_finale") or 0.0)
+    price = product.get("prezzo_finale")
 
-    if min_price is not None and price > 0 and price < min_price:
-        return False
-    if max_price is not None and price > 0 and price > max_price:
-        return False
+    if min_price is not None:
+        if price is None or float(price) < float(min_price):
+            return False
 
-    if require_free_or_prime:
-        if product.get("is_prime") is not True and product.get("is_sped_gratis") is not True:
+    if max_price is not None:
+        if price is None or float(price) > float(max_price):
             return False
 
     return True
 
 
-def _fetch_html(url: str, timeout: int = 10) -> Optional[str]:
-    # Tentativo con curl_cffi simulando browser reali
-    if HAS_CURL:
-        for imp in ["chrome120", "chrome119", "safari17_0"]:
-            try:
-                r = c_requests.get(
-                    url,
-                    impersonate=imp,
-                    timeout=timeout,
-                    headers={
-                        "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
-                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-                    },
-                    cookies={
-                        "lc-acbit": "it_IT",
-                        "i18n-prefs": "EUR",
-                    },
-                )
-                if r.status_code == 200 and r.text and len(r.text) > 2000 and "Robot Check" not in r.text:
-                    return r.text
-            except Exception:
-                pass
-
-    # Tentativo con requests standard
-    try:
-        s = requests.Session()
-        headers = {
-            "User-Agent": random.choice(USER_AGENTS),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Upgrade-Insecure-Requests": "1",
-            "DNT": "1",
-        }
-        cookies = {
-            "lc-acbit": "it_IT",
-            "i18n-prefs": "EUR",
-        }
-        r = s.get(url, headers=headers, cookies=cookies, timeout=timeout)
-        if r.status_code == 200 and r.text and len(r.text) > 2000 and "Robot Check" not in r.text:
-            return r.text
-    except Exception:
-        pass
-
-    return None
-
-
-def _get_search_html_cached(url: str) -> Optional[str]:
-    now = time.time()
-    if url in _HTML_CACHE:
-        cache_time, cached_html = _HTML_CACHE[url]
-        if now - cache_time < CACHE_TTL_SECONDS and cached_html and len(cached_html) > 1500:
-            return cached_html
-
-    html_content = _fetch_html(url)
-    if html_content and len(html_content) > 1500:
-        _HTML_CACHE[url] = (now, html_content)
-        return html_content
-
-    return None
-
-
-def _extract_reviews(item: Any) -> Tuple[Optional[float], Optional[int]]:
-    rating: Optional[float] = None
-    reviews: Optional[int] = None
-
-    star_element = (
-        item.select_one("i.a-icon-star-small span.a-icon-alt")
-        or item.select_one("i.a-icon-star span.a-icon-alt")
-        or item.select_one("span.a-icon-alt")
-    )
-    if star_element:
-        match = RE_STAR.search(star_element.get_text(" ", strip=True))
-        if match:
-            try:
-                rating = float(match.group(1).replace(",", "."))
-            except ValueError:
-                rating = None
-
-    review_element = (
-        item.select_one("span.a-size-base.s-underline-text")
-        or item.select_one("a[href*='customerReviews'] span")
-        or item.select_one("a[href*='#customerReviews'] span")
-    )
-    if review_element:
-        digits = RE_DIGITS.sub("", review_element.get_text(strip=True))
-        if digits:
-            try:
-                reviews = int(digits)
-            except ValueError:
-                reviews = None
-
-    return rating, reviews
-
-
-def _extract_shipping_flags(item: Any, price: float = 0.0) -> Tuple[Optional[bool], Optional[bool]]:
-    prime_selector = (
-        "i.a-icon-prime, span.a-icon-prime, "
-        "[aria-label='Amazon Prime'], img[alt*='Prime'], img[alt*='prime']"
-    )
-    is_prime: Optional[bool] = True if item.select_one(prime_selector) else None
-
-    text = item.get_text(" ", strip=True).lower()
-    free_markers = (
-        "spedizione gratuita",
-        "consegna gratuita",
-        "spedizione gratis",
-        "consegna gratis",
-        "senza costi aggiuntivi",
-        "idoneo alla spedizione gratuita",
-    )
-    is_free: Optional[bool] = True if (any(m in text for m in free_markers) or price >= 35.0) else None
-    if "prime" in text and is_prime is None:
-        is_prime = True
-
-    return is_prime, is_free
-
-
-def _extract_products_from_html(
-    html_text: str,
-    partner_tag: str,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    require_free_or_prime: bool = False,
-) -> List[Dict[str, Any]]:
-    if not html_text:
-        return []
-
-    soup = BeautifulSoup(html_text, "html.parser")
-    # Selezione estesa per catturare qualsiasi struttura di layout Amazon
-    items = soup.select("div[data-component-type='s-search-result']")
-    if not items:
-        items = [d for d in soup.select("div[data-asin]") if len(d.get("data-asin", "").strip()) == 10]
-    if not items:
-        items = soup.select("div.s-result-item, li.s-result-item")
-
-    products: List[Dict[str, Any]] = []
-    seen_asins = set()
-
-    for item in items:
-        asin = item.get("data-asin", "").strip().upper()
-        if not asin or len(asin) != 10 or asin in seen_asins:
-            link_asin = item.select_one("a[href*='/dp/']")
-            if link_asin:
-                m_asin = RE_ASIN.search(link_asin.get("href", ""))
-                if m_asin:
-                    asin = m_asin.group(1).upper()
-
-        if not asin or len(asin) != 10 or asin in seen_asins:
-            continue
-
-        title = ""
-        h2 = item.select_one("h2")
-        if h2:
-            title = h2.get_text(" ", strip=True)
-        if not title:
-            t_el = item.select_one(".a-size-base-plus, .a-size-medium, .a-text-normal, a span")
-            if t_el:
-                title = t_el.get_text(" ", strip=True)
-        if not title or len(title) < 3:
-            continue
-
-        price = 0.0
-        price_elem = (
-            item.select_one("span.a-price:not([data-a-strike='true']) .a-offscreen")
-            or item.select_one(".a-price-range .a-price:not([data-a-strike='true']) .a-offscreen")
-            or item.select_one("span.a-price .a-offscreen")
-            or item.select_one(".a-color-price")
-        )
-        if price_elem:
-            price = parse_price(price_elem.get_text(" ", strip=True))
-
-        if price <= 0:
-            whole_elem = item.select_one(".a-price-whole")
-            if whole_elem:
-                frac_elem = item.select_one(".a-price-fraction")
-                whole_str = whole_elem.get_text(strip=True).replace(".", "").replace(",", "")
-                frac_str = frac_elem.get_text(strip=True) if frac_elem else "00"
-                try:
-                    price = float(f"{whole_str}.{frac_str}")
-                except ValueError:
-                    pass
-
-        old_price = price
-        old_price_elem = (
-            item.select_one("span.a-price[data-a-strike='true'] .a-offscreen")
-            or item.select_one("span.a-text-price .a-offscreen")
-            or item.select_one("span[data-a-strike='true']")
-        )
-        if old_price_elem:
-            old_p_val = parse_price(old_price_elem.get_text(" ", strip=True))
-            if old_p_val > price:
-                old_price = old_p_val
-
-        discount_value = 0
-        if old_price > price > 0:
-            discount_value = int(round(((old_price - price) / old_price) * 100))
-
-        image_url = ""
-        image_elem = item.select_one("img.s-image, img[data-src], img")
-        if image_elem:
-            image_url = str(image_elem.get("src") or image_elem.get("data-src") or "")
-            if "pixel" in image_url or "transparent-pixel" in image_url:
-                image_url = ""
-
-        rating, reviews = _extract_reviews(item)
-        is_prime, is_free = _extract_shipping_flags(item, price)
-
-        product = {
-            "asin": asin,
-            "titolo": title,
-            "immagine_url": image_url,
-            "prezzo_iniziale": float(old_price),
-            "prezzo_finale": float(price),
-            "prezzo_verificato": bool(price > 0),
-            "sconto": f"-{discount_value}%" if discount_value > 0 else "",
-            "sconto_val": discount_value,
-            "is_prime": is_prime,
-            "is_sped_gratis": is_free,
-            "costo_spedizione": None,
-            "voto_medio": round(rating, 1) if rating is not None else 4.4,
-            "num_recensioni": reviews or random.randint(35, 380),
-            "link_affiliato": build_affiliate_link(asin, partner_tag),
-            "source": "html_fallback",
-        }
-
-        if not _filter_product(
-            product,
-            min_price=min_price,
-            max_price=max_price,
-            require_free_or_prime=require_free_or_prime,
-        ):
-            continue
-
-        seen_asins.add(asin)
-        products.append(product)
-
-    return products
-
-
-def _append_unique(target: List[Dict[str, Any]], source: Iterable[Dict[str, Any]], seen_asins: set[str]) -> None:
-    for product in source:
-        asin = str(product.get("asin", "")).strip().upper()
-        if asin and asin not in seen_asins:
-            seen_asins.add(asin)
-            target.append(product)
-
-
-def _search_html_fallback(
+@st.cache_data(ttl=SEARCH_CACHE_TTL, show_spinner=False, max_entries=256)
+def _search_page_cached(
     keyword: str,
-    sort_type: str,
+    sort_value: str,
+    prime_only: bool,
+    page: int,
     partner_tag: str,
-    solo_spedizione_gratuita: bool,
     min_price: Optional[float],
     max_price: Optional[float],
-    item_count: int,
-) -> List[Dict[str, Any]]:
-    clean_kw = keyword.strip()
-    query_encoded = urllib.parse.quote_plus(clean_kw)
+) -> tuple[str, ...]:
+    payload: dict[str, Any] = {
+        "partnerTag": partner_tag,
+        "marketplace": MARKETPLACE,
+        "keywords": keyword,
+        "searchIndex": "All",
+        "itemCount": 10,
+        "itemPage": page,
+        "sortBy": sort_value,
+    }
 
-    collected: List[Dict[str, Any]] = []
-    seen_asins: set[str] = set()
+    if prime_only:
+        payload["deliveryFlags"] = ["Prime"]
 
-    max_pages = min(3, max(1, (item_count + 9) // 10))
-    for page in range(1, max_pages + 1):
-        url = f"https://www.amazon.it/s?k={query_encoded}&page={page}"
-        html_text = _get_search_html_cached(url)
+    if min_price is not None:
+        payload["minPrice"] = max(1, int(round(float(min_price) * 100)))
 
-        if not html_text:
-            url_alt = f"https://www.amazon.it/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords={query_encoded}&page={page}"
-            html_text = _get_search_html_cached(url_alt)
+    if max_price is not None:
+        payload["maxPrice"] = max(1, int(round(float(max_price) * 100)))
 
-        if not html_text:
-            continue
+    data = _api_post("searchItems", payload)
+    items = (((data or {}).get("searchResult") or {}).get("items") or [])
 
-        products = _extract_products_from_html(
-            html_text,
-            partner_tag,
-            min_price=min_price,
-            max_price=max_price,
-            require_free_or_prime=solo_spedizione_gratuita,
-        )
-        _append_unique(collected, products, seen_asins)
+    asins: list[str] = []
+    seen: set[str] = set()
 
-        if len(collected) >= item_count:
-            break
+    for item in items:
+        asin = str(item.get("asin") or "").strip().upper()
+        if len(asin) == 10 and asin not in seen:
+            seen.add(asin)
+            asins.append(asin)
 
-    if sort_type == "Prezzo minimo":
-        collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
-    elif sort_type == "Vendite":
-        collected.sort(key=lambda p: int(p.get("num_recensioni") or 0), reverse=True)
-
-    return collected[:item_count]
+    return tuple(asins)
 
 
-def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int = 10) -> List[Dict[str, Any]]:
-    configured_tag = get_partner_tag() or str(partner_tag or "").strip()
+GET_ITEMS_RESOURCES = [
+    "images.primary.large",
+    "images.primary.medium",
+    "itemInfo.title",
+    "offersV2.listings.availability",
+    "offersV2.listings.condition",
+    "offersV2.listings.dealDetails",
+    "offersV2.listings.isBuyBoxWinner",
+    "offersV2.listings.merchantInfo",
+    "offersV2.listings.price",
+    "offersV2.listings.type",
+    "offersV2.listings.violatesMAP",
+]
 
-    keyword = random.choice(KEYWORDS_VETRINA)
-    products = ottieni_offerte_avanzate(
-        keyword=keyword,
-        sort_type="Vendite",
-        item_count=item_count * 2,
-        _partner_tag_override=configured_tag,
-    )
-    if products:
-        random.shuffle(products)
-        return products[:item_count]
 
-    return []
+@st.cache_data(ttl=PRICE_CACHE_TTL, show_spinner=False, max_entries=512)
+def _get_items_cached(
+    asins: tuple[str, ...],
+    partner_tag: str,
+) -> tuple[dict[str, Any], ...]:
+    if not asins:
+        return tuple()
+
+    payload = {
+        "partnerTag": partner_tag,
+        "marketplace": MARKETPLACE,
+        "itemIds": list(asins[:10]),
+        "itemIdType": "ASIN",
+        "resources": GET_ITEMS_RESOURCES,
+    }
+
+    data = _api_post("getItems", payload)
+    items = (((data or {}).get("itemsResult") or {}).get("items") or [])
+    return tuple(item for item in items if isinstance(item, dict))
 
 
 def ottieni_offerte_avanzate(
     keyword: str = "",
-    sort_type: str = "Prezzo minimo",
+    sort_type: str = "Rilevanza",
     solo_spedizione_gratuita: bool = False,
     min_price: Optional[float] = None,
     max_price: Optional[float] = None,
@@ -612,62 +511,111 @@ def ottieni_offerte_avanzate(
     categoria: str = "",
     sottocategoria: str = "",
     _partner_tag_override: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     del categoria, sottocategoria
 
     partner_tag = get_partner_tag() or str(_partner_tag_override or "").strip()
-    item_count = max(1, min(int(item_count or 10), MAX_RESULTS))
-    clean_keyword = (keyword or "").strip()
+    if not partner_tag:
+        LOGGER.error("partner_tag Amazon non configurato.")
+        return []
 
-    if not clean_keyword:
-        clean_keyword = "offerte del giorno"
+    target = max(1, min(int(item_count or 10), MAX_RESULTS))
+    query = str(keyword or "").strip() or "offerte del giorno"
+    sort_value = SORT_MAPPINGS.get(sort_type, "Relevance")
 
-    # STRATEGIA COMBINATA: Esegue prima il recupero HTML (ottimizzato per keyword generiche, brand e frasi)
-    collected = _search_html_fallback(
-        clean_keyword,
-        sort_type,
-        partner_tag,
-        solo_spedizione_gratuita,
-        min_price,
-        max_price,
-        item_count,
+    products: list[dict[str, Any]] = []
+    seen_asins: set[str] = set()
+
+    # SearchItems restituisce massimo 10 elementi per pagina.
+    # Ogni pagina viene verificata subito con un singolo GetItems batch.
+    required_pages = min(
+        MAX_SEARCH_PAGES,
+        max(1, math.ceil(target / 10) + 2),
     )
 
-    # Se l'HTML non restituisce abbastanza prodotti, integra con la Creator API ufficiale
-    if len(collected) < item_count:
-        try:
-            api_payload = {
-                "partnerTag": partner_tag,
-                "keywords": clean_keyword,
-                "searchIndex": "All",
-                "marketplace": MARKETPLACE,
-                "itemCount": 10,
-                "itemPage": 1,
-                "resources": [
-                    "images.primary.large",
-                    "itemInfo.title",
-                    "offersV2.listings.price",
-                    "offersV2.listings.dealDetails",
-                ],
-            }
-            api_data = _creators_api_call("searchItems", api_payload)
-            if api_data:
-                api_items = api_data.get("searchResult", {}).get("items", []) or []
-                seen_asins = {p["asin"] for p in collected if p.get("asin")}
-                for item in api_items:
-                    prod = _api_item_to_product(item, partner_tag, prime_filter_applied=solo_spedizione_gratuita)
-                    if prod and prod.get("asin") not in seen_asins:
-                        if _filter_product(prod, min_price, max_price, require_free_or_prime=solo_spedizione_gratuita):
-                            collected.append(prod)
-                            seen_asins.add(prod["asin"])
-                    if len(collected) >= item_count:
-                        break
-        except Exception:
-            pass
+    for page in range(1, required_pages + 1):
+        asins = _search_page_cached(
+            query,
+            sort_value,
+            bool(solo_spedizione_gratuita),
+            page,
+            partner_tag,
+            min_price,
+            max_price,
+        )
+        if not asins:
+            break
 
-    if sort_type == "Vendite":
-        collected.sort(key=lambda p: int(p.get("num_recensioni") or 0), reverse=True)
-    elif sort_type == "Prezzo minimo":
-        collected.sort(key=lambda p: float(p.get("prezzo_finale") or float("inf")))
+        exact_items = _get_items_cached(asins, partner_tag)
+        by_asin = {
+            str(item.get("asin") or "").strip().upper(): item
+            for item in exact_items
+        }
 
-    return collected[:item_count]
+        for asin in asins:
+            if asin in seen_asins:
+                continue
+            seen_asins.add(asin)
+
+            item = by_asin.get(asin)
+            if not item:
+                continue
+
+            product = _item_to_product(
+                item,
+                partner_tag,
+                prime_filter_applied=bool(solo_spedizione_gratuita),
+            )
+            if not product:
+                continue
+
+            if not _passes_local_filters(product, min_price, max_price):
+                continue
+
+            products.append(product)
+            if len(products) >= target:
+                break
+
+        if len(products) >= target:
+            break
+
+    if sort_type == "Prezzo minimo":
+        products.sort(
+            key=lambda product: (
+                product.get("prezzo_finale") is None,
+                float(product.get("prezzo_finale") or float("inf")),
+            )
+        )
+
+    return products[:target]
+
+
+@st.cache_data(ttl=10 * 60, show_spinner=False, max_entries=8)
+def ottieni_vetrina_casuale(
+    partner_tag: Optional[str] = None,
+    item_count: int = 10,
+) -> list[dict[str, Any]]:
+    configured_tag = get_partner_tag() or str(partner_tag or "").strip()
+    if not configured_tag:
+        return []
+
+    keywords = (
+        "offerte tecnologia",
+        "offerte casa cucina",
+        "offerte cuffie bluetooth",
+        "offerte sport",
+        "offerte cura persona",
+        "offerte accessori smartphone",
+    )
+
+    # Rotazione deterministica: tutti gli utenti condividono la stessa
+    # vetrina per 10 minuti, migliorando la cache e riducendo le API call.
+    slot = int(time.time() // (10 * 60))
+    keyword = keywords[slot % len(keywords)]
+
+    return ottieni_offerte_avanzate(
+        keyword=keyword,
+        sort_type="Popolarità",
+        item_count=max(1, min(int(item_count or 10), 10)),
+        _partner_tag_override=configured_tag,
+    )
