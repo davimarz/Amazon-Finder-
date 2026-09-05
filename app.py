@@ -133,7 +133,7 @@ st.markdown("""
         color: #0369a1;
     }
 
-    /* 2. SEGMENTED CONTROL: SFONDO BIANCO LUMINOSO / SATINATO (ZERO NERO) */
+    /* 2. SEGMENTED CONTROL: CORNICE BIANCA SATINATA LUMINOSA (ZERO NERO) */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) {
         display: flex !important;
         flex-direction: row !important;
@@ -191,7 +191,6 @@ st.markdown("""
         transition: all 0.15s ease !important;
     }
 
-    /* BOTTONE ATTIVO: BLU OCEANO LUMINOSO */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="primary"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-primary"] {
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
@@ -204,7 +203,6 @@ st.markdown("""
         font-weight: 800 !important;
     }
 
-    /* BOTTONI INATTIVI: SFONDO BIANCO PULITO, TESTO BLU OCEANO (ZERO NERO) */
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[kind="secondary"],
     div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button[data-testid="stBaseButton-secondary"] {
         background: #ffffff !important;
@@ -269,7 +267,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 5. FILTER CHIPS TOUCH: NESSUN PALLINO ROSSO */
+    /* 5. FILTER CHIPS TOUCH: ZERO ROSSO E NESSUN PALLINO NATIVO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -326,7 +324,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO: FOTO RADDOPPIATA E BARRA AZIONI UNIFICATA */
+    /* 7. SCHEDA PRODOTTO */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -564,6 +562,7 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
+    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -748,7 +747,7 @@ def esegui_ricerca(increment=False):
 # 1. HEADER
 st.markdown("""<div id="top_page"></div><div class="brand-header-box"><div class="brand-title-single">Scala dei Turchi</div><div class="brand-subtitle-single"><span class="badge-ai-pill">AI DEALS</span><span class="brand-author">by <strong>Davide Marziano</strong></span></div></div>""", unsafe_allow_html=True)
 
-# 2. SEGMENTED CONTROL: SFONDO BIANCO LUMINOSO E TESTO BLU OCEANO
+# 2. SEGMENTED CONTROL ORIZZONTALE BIANCO LUMINOSO
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
     is_t1 = (active_tab == "vetrina")
