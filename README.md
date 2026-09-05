@@ -53,3 +53,14 @@ Correzioni:
 - Nessun prezzo, prodotto, recensione o vendita inventati.
 - Dopo il primo 403 della sessione l'app evita chiamate ripetute.
 - In una nuova sessione l'app riprova automaticamente Creators API.
+
+
+## V5 - pulizia testi UI
+
+Su richiesta sono stati rimossi dalla UI:
+- la frase sul guadagno dagli acquisti;
+- i riferimenti visibili al Partner Tag;
+- le diciture "link affiliato" / "link affiliati";
+- la frase "Link affiliato a pagamento" nelle schede.
+
+Il Partner Tag resta tecnicamente nel backend per la generazione dei link Amazon.

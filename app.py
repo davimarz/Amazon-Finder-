@@ -568,7 +568,7 @@ def render_api_fallback_search(keyword: str) -> None:
             "<div class='api-fallback-box'>"
             "<div class='api-fallback-title'>Ricerca automatica temporaneamente non disponibile</div>"
             "<div class='api-fallback-text'>Puoi continuare la ricerca direttamente su Amazon. "
-            "Il collegamento mantiene il tag affiliato del sito.</div>"
+            "Puoi continuare la ricerca direttamente su Amazon.</div>"
             f"<a class='amazon-search-direct' href='{html.escape(url, quote=True)}' "
             "target='_blank' rel='noopener noreferrer sponsored'>"
             f"🔍 Cerca “{html.escape(clean_keyword)}” su Amazon</a>"
@@ -600,7 +600,7 @@ def render_vetrina_fallback() -> None:
             "<div class='api-fallback-box'>"
             "<div class='api-fallback-title'>Scopri offerte su Amazon</div>"
             "<div class='api-fallback-text'>Le schede automatiche non sono disponibili in questo momento. "
-            "Puoi comunque aprire le categorie Amazon tramite i link affiliati del sito.</div>"
+            "Puoi comunque aprire le categorie direttamente su Amazon.</div>"
             "<div class='fallback-category-grid'>" + "".join(links) + "</div></div>"
         ),
         unsafe_allow_html=True,
@@ -847,9 +847,6 @@ def render_product_card(product: dict) -> None:
         f"<a class='soc-chip soc-mail' href='{html.escape(share['mail'], quote=True)}'>"
         "Mail</a>"
         "</div>"
-        "</div>"
-        "<div class='pcm-note' style='margin-top:5px;'>"
-        "Link affiliato a pagamento."
         "</div>"
         "</div>"
     )
@@ -1165,8 +1162,8 @@ elif active_tab == "privacy":
     st.markdown(
         """
         I dati inseriti nel modulo contatti vengono utilizzati esclusivamente
-        per rispondere alla richiesta inviata. Il sito partecipa al Programma
-        di Affiliazione Amazon e contiene link affiliati.
+        per rispondere alla richiesta inviata. Il sito può contenere collegamenti
+        esterni ad Amazon.it.
 
         Le credenziali tecniche del sito sono conservate nei Secrets di
         Streamlit e non devono essere pubblicate nel repository GitHub.
@@ -1231,10 +1228,6 @@ st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
     """
     <div class="site-footer-box">
-        <strong>
-        In qualità di Affiliato Amazon io ricevo un guadagno dagli acquisti idonei.
-        </strong><br>
-        I link verso Amazon sono link affiliati a pagamento.
         Prezzi e disponibilità possono variare su Amazon.<br>
         <a href="?privacy=1" target="_self">Informativa privacy</a>
     </div>
