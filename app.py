@@ -21,8 +21,7 @@ st.set_page_config(
 MAX_RESULTS = getattr(amazon_api, "MAX_RESULTS", 50)
 SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
     "Prezzo minimo": "Price:LowToHigh",
-    "Popolarità": "Featured",
-    "Recensioni": "AvgCustomerReviews",
+    "Vendite": "Featured",
 })
 get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "eiapromo-21")
 ottieni_offerte_avanzate = getattr(amazon_api, "ottieni_offerte_avanzate", lambda **kwargs: [])
@@ -35,6 +34,10 @@ st.session_state.setdefault("current_page", 1)
 st.session_state.setdefault("scroll_to_results_flag", False)
 st.session_state.setdefault("offerte", [])
 st.session_state.setdefault("search_notice", "")
+
+# Validazione per prevenire residui delle vecchie opzioni "Popolarità" o "Recensioni"
+if st.session_state.get("cerca_radio_sort") not in list(SORT_MAPPINGS.keys()):
+    st.session_state["cerca_radio_sort"] = "Prezzo minimo"
 
 try:
     if str(st.query_params.get("privacy", "")) == "1":
@@ -234,7 +237,7 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* 4. OVERRIDE TOTALE DEI RADIO: NO ROSSO */
+    /* 4. OVERRIDE DEI RADIO BUTTON: NESSUN ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -250,7 +253,7 @@ st.markdown("""
         fill: #0284c7 !important;
     }
 
-    /* 5. FILTER CHIPS ORIZZONTALI (AZZURRO / CIANO) */
+    /* 5. FILTER CHIPS TOUCH-FRIENDLY (AZZURRO / CIANO) */
     div[data-testid="stRadio"] > div {
         display: flex !important;
         flex-direction: row !important;
@@ -301,7 +304,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* 7. SCHEDA PRODOTTO RE-ENGINEERED */
+    /* 7. SCHEDA PRODOTTO */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -377,7 +380,7 @@ st.markdown("""
         flex-wrap: wrap;
     }
 
-    /* BADGE SCONTO ARANCIONE VIVACE (NO ALLARME ROSSO) */
+    /* BADGE SCONTO IN ARANCIONE VIVACE */
     .pcm-discount-badge {
         background-color: #ea580c;
         color: #ffffff;
@@ -402,7 +405,6 @@ st.markdown("""
         line-height: 1;
     }
 
-    /* BADGES SPEDIZIONE CHIARI */
     .pcm-badges-row {
         display: flex;
         align-items: center;
@@ -442,7 +444,6 @@ st.markdown("""
         font-weight: 800;
     }
 
-    /* SCHEDA FEEDBACK DEDICATA */
     .feedback-card-box {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -454,7 +455,7 @@ st.markdown("""
         margin-top: 1px;
     }
     .fb-star-icons {
-        color: #f59e0b; /* Giallo Ambra */
+        color: #f59e0b;
         font-size: 0.76rem;
         letter-spacing: 0.5px;
     }
@@ -469,7 +470,6 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* PULSANTE ACQUISTO ORO/AMBRA */
     .pcm-buy-btn {
         display: flex;
         align-items: center;
@@ -487,7 +487,6 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
     }
 
-    /* SOCIAL SHARE ROW ANTI-ADBLOCK */
     .pcm-social-row {
         display: flex;
         align-items: center;
@@ -516,7 +515,6 @@ st.markdown("""
     .soc-mail { background-color: #EA4335 !important; }
     .soc-copy { background-color: #475569 !important; }
 
-    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -665,7 +663,7 @@ def esegui_ricerca(increment=False):
     st.session_state["item_count"] = target_count[cite: 3]
 
     kw = st.session_state.get("cerca_keyword_input", "").strip()[cite: 3]
-    sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")[cite: 3]
+    sort_t = st.session_state.get("cerca_radio_sort", "Prezzo minimo")
     disc_lbl = st.session_state.get("cerca_radio_disc", "Tutti")[cite: 3]
     min_d, max_d = OPZIONI_SCONTO.get(disc_lbl, (0, 100))[cite: 3]
     free_ship = st.session_state.get("cerca_check_sped_gratis", False)[cite: 3]
@@ -794,7 +792,7 @@ def render_single_product_card(p):
     share_price = f"\n💰 Prezzo: €{prezzo_finale:.2f}" if prezzo_verificato else ""
     share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"
     
-    # URL SOCIAL OTTIMIZZATI E ANTI-ADBLOCK
+    # URL SOCIAL COMPATIBILI MOBILE
     wa_url = f"https://wa.me/?text={urllib.parse.quote(share_msg)}"
     fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
     ig_url = "https://www.instagram.com/"[cite: 3]
@@ -851,10 +849,7 @@ if active_tab == "vetrina":[cite: 3]
         st.info("Nessun prodotto disponibile in vetrina al momento.")[cite: 3]
 
 elif active_tab == "cerca":[cite: 3]
-    if st.session_state.get("cerca_radio_sort") == "Numero di vendite":[cite: 3]
-        st.session_state["cerca_radio_sort"] = "Popolarità"[cite: 3]
-
-    # BARRA DI RICERCA CON LENTE
+    # BARRA DI RICERCA CON LENTE INTEGRATA
     st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
     st.text_input(
         "cerca_input_main",
@@ -866,7 +861,7 @@ elif active_tab == "cerca":[cite: 3]
     )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # FILTER CHIPS TOUCH-FRIENDLY
+    # FILTER CHIPS TOUCH-FRIENDLY (SOLO "Prezzo minimo" E "Vendite")
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
@@ -927,7 +922,7 @@ elif active_tab == "cerca":[cite: 3]
         for p in offerte_pagina:
             render_single_product_card(p)
 
-        # PULSANTE IN FONDO ALLA PAGINA
+        # PULSANTE ALTRI 10 IN FONDO ALLA PAGINA
         st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
         st.button(
             "➕ Carica altri 10 prodotti ⬇️", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
@@ -979,7 +974,7 @@ elif active_tab == "contatti":[cite: 3]
 
 st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
 
-# SCROLL AUTOMATICO ESEGUITO VIA IFRAME STREAMLIT COMPONENTS
+# SCROLL AUTOMATICO ALL'INIZIO DEI NUOVI RISULTATI
 if st.session_state.get("scroll_to_results_flag", False):
     st.session_state["scroll_to_results_flag"] = False
     components.html("""
