@@ -23,16 +23,15 @@ CACHE_TTL_SECONDS = 120
 MAX_CREATORS_PAGES = 10
 MAX_RESULTS = 50
 
+# Ordinamento aggiornato: solo Prezzo minimo e Vendite
 SORT_MAPPINGS = {
     "Prezzo minimo": "Price:LowToHigh",
-    "Popolarità": "Featured",
-    "Recensioni": "AvgCustomerReviews",
+    "Vendite": "Featured",
 }
 
 SORT_FALLBACK_MAP = {
     "Prezzo minimo": "price-asc-rank",
-    "Popolarità": "exact-aware-popularity-rank",
-    "Recensioni": "review-rank",
+    "Vendite": "exact-aware-popularity-rank",
     "Numero di vendite": "exact-aware-popularity-rank",
 }
 
@@ -259,8 +258,6 @@ def _api_item_to_product(
 
     deal = listing.get("dealDetails", {}) or {}
     access_type = str(deal.get("accessType", "")).upper()
-    
-    # Rilevamento avanzato Prime & Spedizione Gratuita
     is_prime = True if prime_filter_applied or "PRIME" in access_type or "PRIME" in str(item).upper() else None
     is_free = True if (is_prime or price >= 35.0) else None
 
@@ -590,10 +587,7 @@ def _search_creators_api(
     if not get_creators_access_token():
         return None
 
-    sort_value = SORT_MAPPINGS.get(sort_type) or SORT_MAPPINGS.get(
-        "Popolarità" if sort_type == "Numero di vendite" else sort_type,
-        "Featured",
-    )
+    sort_value = SORT_MAPPINGS.get(sort_type, "Featured")
 
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
@@ -709,7 +703,7 @@ def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int =
     keyword = random.choice(KEYWORDS_VETRINA)
     products = ottieni_offerte_avanzate(
         keyword=keyword,
-        sort_type="Popolarità",
+        sort_type="Vendite",
         min_discount=5,
         item_count=item_count * 2,
         _partner_tag_override=configured_tag,
@@ -720,7 +714,7 @@ def ottieni_vetrina_casuale(partner_tag: Optional[str] = None, item_count: int =
 
     fallback = ottieni_offerte_avanzate(
         keyword="offerte del giorno",
-        sort_type="Popolarità",
+        sort_type="Vendite",
         min_discount=0,
         item_count=item_count * 2,
         _partner_tag_override=configured_tag,
@@ -780,7 +774,7 @@ def ottieni_offerte_avanzate(
 
         fallback_products = _search_html_fallback(
             asin_matched,
-            "Popolarità",
+            "Vendite",
             partner_tag,
             solo_spedizione_gratuita,
             min_price,
