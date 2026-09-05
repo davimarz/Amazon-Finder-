@@ -20,7 +20,7 @@ MARKETPLACE = "www.amazon.it"
 CREATORS_API_BASE = "https://creatorsapi.amazon/catalog/v1"
 DEFAULT_EU_TOKEN_URL = "https://api.amazon.co.uk/auth/o2/token"
 CACHE_TTL_SECONDS = 180
-MAX_CREATORS_PAGES = 10
+MAX_CREATORS_PAGES = 5
 MAX_RESULTS = 50
 
 SORT_MAPPINGS = {
@@ -293,7 +293,6 @@ def _filter_product(
 
 
 def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
-    # 1. Tentativo primario con curl_cffi (impersonazione Chrome pura senza conflitti di header)
     if HAS_CURL:
         for imp in ["chrome120", "chrome119"]:
             try:
@@ -315,7 +314,6 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
             except Exception:
                 pass
 
-    # 2. Fallback standard con requests.Session (nessun Accept-Encoding manuale: permette auto-decompressione gzip/deflate)
     try:
         s = requests.Session()
         headers = {
@@ -323,6 +321,7 @@ def _fetch_html(url: str, timeout: int = 9) -> Optional[str]:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
             "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
             "Upgrade-Insecure-Requests": "1",
+            "Referer": "https://www.google.it/",
             "DNT": "1",
         }
         cookies = {
@@ -346,7 +345,6 @@ def _get_search_html_cached(url: str) -> Optional[str]:
             return cached_html
 
     html_content = _fetch_html(url)
-    # Salva in cache SOLO se la risposta è valida (evita di avvelenare la cache con risposte vuote)
     if html_content and len(html_content) > 2000:
         _HTML_CACHE[url] = (now, html_content)
         return html_content
@@ -592,7 +590,8 @@ def _search_creators_api(
     collected: List[Dict[str, Any]] = []
     seen_asins: set[str] = set()
 
-    for page in range(1, MAX_CREATORS_PAGES + 1):
+    pages_needed = max(1, min(MAX_CREATORS_PAGES, (item_count + 9) // 10))
+    for page in range(1, pages_needed + 1):
         payload: Dict[str, Any] = {
             "partnerTag": partner_tag,
             "keywords": keyword,
@@ -610,6 +609,7 @@ def _search_creators_api(
             ],
         }
 
+        # NESSUN sortBy inserito: evita l'errore 400 Bad Request di Amazon su searchIndex="All"
         if min_price is not None:
             payload["minPrice"] = max(1, int(round(min_price * 100)))
         if max_price is not None:
@@ -660,7 +660,6 @@ def _search_html_fallback(
 
     max_pages = min(4, max(2, (item_count + 9) // 10 + 1))
     for page in range(1, max_pages + 1):
-        # URL naturale di ricerca su Amazon.it
         url = f"https://www.amazon.it/s?k={query_encoded}&page={page}&ref=nb_sb_noss"
         html_text = _get_search_html_cached(url)
         if not html_text:
@@ -803,7 +802,6 @@ def ottieni_offerte_avanzate(
             if len(collected) >= item_count:
                 break
 
-    # Rilassamento se la spedizione gratuita non trova nulla
     if not collected and solo_spedizione_gratuita:
         html_products_relax = _search_html_fallback(
             query,
