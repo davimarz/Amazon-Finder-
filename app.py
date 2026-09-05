@@ -219,7 +219,7 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* 3. ALTRI PULSANTI DI SISTEMA (PAGINAZIONE / TORNA IN ALTO) */
+    /* 3. BOTTONI SISTEMA */
     button[data-testid="stBaseButton-primary"]:not(div[data-testid="stHorizontalBlock"]:has(.st-key-nav_btn_vetrina) button) {
         background-color: #0284c7 !important;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
@@ -235,12 +235,7 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* 4. SEARCH BAR CON LENTE */
-    .search-box-native {
-        position: relative;
-        width: 100%;
-        margin-bottom: 6px;
-    }
+    /* 4. BARRA DI RICERCA CON PULSANTE CERCA AFFIANCATO */
     div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) {
         margin: 0 !important;
         padding: 0 !important;
@@ -248,26 +243,14 @@ st.markdown("""
     div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) input {
         border-radius: 9px !important;
         border: 1.5px solid #0284c7 !important;
-        padding-right: 36px !important;
         font-size: 0.84rem !important;
         font-weight: 600 !important;
         height: 38px !important;
         background-color: #ffffff !important;
         box-shadow: 0 1px 4px rgba(2, 132, 199, 0.12) !important;
     }
-    .search-lens-inside {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        pointer-events: none;
-        color: #0284c7;
-        font-size: 0.95rem;
-        font-weight: 900;
-        z-index: 5;
-    }
 
-    /* 5. FILTER CHIPS TOUCH: ZERO ROSSO E NESSUN PALLINO NATIVO */
+    /* 5. FILTER CHIPS TOUCH: NESSUN PALLINO ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
@@ -738,7 +721,7 @@ def esegui_ricerca(increment=False):
             st.session_state["current_page"] = max(1, (len(st.session_state["offerte"]) + 9) // 10)
         else:
             st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."
-        
+
         st.session_state["scroll_to_results_flag"] = True
     else:
         st.session_state["offerte"] = prodotti_unici[:10]
@@ -747,7 +730,7 @@ def esegui_ricerca(increment=False):
 # 1. HEADER
 st.markdown("""<div id="top_page"></div><div class="brand-header-box"><div class="brand-title-single">Scala dei Turchi</div><div class="brand-subtitle-single"><span class="badge-ai-pill">AI DEALS</span><span class="brand-author">by <strong>Davide Marziano</strong></span></div></div>""", unsafe_allow_html=True)
 
-# 2. SEGMENTED CONTROL ORIZZONTALE BIANCO LUMINOSO
+# 2. SEGMENTED CONTROL BIANCO LUMINOSO
 col_tab1, col_tab2, col_tab3 = st.columns(3)
 with col_tab1:
     is_t1 = (active_tab == "vetrina")
@@ -809,7 +792,7 @@ def render_single_product_card(p, is_first=False):
     safe_title_text = titolo.replace("\n", " ").strip()
     share_price = f"\n💰 Prezzo: €{prezzo_finale:.2f}" if prezzo_verificato else ""
     share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"
-    
+
     wa_url = f"https://wa.me/?text={urllib.parse.quote(share_msg)}"
     fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
     ig_url = "https://www.instagram.com/"
@@ -862,16 +845,19 @@ if active_tab == "vetrina":
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 elif active_tab == "cerca":
-    st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
-    st.text_input(
-        "cerca_input_main",
-        placeholder="Cosa cerchi su Amazon? Scrivi e premi Invio...",
-        key="cerca_keyword_input",
-        label_visibility="collapsed",
-        on_change=esegui_ricerca,
-        args=(False,)
-    )
-    st.markdown('</div>', unsafe_allow_html=True)
+    # BARRA DI RICERCA CON PULSANTE D'INVIO AFFIANCATO
+    col_search_box, col_search_action = st.columns([5, 1])
+    with col_search_box:
+        st.text_input(
+            "cerca_input_main",
+            placeholder="Cosa cerchi su Amazon? (es. Asics, cuffie, forno microonde...)",
+            key="cerca_keyword_input",
+            label_visibility="collapsed",
+            on_change=esegui_ricerca,
+            args=(False,)
+        )
+    with col_search_action:
+        st.button("🔍 Cerca", key="btn_run_search", on_click=esegui_ricerca, args=(False,), use_container_width=True)
 
     st.radio(
         "Ordinamento:",
@@ -943,7 +929,7 @@ elif active_tab == "contatti":
             note_val = st.text_area("Messaggio*", placeholder="Scrivi qui il tuo messaggio...", height=110)
             privacy_ack = st.checkbox("Accetto l'informativa privacy.*")
             st.markdown("<small><a href='?privacy=1' target='_self'>Leggi informativa privacy</a></small>", unsafe_allow_html=True)
-            
+
             btn_send_form = st.form_submit_button("✉️ Invia Messaggio", use_container_width=True)
             if btn_send_form:
                 valido, msg_validazione = valida_campi_contatto(nome_val, tel_val, email_val, note_val)
