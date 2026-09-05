@@ -235,7 +235,7 @@ st.markdown("""
         font-weight: 700 !important;
     }
 
-    /* 4. BARRA DI RICERCA CON PULSANTE CERCA AFFIANCATO */
+    /* 4. BARRA DI RICERCA */
     div[data-testid="stTextInput"]:has(input[aria-label="cerca_input_main"]) {
         margin: 0 !important;
         padding: 0 !important;
@@ -845,12 +845,11 @@ if active_tab == "vetrina":
         st.info("Nessun prodotto disponibile in vetrina al momento.")
 
 elif active_tab == "cerca":
-    # BARRA DI RICERCA CON PULSANTE D'INVIO AFFIANCATO
     col_search_box, col_search_action = st.columns([5, 1])
     with col_search_box:
         st.text_input(
             "cerca_input_main",
-            placeholder="Cosa cerchi su Amazon? (es. Asics, cuffie, forno microonde...)",
+            placeholder="Cosa cerchi su Amazon? (es. iPhone, scarpe, cuffie...)",
             key="cerca_keyword_input",
             label_visibility="collapsed",
             on_change=esegui_ricerca,
