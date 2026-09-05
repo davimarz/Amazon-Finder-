@@ -21,7 +21,7 @@ st.set_page_config(
 MAX_RESULTS = getattr(amazon_api, "MAX_RESULTS", 50)
 SORT_MAPPINGS = getattr(amazon_api, "SORT_MAPPINGS", {
     "Prezzo minimo": "Price:LowToHigh",
-    "Vendite": "Featured",
+    "Vendite": "Vendite",
 })
 get_partner_tag = getattr(amazon_api, "get_partner_tag", lambda: "eiapromo-21")
 ottieni_offerte_avanzate = getattr(amazon_api, "ottieni_offerte_avanzate", lambda **kwargs: [])
@@ -260,7 +260,7 @@ st.markdown("""
         background: #ffffff !important;
         padding: 5px 14px !important;
         border-radius: 9999px !important;
-        border: 1px solid #93c5fd !important;
+        border: 1.5px solid #93c5fd !important;
         margin: 0 !important;
         flex: 1 1 auto !important;
         min-width: 0 !important;
@@ -325,7 +325,7 @@ st.markdown("""
         gap: 12px;
     }
 
-    /* FOTO GRANDE ALMENO IL DOPPIO */
+    /* FOTO RADDOPPIATA A 190PX */
     .pcm-img-box {
         width: 190px;
         height: 190px;
@@ -474,7 +474,7 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* BARRA AZIONI ORIZZONTALE COMPATTA (BOTTONE ACQUISTA + ICONE SOCIAL) */
+    /* BARRA AZIONI ORIZZONTALE COMPATTA */
     .pcm-bottom-bar {
         display: flex;
         align-items: center;
@@ -861,7 +861,6 @@ elif active_tab == "cerca":
     st.radio(
         "Ordinamento:",
         list(SORT_MAPPINGS.keys()),
-        index=0,
         horizontal=True,
         key="cerca_radio_sort",
         on_change=esegui_ricerca,
