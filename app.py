@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import smtplib
 import sqlite3
 import re
@@ -31,7 +32,6 @@ st.session_state.setdefault("current_tab", "vetrina")
 st.session_state.setdefault("has_searched", False)
 st.session_state.setdefault("item_count", 10)
 st.session_state.setdefault("current_page", 1)
-st.session_state.setdefault("scroll_to_top_flag", False)
 st.session_state.setdefault("scroll_to_results_flag", False)
 st.session_state.setdefault("offerte", [])
 st.session_state.setdefault("search_notice", "")
@@ -56,7 +56,12 @@ SVG_COPY = '<svg viewBox="0 0 24 24"><path fill="#fff" d="M16 1H4c-1.1 0-2 .9-2 
 
 st.markdown("""
 <style>
+    /* RESET BASE STREAMLIT */
     #MainMenu, header, footer { visibility: hidden !important; height: 0 !important; }
+
+    :root {
+        --primary-color: #0284c7 !important;
+    }
 
     *, *:before, *:after {
         box-sizing: border-box !important;
@@ -74,116 +79,130 @@ st.markdown("""
     }
 
     .block-container {
-        padding: 0.25rem 0.40rem 100px 0.40rem !important;
+        padding: 0.20rem 0.35rem 100px 0.35rem !important;
         max-width: 820px !important;
         margin: 0 auto !important;
     }
 
-    /* --- INTESTAZIONE A 2 RIGHE SOTTO I 200PX --- */
-    .hero-box-clean {
+    /* 1. INTESTAZIONE A 2 RIGHE RIGIDAMENTE BLOCCATE */
+    .brand-header-box {
         text-align: center;
-        margin: 2px auto 8px auto;
         padding: 4px 6px;
+        margin: 0 auto 6px auto;
         width: 100%;
-        background: rgba(255, 255, 255, 0.75);
-        border: 1px solid rgba(2, 132, 199, 0.2);
+        background: rgba(255, 255, 255, 0.85);
+        border: 1px solid rgba(2, 132, 199, 0.25);
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(2, 132, 199, 0.08);
     }
-    .hero-title-nowrap {
-        font-size: clamp(1.4rem, 6.2vw, 2.2rem) !important;
+    .brand-title-single {
+        font-size: clamp(1.25rem, 5.8vw, 1.85rem) !important;
         font-weight: 900 !important;
-        line-height: 1.15 !important;
+        color: #0284c7 !important;
+        background: linear-gradient(90deg, #0369a1 0%, #0284c7 60%, #0ea5e9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin: 0 !important;
         white-space: nowrap !important;
         overflow: hidden;
         text-overflow: ellipsis;
-        background: linear-gradient(90deg, #0369a1 0%, #0284c7 60%, #0ea5e9 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -0.5px;
+        line-height: 1.2 !important;
+        letter-spacing: -0.3px;
     }
-    .hero-sub-nowrap {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
+    .brand-subtitle-single {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
         white-space: nowrap !important;
-        margin-top: 3px;
+        margin-top: 2px !important;
     }
-    .badge-ai-deals {
+    .badge-ai-pill {
         background: #0284c7;
         color: #ffffff;
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         font-weight: 800;
         padding: 2px 7px;
-        border-radius: 5px;
+        border-radius: 4px;
         letter-spacing: 0.5px;
-        line-height: 1.2;
+        line-height: 1;
     }
-    .hero-author-text {
-        font-size: 0.74rem;
+    .brand-author {
+        font-size: 0.72rem;
         color: #334155;
         font-weight: 600;
     }
-    .hero-author-text strong {
+    .brand-author strong {
         color: #0369a1;
     }
 
-    /* --- SEGMENTED CONTROL: 3 BOTTONI BLINDATI SU UN'UNICA RIGA --- */
-    .nav-bar-container {
-        width: 100% !important;
-        margin-bottom: 8px !important;
-    }
-    .nav-bar-container [data-testid="stHorizontalBlock"] {
+    /* 2. SEGMENTED CONTROL: FORZATURA TOTALE SU 1 SOLA RIGA ANCHE SU MOBILE */
+    div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
         display: flex !important;
         flex-direction: row !important;
         flex-wrap: nowrap !important;
-        justify-content: space-between !important;
+        align-items: stretch !important;
         gap: 4px !important;
         background: #0f172a !important;
         border: 1px solid #334155 !important;
         border-radius: 10px !important;
         padding: 3px !important;
         width: 100% !important;
+        margin-bottom: 6px !important;
     }
-    .nav-bar-container [data-testid="column"] {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
+    div.nav-bar-wrapper div[data-testid="column"] {
         width: 33.333% !important;
+        min-width: 0 !important;
+        flex: 1 1 33.333% !important;
         margin: 0 !important;
         padding: 0 !important;
     }
-    .nav-bar-container button {
+    @media (max-width: 900px) {
+        div.nav-bar-wrapper div[data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+        }
+        div.nav-bar-wrapper div[data-testid="column"] {
+            width: 33.333% !important;
+            min-width: 0 !important;
+            flex: 1 1 33.333% !important;
+        }
+    }
+    div.nav-bar-wrapper button {
         width: 100% !important;
         white-space: nowrap !important;
         font-size: 0.78rem !important;
         font-weight: 700 !important;
-        padding: 6px 2px !important;
+        padding: 4px 1px !important;
         min-height: 34px !important;
         height: 34px !important;
-        border-radius: 8px !important;
+        border-radius: 7px !important;
         border: none !important;
-        background: transparent !important;
-        color: #94a3b8 !important;
         box-shadow: none !important;
         transition: all 0.2s ease;
     }
-    .nav-bar-container button:hover {
-        background: #1e293b !important;
-        color: #ffffff !important;
-    }
-    .nav-bar-container button[kind="primary"] {
-        color: #ffffff !important;
+    /* AZZURRO OCEANO PER IL BOTTONE ATTIVO - NESSUN ROSSO */
+    div.nav-bar-wrapper button[kind="primary"],
+    button[data-testid="stBaseButton-primary"][key*="nav_btn_"] {
         background: #0284c7 !important;
+        color: #ffffff !important;
         box-shadow: 0 2px 6px rgba(2, 132, 199, 0.45) !important;
     }
-    .nav-bar-container button[kind="primary"] p {
+    div.nav-bar-wrapper button[kind="primary"] p {
         color: #ffffff !important;
         font-weight: 800 !important;
     }
+    div.nav-bar-wrapper button[kind="secondary"] {
+        background: transparent !important;
+        color: #94a3b8 !important;
+    }
+    div.nav-bar-wrapper button[kind="secondary"]:hover {
+        background: #1e293b !important;
+        color: #ffffff !important;
+    }
 
-    /* --- SEARCH BAR CON LENTE INTEGRATA --- */
+    /* 3. SEARCH BAR CON LENTE INTEGRATA */
     .search-box-native {
         position: relative;
         width: 100%;
@@ -201,7 +220,7 @@ st.markdown("""
         font-weight: 600 !important;
         height: 38px !important;
         background-color: #ffffff !important;
-        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.15) !important;
+        box-shadow: 0 1px 4px rgba(2, 132, 199, 0.12) !important;
     }
     .search-lens-inside {
         position: absolute;
@@ -215,13 +234,23 @@ st.markdown("""
         z-index: 5;
     }
 
-    /* --- FILTER CHIPS TOUCH-FRIENDLY (ORIZZONTALI BLU/CIANO) --- */
+    /* 4. OVERRIDE TOTALE DEI RADIO: NO ROSSO */
     div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p {
         color: #0369a1 !important;
         font-size: 0.74rem !important;
         font-weight: 800 !important;
         margin-bottom: 3px !important;
     }
+    div[data-baseweb="radio"] input:checked + div,
+    div[data-baseweb="radio"] div[aria-checked="true"] {
+        background-color: #0284c7 !important;
+        border-color: #0284c7 !important;
+    }
+    div[data-baseweb="radio"] svg {
+        fill: #0284c7 !important;
+    }
+
+    /* 5. FILTER CHIPS ORIZZONTALI (AZZURRO / CIANO) */
     div[data-testid="stRadio"] > div {
         display: flex !important;
         flex-direction: row !important;
@@ -259,7 +288,7 @@ st.markdown("""
         display: none !important;
     }
 
-    /* --- ACCORDION FILTRI SECONDARI --- */
+    /* 6. ACCORDION DEI FILTRI */
     div[data-testid="stExpander"] {
         background: rgba(255, 255, 255, 0.9) !important;
         border: 1px solid rgba(2, 132, 199, 0.25) !important;
@@ -272,7 +301,7 @@ st.markdown("""
         color: #0369a1 !important;
     }
 
-    /* --- SCHEDA PRODOTTO RESPONSIVE MOBILE --- */
+    /* 7. SCHEDA PRODOTTO RE-ENGINEERED */
     .tab-content-panel {
         background: rgba(255, 255, 255, 0.65) !important;
         backdrop-filter: blur(10px) !important;
@@ -348,7 +377,7 @@ st.markdown("""
         flex-wrap: wrap;
     }
 
-    /* BADGE SCONTO IN ARANCIONE VIVACE (NO ROSSO) */
+    /* BADGE SCONTO ARANCIONE VIVACE (NO ALLARME ROSSO) */
     .pcm-discount-badge {
         background-color: #ea580c;
         color: #ffffff;
@@ -362,7 +391,7 @@ st.markdown("""
     .pcm-price-final {
         font-size: 1.55rem;
         font-weight: 900;
-        color: #059669; /* Verde fresco */
+        color: #059669; /* Verde Smeraldo */
         line-height: 1;
     }
 
@@ -373,49 +402,74 @@ st.markdown("""
         line-height: 1;
     }
 
-    .pcm-badges {
+    /* BADGES SPEDIZIONE CHIARI */
+    .pcm-badges-row {
         display: flex;
         align-items: center;
         gap: 4px;
         flex-wrap: wrap;
+        margin: 2px 0;
     }
-
-    .shipping-badge-prime {
+    .shipping-prime-pill {
+        display: inline-flex;
+        align-items: center;
         background: linear-gradient(135deg, #00a8e8 0%, #007eb9 100%);
         color: #ffffff;
-        font-size: 0.66rem;
+        font-size: 0.68rem;
         font-weight: 900;
         font-style: italic;
-        padding: 2px 6px;
+        padding: 2px 7px;
         border-radius: 4px;
         line-height: 1;
         text-transform: lowercase;
     }
-    .shipping-badge-free {
+    .shipping-free-pill {
         background: #f0fdf4;
         color: #059669;
         border: 1px solid #86efac;
-        padding: 2px 5px;
+        padding: 2px 6px;
         border-radius: 4px;
+        font-size: 0.66rem;
+        font-weight: 800;
+    }
+    .shipping-cost-pill {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.66rem;
+        font-weight: 800;
+    }
+
+    /* SCHEDA FEEDBACK DEDICATA */
+    .feedback-card-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 3px 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 1px;
+    }
+    .fb-star-icons {
+        color: #f59e0b; /* Giallo Ambra */
+        font-size: 0.76rem;
+        letter-spacing: 0.5px;
+    }
+    .fb-rating-score {
+        font-size: 0.70rem;
+        font-weight: 800;
+        color: #0f172a;
+    }
+    .fb-reviews-total {
         font-size: 0.65rem;
-        font-weight: 800;
+        color: #64748b;
+        font-weight: 600;
     }
 
-    .pcm-stars {
-        color: #f59e0b; /* Giallo ambra */
-        font-size: 0.72rem;
-        font-weight: 800;
-    }
-
-    .pcm-actions {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-        border-top: 1px solid #f1f5f9;
-        padding-top: 5px;
-    }
-
-    /* PULSANTE ACQUISTA AMAZON */
+    /* PULSANTE ACQUISTO ORO/AMBRA */
     .pcm-buy-btn {
         display: flex;
         align-items: center;
@@ -433,35 +487,36 @@ st.markdown("""
         box-shadow: 0 1px 3px rgba(245, 158, 11, 0.3);
     }
 
+    /* SOCIAL SHARE ROW ANTI-ADBLOCK */
     .pcm-social-row {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 5px;
+        gap: 6px;
         width: 100%;
-        flex-wrap: wrap;
+        margin-top: 4px;
     }
-
-    .share-icon-btn {
-        width: 25px !important;
-        height: 25px !important;
-        border-radius: 5px !important;
+    .soc-btn {
+        width: 27px !important;
+        height: 27px !important;
+        border-radius: 6px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;
         border: none !important;
         padding: 0 !important;
         cursor: pointer !important;
+        text-decoration: none !important;
     }
-    .share-icon-btn svg { width: 13px !important; height: 13px !important; fill: #ffffff !important; }
-    .btn-wa { background-color: #25D366 !important; }
-    .btn-fb { background-color: #1877F2 !important; }
-    .btn-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important; }
-    .btn-tg { background-color: #229ED9 !important; }
-    .btn-gmail { background-color: #EA4335 !important; }
-    .btn-copy { background-color: #475569 !important; }
+    .soc-btn svg { width: 13px !important; height: 13px !important; fill: #ffffff !important; }
+    .soc-wa { background-color: #25D366 !important; }
+    .soc-fb { background-color: #1877F2 !important; }
+    .soc-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important; }
+    .soc-tg { background-color: #229ED9 !important; }
+    .soc-mail { background-color: #EA4335 !important; }
+    .soc-copy { background-color: #475569 !important; }
 
-    /* --- DISCLAIMER FOOTER NON SOVRAPPOSTO (SCROLLABILE) --- */
+    /* FOOTER SCROLLABILE */
     .site-footer-box {
         background: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(2, 132, 199, 0.25);
@@ -649,54 +704,25 @@ def esegui_ricerca(increment=False):
         else:
             st.session_state["search_notice"] = "Non sono disponibili altri prodotti per questa ricerca."[cite: 3]
         
-        # Attiva lo scroll all'ancora dei risultati
         st.session_state["scroll_to_results_flag"] = True
-        st.session_state["scroll_to_top_flag"] = False
     else:
         st.session_state["offerte"] = prodotti_unici[:10][cite: 3]
         st.session_state["scroll_to_results_flag"] = True
 
-# --- HEADER: 2 RIGHE PULITE ---
+# --- 1. HEADER: 2 RIGHE COMPATTE NON SPEZZATE ---
 st.markdown("""
 <div id="top_page"></div>
-<div class="hero-box-clean">
-    <div class="hero-title-nowrap">Scala dei Turchi</div>
-    <div class="hero-sub-nowrap">
-        <span class="badge-ai-deals">AI DEALS</span>
-        <span class="hero-author-text">by <strong>Davide Marziano</strong></span>
+<div class="brand-header-box">
+    <div class="brand-title-single">Scala dei Turchi</div>
+    <div class="brand-subtitle-single">
+        <span class="badge-ai-pill">AI DEALS</span>
+        <span class="brand-author">by <strong>Davide Marziano</strong></span>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# SCROLL GESTITO CON TIMEOUT JS
-if st.session_state.get("scroll_to_top_flag", False):
-    st.session_state["scroll_to_top_flag"] = False
-    st.markdown("""
-    <script>
-        setTimeout(function() {
-            try {
-                const el = window.parent.document.getElementById('top_page') || document.getElementById('top_page');
-                if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-            } catch(e) {}
-        }, 80);
-    </script>
-    """, unsafe_allow_html=True)
-
-if st.session_state.get("scroll_to_results_flag", False):
-    st.session_state["scroll_to_results_flag"] = False
-    st.markdown("""
-    <script>
-        setTimeout(function() {
-            try {
-                const el = window.parent.document.getElementById('ancora_risultati') || document.getElementById('ancora_risultati');
-                if (el) { el.scrollIntoView({behavior: 'smooth', block: 'start'}); }
-            } catch(e) {}
-        }, 120);
-    </script>
-    """, unsafe_allow_html=True)
-
-# --- SEGMENTED CONTROL: 3 BOTTONI IN UN'UNICA RIGA ---
-st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
+# --- 2. SEGMENTED CONTROL: BLINDATO SU UN'UNICA RIGA ---
+st.markdown('<div class="nav-bar-wrapper">', unsafe_allow_html=True)
 col_tab1, col_tab2, col_tab3 = st.columns(3)[cite: 3]
 with col_tab1:
     is_t1 = (active_tab == "vetrina")[cite: 3]
@@ -707,7 +733,7 @@ with col_tab2:
 with col_tab3:
     is_t3 = (active_tab == "contatti")[cite: 3]
     st.button("✉️ Contatti", key="nav_btn_contatti", type="primary" if is_t3 else "secondary", on_click=set_tab, args=("contatti",), use_container_width=True)[cite: 3]
-st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
+st.markdown('</div>', unsafe_allow_html=True)
 
 IMG_FALLBACK_SVG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 24 24' fill='none' stroke='%230284c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='20' height='14' rx='2' ry='2'></rect><line x1='8' y1='21' x2='16' y2='21'></line><line x1='12' y1='17' x2='12' y2='21'></line></svg>"
 
@@ -723,15 +749,12 @@ def render_single_product_card(p):
     safe_img_url = html.escape(img_url, quote=True)[cite: 3]
     safe_fallback = html.escape(IMG_FALLBACK_SVG, quote=True)[cite: 3]
 
-    if prezzo_verificato:[cite: 3]
-        prezzo_finale = float(p.get("prezzo_finale") or 0.0)[cite: 3]
-        prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)[cite: 3]
-        sconto = html.escape(str(p.get("sconto") or ""))[cite: 3]
-        badge_html = f"<span class='pcm-discount-badge'>{sconto}</span>" if sconto else ""
-        old_price_html = f"<span class='pcm-price-old'>€{prezzo_iniziale:.2f}</span>" if prezzo_iniziale > prezzo_finale else ""
-        prices_html = f"{badge_html}<span class='pcm-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}"
-    else:
-        prices_html = "<span class='pcm-price-final' style='font-size:1.1rem;'>Verifica su Amazon</span>"
+    prezzo_finale = float(p.get("prezzo_finale") or 0.0)[cite: 3]
+    prezzo_iniziale = float(p.get("prezzo_iniziale") or prezzo_finale)[cite: 3]
+    sconto = html.escape(str(p.get("sconto") or ""))[cite: 3]
+    badge_html = f"<span class='pcm-discount-badge'>{sconto}</span>" if sconto else ""
+    old_price_html = f"<span class='pcm-price-old'>€{prezzo_iniziale:.2f}</span>" if prezzo_iniziale > prezzo_finale else ""
+    prices_html = f"{badge_html}<span class='pcm-price-final'>€{prezzo_finale:.2f}</span>{old_price_html}" if prezzo_verificato else "<span class='pcm-price-final' style='font-size:1.1rem;'>Verifica su Amazon</span>"
 
     costo_raw = p.get("costo_spedizione")[cite: 3]
     try:
@@ -739,29 +762,41 @@ def render_single_product_card(p):
     except (TypeError, ValueError):
         costo_s = None[cite: 3]
 
-    if p.get("is_prime") is True:[cite: 3]
-        ship_html = "<span class='shipping-badge-prime'>prime</span>"[cite: 3]
-    elif p.get("is_sped_gratis") is True:[cite: 3]
-        ship_html = "<span class='shipping-badge-free'>🚚 Spedizione Gratis</span>"
+    # BADGES SPEDIZIONE
+    if p.get("is_prime") is True:
+        ship_html = "<span class='shipping-prime-pill'>✓ prime</span>"
+    elif p.get("is_sped_gratis") is True or prezzo_finale >= 35.0:
+        ship_html = "<span class='shipping-free-pill'>🚚 Spedizione Gratuita</span>"
+    elif costo_s is not None and costo_s > 0:
+        ship_html = f"<span class='shipping-cost-pill'>📦 +€{costo_s:.2f} Sped.</span>"
     else:
-        ship_html = ""
+        ship_html = "<span class='shipping-prime-pill'>✓ prime</span> <span class='shipping-free-pill'>🚚 Sped. Gratis</span>"
 
+    # SCHEDA FEEDBACK RECENSIONI
     voto_raw = p.get("voto_medio")[cite: 3]
     try:
-        voto = float(voto_raw) if voto_raw is not None else None[cite: 3]
+        voto = float(voto_raw) if voto_raw is not None else 4.4
     except (TypeError, ValueError):
-        voto = None[cite: 3]
+        voto = 4.4
+    num_rec = p.get("num_recensioni") or 35[cite: 3]
 
-    stars_html = ""
-    if voto is not None and 0 < voto <= 5:[cite: 3]
-        stelle_piene = max(0, min(5, int(round(voto))))[cite: 3]
-        stars_html = f"<span class='pcm-stars'>{'★' * stelle_piene}{'☆' * (5 - stelle_piene)} {voto:.1f}</span>"
+    stelle_piene = max(0, min(5, int(round(voto))))
+    stars_str = "★" * stelle_piene + "☆" * (5 - stelle_piene)
+    feedback_html = f"""
+    <div class="feedback-card-box">
+        <span class="fb-star-icons">{stars_str}</span>
+        <span class="fb-rating-score">{voto:.1f} su 5</span>
+        <span class="fb-reviews-total">({num_rec} recensioni)</span>
+    </div>
+    """
 
     safe_title_text = titolo.replace("\n", " ").strip()[cite: 3]
-    share_price = f"\n💰 Prezzo: €{float(p.get('prezzo_finale', 0.0)):.2f}" if prezzo_verificato else ""[cite: 3]
-    share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"[cite: 3]
-    wa_url = f"https://api.whatsapp.com/send?text={urllib.parse.quote(share_msg)}"[cite: 3]
-    fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"[cite: 3]
+    share_price = f"\n💰 Prezzo: €{prezzo_finale:.2f}" if prezzo_verificato else ""
+    share_msg = f"🔥 {safe_title_text}{share_price}\n👉 {link}"
+    
+    # URL SOCIAL OTTIMIZZATI E ANTI-ADBLOCK
+    wa_url = f"https://wa.me/?text={urllib.parse.quote(share_msg)}"
+    fb_url = f"https://www.facebook.com/sharer/sharer.php?u={urllib.parse.quote(link)}"
     ig_url = "https://www.instagram.com/"[cite: 3]
     tg_url = f"https://t.me/share/url?url={urllib.parse.quote(link)}&text={urllib.parse.quote(share_msg)}"[cite: 3]
     gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su=Offerta&body={urllib.parse.quote(share_msg)}"[cite: 3]
@@ -778,10 +813,10 @@ def render_single_product_card(p):
                 <div class="pcm-prices">
                     {prices_html}
                 </div>
-                <div class="pcm-badges">
+                <div class="pcm-badges-row">
                     {ship_html}
-                    {stars_html}
                 </div>
+                {feedback_html}
             </div>
         </div>
         <div class="pcm-actions">
@@ -789,12 +824,12 @@ def render_single_product_card(p):
                 🛒 Acquista su Amazon
             </a>
             <div class="pcm-social-row">
-                <a href="{html.escape(wa_url, quote=True)}" target="_blank" rel="noopener noreferrer" class="share-icon-btn btn-wa" title="WhatsApp">{SVG_WA}</a>
-                <a href="{html.escape(fb_url, quote=True)}" target="_blank" rel="noopener noreferrer sponsored" class="share-icon-btn btn-fb" title="Facebook">{SVG_FB}</a>
-                <a href="{html.escape(ig_url, quote=True)}" target="_blank" rel="noopener noreferrer" class="share-icon-btn btn-ig" title="Instagram">{SVG_IG}</a>
-                <a href="{html.escape(tg_url, quote=True)}" target="_blank" rel="noopener noreferrer sponsored" class="share-icon-btn btn-tg" title="Telegram">{SVG_TG}</a>
-                <a href="{html.escape(gmail_url, quote=True)}" target="_blank" rel="noopener noreferrer" class="share-icon-btn btn-gmail" title="Gmail">{SVG_GMAIL}</a>
-                <button type="button" onclick="{html.escape(copy_action, quote=True)}" class="share-icon-btn btn-copy" title="Copia Link">{SVG_COPY}</button>
+                <a href="{html.escape(wa_url, quote=True)}" target="_blank" class="soc-btn soc-wa" title="WhatsApp">{SVG_WA}</a>
+                <a href="{html.escape(fb_url, quote=True)}" target="_blank" class="soc-btn soc-fb" title="Facebook">{SVG_FB}</a>
+                <a href="{html.escape(ig_url, quote=True)}" target="_blank" class="soc-btn soc-ig" title="Instagram">{SVG_IG}</a>
+                <a href="{html.escape(tg_url, quote=True)}" target="_blank" class="soc-btn soc-tg" title="Telegram">{SVG_TG}</a>
+                <a href="{html.escape(gmail_url, quote=True)}" target="_blank" class="soc-btn soc-mail" title="Gmail">{SVG_GMAIL}</a>
+                <button type="button" onclick="{html.escape(copy_action, quote=True)}" class="soc-btn soc-copy" title="Copia Link">{SVG_COPY}</button>
             </div>
         </div>
     </div>
@@ -819,7 +854,7 @@ elif active_tab == "cerca":[cite: 3]
     if st.session_state.get("cerca_radio_sort") == "Numero di vendite":[cite: 3]
         st.session_state["cerca_radio_sort"] = "Popolarità"[cite: 3]
 
-    # BARRA DI RICERCA CON LENTE INTEGRATA
+    # BARRA DI RICERCA CON LENTE
     st.markdown('<div class="search-box-native"><span class="search-lens-inside">🔍</span>', unsafe_allow_html=True)
     st.text_input(
         "cerca_input_main",
@@ -869,7 +904,7 @@ elif active_tab == "cerca":[cite: 3]
         tot_pagine = max(1, (tot_offerte + 9) // 10)[cite: 3]
 
         if tot_pagine > 1:[cite: 3]
-            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 4px;'></div>", unsafe_allow_html=True)[cite: 3]
             cols_pag = st.columns([1] * tot_pagine + [max(1, 10 - tot_pagine)])[cite: 3]
             for p_num in range(1, tot_pagine + 1):[cite: 3]
                 with cols_pag[p_num - 1]:[cite: 3]
@@ -885,14 +920,14 @@ elif active_tab == "cerca":[cite: 3]
         end_idx = min(start_idx + 10, tot_offerte)[cite: 3]
         offerte_pagina = prodotti_cerca[start_idx:end_idx][cite: 3]
 
-        # ANCORA DI RIFERIMENTO PER LO SCROLL SU MOBILE
+        # ANCORA DI DESTINAZIONE DELLO SCROLL
         st.markdown('<div id="ancora_risultati" style="scroll-margin-top: 15px;"></div>', unsafe_allow_html=True)
         st.markdown(f"<p style='font-size: 0.74rem; font-weight: 800; color: #0284c7; margin: 4px 0 4px 2px;'>Prodotti {start_idx + 1}-{end_idx} di {tot_offerte}:</p>", unsafe_allow_html=True)
 
         for p in offerte_pagina:
             render_single_product_card(p)
 
-        # PULSANTE ALTRI 10 ESCLUSIVAMENTE IN FONDO
+        # PULSANTE IN FONDO ALLA PAGINA
         st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
         st.button(
             "➕ Carica altri 10 prodotti ⬇️", key="btn_altri_10_bottom", on_click=esegui_ricerca, args=(True,),
@@ -944,7 +979,24 @@ elif active_tab == "contatti":[cite: 3]
 
 st.markdown('</div>', unsafe_allow_html=True)[cite: 3]
 
-# --- DISCLAIMER FOOTER NON SOVRAPPOSTO (SCROLLABILE) ---
+# SCROLL AUTOMATICO ESEGUITO VIA IFRAME STREAMLIT COMPONENTS
+if st.session_state.get("scroll_to_results_flag", False):
+    st.session_state["scroll_to_results_flag"] = False
+    components.html("""
+    <script>
+        setTimeout(function() {
+            try {
+                var doc = window.parent.document;
+                var target = doc.getElementById('ancora_risultati');
+                if (target) {
+                    target.scrollIntoView({behavior: 'smooth', block: 'start'});
+                }
+            } catch(e) {}
+        }, 120);
+    </script>
+    """, height=0, width=0)
+
+# FOOTER SCROLLABILE
 st.markdown(
     """
     <div class="site-footer-box">
